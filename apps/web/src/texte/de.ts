@@ -29,7 +29,7 @@ export const de = {
   gebiete: {
     titel: "Gebiete",
     stadtZeile: (gesamt: string, anzahl: number) => `${gesamt} Straßen in ${anzahl} Gebieten`,
-    zeile: (gesamt: string) => `0 % von ${gesamt}`,
+    zeile: (prozent: string, gesamt: string) => `${prozent} % von ${gesamt}`,
     stand: (datum: string) => `Straßendaten: OpenStreetMap, Stand ${datum}`,
     leer: "Hier sammelst du deine Stadtteile, Bezirke und Städte. Jeder bekommt eine Karte mit Prozent und Kilometern, sobald du losgezogen bist.",
   },

@@ -88,3 +88,14 @@ export function alsKm(meter: number): string {
 export function alsStrecke(meter: number): string {
   return meter < 1000 ? `${Math.round(meter)} m` : alsKm(meter);
 }
+
+/** Share seen in percent (0–100, whole numbers; "<1" is shown by the caller for tiny values). */
+export function prozent(gesehenM: number, gesamtM: number): number {
+  if (gesamtM <= 0) return 0;
+  return Math.min(100, (gesehenM / gesamtM) * 100);
+}
+
+export function prozentText(p: number): string {
+  if (p > 0 && p < 1) return "<1";
+  return String(Math.floor(p));
+}

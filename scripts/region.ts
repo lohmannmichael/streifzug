@@ -12,19 +12,14 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { gunzipSync } from "node:zlib";
 import {
   TILE_ZOOM,
-  classifyOmt,
-  clipLine,
-  lineLengthM,
-  parallelWeights,
-  pointAlong,
+  piecesFromTile,
   pointInGeometry,
-  splitWay,
   tileBounds,
   tileFor,
   type LonLat,
   type OmtTransportation,
   type PolygonGeometry,
-  type StreetGroup,
+  type TileFeature,
 } from "../packages/core/src/index";
 
 interface Gebiet {
@@ -37,7 +32,6 @@ interface Gebiet {
 }
 
 const AUSGABE = "apps/web/public/regionen";
-const GROSS = new Set(["trunk", "primary", "secondary", "tertiary"]);
 
 function bboxOf(geometry: PolygonGeometry): [number, number, number, number] {
   const rings = geometry.type === "Polygon" ? geometry.coordinates : geometry.coordinates.flat();
@@ -105,28 +99,20 @@ async function main() {
       if (daten.length === 0) continue;
       kacheln++;
       const ebene = new VectorTile(new PbfReader(daten)).layers.transportation;
-      const linien: { art: "street" | "path"; group: StreetGroup; coords: LonLat[] }[] = [];
+      const features: TileFeature[] = [];
       for (let i = 0; ebene && i < ebene.length; i++) {
         const feature = ebene.feature(i);
-        const props = feature.properties as OmtTransportation;
-        const art = classifyOmt(props, { includePaths: true });
-        if (!art) continue;
         const geo = feature.toGeoJSON(x, y, TILE_ZOOM).geometry;
-        const teile: LonLat[][] =
+        const lines: LonLat[][] =
           geo.type === "LineString" ? [geo.coordinates as unknown as LonLat[]] : geo.type === "MultiLineString" ? (geo.coordinates as unknown as LonLat[][]) : [];
-        for (const teil of teile)
-          for (const stueck of clipLine(teil, grenzen))
-            if (lineLengthM(stueck) >= 0.5)
-              linien.push({ art, group: art === "path" ? null : GROSS.has(String(props.class)) ? "major" : "minor", coords: stueck });
+        features.push({ props: feature.properties as OmtTransportation, lines });
       }
-      // Every street counts once (two carriageways count half each), see packages/core/src/parallel.ts.
-      const stuecke = linien.flatMap((linie, lineId) => splitWay(lineId, linie.coords).map((seg) => ({ lineId, seg, group: linie.group })));
-      const gewichte = parallelWeights(stuecke.map((s) => ({ lineId: s.lineId, group: s.group, coords: s.seg.coords })));
-      stuecke.forEach((s, i) => {
-        const mitte = pointAlong(s.seg.coords, s.seg.lengthM / 2);
-        if (!enthaelt(wurzel, mitte)) return;
-        const meter = s.seg.lengthM * gewichte[i]!;
-        const istStrasse = linien[s.lineId]!.art === "street";
+      // Same pieces as on the device: counting rules, tile clipping, every street once (packages/core/src/pieces.ts).
+      for (const piece of piecesFromTile({ z: TILE_ZOOM, x, y }, features)) {
+        const mitte = piece.mid;
+        if (!enthaelt(wurzel, mitte)) continue;
+        const meter = piece.lengthM * piece.weight;
+        const istStrasse = piece.kind === "street";
         // One area per level contains the piece.
         for (const liste of nachRang.values()) {
           const g = liste.find((kandidat) => enthaelt(kandidat, mitte));
@@ -135,7 +121,7 @@ async function main() {
           if (istStrasse) summe.strasse_m += meter;
           else summe.weg_m += meter;
         }
-      });
+      }
     }
 
   const ergebnis = {

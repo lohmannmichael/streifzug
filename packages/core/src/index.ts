@@ -7,3 +7,5 @@ export * from "./polygon";
 export * from "./clip";
 export * from "./parallel";
 export * from "./track";
+export * from "./pieces";
+export * from "./match";

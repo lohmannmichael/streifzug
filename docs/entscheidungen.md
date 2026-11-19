@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 19.11.2026: Schritt 1d Abgleich Spur → Straßen, gelb und Prozent
+- Gemeinsame Funktion `piecesFromTile` (packages/core/src/pieces.ts) für Gesamt-km (Regionen-Skript) und Gesehenes (Gerät): beide zählen garantiert gleich. Köln nach Umbau unverändert 2.273,9 km
+- Abgleich `seenPieceIds` (match.ts): Stück gilt als gesehen, wenn ≥ 60 % seiner Länge höchstens 20 m seitlich neben der Spur liegen und die Spur in Straßenrichtung verläuft (±45°). Die 20 m wirken nur seitlich, nicht über das Ende der Spur hinaus (sonst zählt „8 m hineingehen und umdrehen“ als ganze Straße). Lücken über 60 s werden nicht überbrückt. Querende Seitenstraßen zählen nicht
+- Auf dem Gerät: Kacheln rund um alle Spuren von OpenFreeMap laden, abgleichen, gesehene Meter je Gebiet (alle Ebenen) summieren; Prozent = gesehen / gesamt. Autofahrten zählen nur mit Schalter. Live während des Aufzeichnens (alle 10 neuen Punkte)
+- Karte: Gesehenes als gelber Textmarker-Strich, Spur als gestrichelte Tintenlinie; beim Aufzeichnen Zoom auf Straßenebene
+- Fortschritt wird aus den Rohdaten auf dem Gerät berechnet (alle Runden); Speicherung als Abdeckung in der Datenbank (für mehrere Geräte, Ranglisten) folgt später
+- Getestet mit simuliertem Spaziergang auf echter Straße (Wupperstraße, Lövenich): 148 m gelaufen, 0,2 km entdeckt, Gebiet automatisch gewechselt
+
 ## 19.11.2026: Schritt 1b/1c Standort und Aufzeichnen (Web-App)
 - „Losziehen“: GPS mit hoher Genauigkeit, solange die App offen ist; Bildschirm bleibt an (Wake Lock). Hintergrund-Aufzeichnung erst mit der iPhone-App (Phase 3), die App sagt das beim Aufzeichnen
 - GPS-Punkte mit Ungenauigkeit über 25 m, ohne Zeitfortschritt oder mit Sprüngen über 50 m/s werden aussortiert; Lücken über 60 s werden nicht überbrückt; Fortbewegung nach Median-Tempo (bis 7,2 km/h zu Fuß, bis 30 km/h Rad, darüber Auto) – `packages/core/src/track.ts`

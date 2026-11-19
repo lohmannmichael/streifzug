@@ -8,7 +8,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import type { Fix } from "@streifzug/core";
+import type { Fix, Piece } from "@streifzug/core";
 import { useEffect, useRef } from "react";
 import type { Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
@@ -139,6 +139,8 @@ export interface KartenProps {
   onWaehlen: (id: string) => void;
   /** The current outing (drawn live) and whether the map follows the position. */
   spur: Fix[];
+  /** Street pieces already seen (all outings), drawn in highlighter yellow. */
+  entdeckt: Piece[];
   folgen: boolean;
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
@@ -150,10 +152,12 @@ const LEER = { type: "FeatureCollection" as const, features: [] };
 /** Own track and position, on top of everything. */
 function eigenesZeichnen(karte: MapLibreMap) {
   if (karte.getSource("spur")) return;
+  karte.addSource("entdeckt", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffe14a", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 16, 9], "line-opacity": 0.9 } });
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "spur", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffe14a", "line-width": 7, "line-opacity": 0.95 } });
-  karte.addLayer({ id: "spur-kern", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": TINTE, "line-width": 1.5 } });
+  // The live track is a thin ink line; what it unlocks turns yellow underneath.
+  karte.addLayer({ id: "spur-kern", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": TINTE, "line-width": 2, "line-dasharray": [2, 1.5] } });
   karte.addLayer({ id: "ich-hof", type: "circle", source: "ich", paint: { "circle-radius": 14, "circle-color": "#2b6ef2", "circle-opacity": 0.18 } });
   karte.addLayer({ id: "ich", type: "circle", source: "ich", paint: { "circle-radius": 7, "circle-color": "#2b6ef2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
 }
@@ -248,7 +252,8 @@ export function Karte(props: KartenProps) {
     setzeDaten(karte, "ich", hier ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: hier } } : LEER);
     if (!props.folgen || !letzter) return;
     const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const ziel = { center: hier!, padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
+    // While out and about, stay close enough to see single streets turn yellow.
+    const ziel = { center: hier!, zoom: Math.max(karte.getZoom(), 16), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
     if (ruhig) karte.jumpTo(ziel);
     else karte.easeTo({ ...ziel, duration: 500 });
     karte.once("moveend", () => {
@@ -258,6 +263,16 @@ export function Karte(props: KartenProps) {
       if (id && String(id) !== gewaehltRef.current) waehlenRef.current(String(id));
     });
   }, [props.spur, props.folgen, props.position]);
+
+  // Seen streets in yellow.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (!karte || !karte.getSource("entdeckt")) return;
+    setzeDaten(karte, "entdeckt", {
+      type: "FeatureCollection",
+      features: props.entdeckt.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: p.coords } })),
+    });
+  }, [props.entdeckt]);
 
   // Location button: move to the own position.
   useEffect(() => {

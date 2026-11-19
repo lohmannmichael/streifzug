@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
+import { useFortschritt, type Fortschritt } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
-import { alsKm, alsStrecke, elternText, findeNachName, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
+import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
@@ -28,6 +29,10 @@ export function App() {
   };
   const aufzeichnung = useAufzeichnung();
   const streifzuege = useStreifzuege();
+  // Car rides count only with the switch on (docs/PLAN.md, section 2).
+  const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
+  const spuren = [...zaehlende.map((s) => s.fixes), ...(aufzeichnung.aktiv ? [aufzeichnung.fixes] : [])];
+  const fortschritt = useFortschritt(spuren, daten);
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);
@@ -56,6 +61,7 @@ export function App() {
             gewaehltName={gebiet?.name ?? ""}
             onWaehlen={waehlen}
             spur={aufzeichnung.fixes}
+            entdeckt={fortschritt?.stuecke ?? []}
             folgen={aufzeichnung.aktiv}
             position={position}
             zentrieren={zentrieren}
@@ -68,11 +74,19 @@ export function App() {
               <IconStandort />
             </button>
           </div>
-          <KartenBlatt gebiet={gebiet} daten={daten} einstellungen={einstellungen} aufzeichnung={aufzeichnung} standortFehler={standortFehler} />
+          <KartenBlatt
+            gebiet={gebiet}
+            daten={daten}
+            einstellungen={einstellungen}
+            aufzeichnung={aufzeichnung}
+            standortFehler={standortFehler}
+            fortschritt={fortschritt}
+          />
         </div>
         {reiter === "gebiete" && (
           <GebieteSeite
             daten={daten}
+            fortschritt={fortschritt}
             einstellungen={einstellungen}
             waehlen={(id) => {
               waehlen(id);
@@ -106,9 +120,14 @@ function KartenBlatt(props: {
   einstellungen: Einstellungen;
   aufzeichnung: Aufzeichnung;
   standortFehler: boolean;
+  fortschritt: Fortschritt | null;
 }) {
   const { gebiet, daten, aufzeichnung: a } = props;
-  const kmText = gebiet ? t.karte.kmZeile(alsKm(0), alsKm(zaehlendeMeter(gebiet, props.einstellungen.wegeZaehlen))) : t.karte.kmLaedt;
+  const wege = props.einstellungen.wegeZaehlen;
+  const gesamt = gebiet ? zaehlendeMeter(gebiet, wege) : 0;
+  const gesehen = gebiet ? zaehlendeMeter(props.fortschritt?.proGebiet.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, wege) : 0;
+  const p = prozent(gesehen, gesamt);
+  const kmText = gebiet ? t.karte.kmZeile(alsKm(gesehen), alsKm(gesamt)) : t.karte.kmLaedt;
   return (
     <section className="blatt" aria-labelledby="gebiet-name">
       <div className="griff" aria-hidden="true" />
@@ -117,13 +136,13 @@ function KartenBlatt(props: {
           <h1 id="gebiet-name" className="gebiet">{gebiet?.name ?? "\u00a0"}</h1>
           <p className="ober">{gebiet && daten ? elternText(daten, gebiet.id) : "\u00a0"}</p>
         </div>
-        <p className="prozent" aria-label={`0 Prozent ${t.karte.prozentLabel}`}>
-          <span className="zahl"><span className="marker">0</span><span className="einheit">%</span></span>
+        <p className="prozent" aria-label={`${prozentText(p)} Prozent ${t.karte.prozentLabel}`}>
+          <span className="zahl"><span className="marker">{prozentText(p)}</span><span className="einheit">%</span></span>
           <span className="prozent-label" aria-hidden="true">{t.karte.prozentLabel}</span>
         </p>
       </div>
       <div className="fortschritt">
-        <div className="balken" aria-hidden="true"><i style={{ width: "0%" }} /></div>
+        <div className="balken" aria-hidden="true"><i style={{ width: `${p}%` }} /></div>
         <p className="km">{kmText}</p>
       </div>
       {a.aktiv ? <Unterwegs a={a} /> : <Ruhe a={a} />}
@@ -249,8 +268,10 @@ function Profil(props: {
   );
 }
 
-function GebieteSeite(props: { daten: Regionen | null; einstellungen: Einstellungen; waehlen: (id: string) => void }) {
+function GebieteSeite(props: { daten: Regionen | null; fortschritt: Fortschritt | null; einstellungen: Einstellungen; waehlen: (id: string) => void }) {
   const { daten, einstellungen } = props;
+  const pr = (g: GebietDaten) =>
+    prozentText(prozent(zaehlendeMeter(props.fortschritt?.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, einstellungen.wegeZaehlen), zaehlendeMeter(g, einstellungen.wegeZaehlen)));
   if (!daten) return <LeereSeite titel={t.gebiete.titel} text={t.karte.kmLaedt} />;
   const km = (g: GebietDaten) => alsKm(zaehlendeMeter(g, einstellungen.wegeZaehlen));
   const sortiert = (ids: string[]) => ids.map((id) => daten.gebiete.get(id)!).sort((a, b) => a.name.localeCompare(b.name, "de"));
@@ -258,7 +279,7 @@ function GebieteSeite(props: { daten: Regionen | null; einstellungen: Einstellun
     <li key={g.id}>
       <button type="button" className="gebiet-zeile" onClick={() => props.waehlen(g.id)}>
         <span className="gebiet-zeile-name">{g.name}</span>
-        <span className="gebiet-zeile-wert">{t.gebiete.zeile(km(g))}</span>
+        <span className="gebiet-zeile-wert">{t.gebiete.zeile(pr(g), km(g))}</span>
       </button>
     </li>
   );
