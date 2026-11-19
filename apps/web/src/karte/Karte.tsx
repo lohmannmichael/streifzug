@@ -82,8 +82,8 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
         source: `gebiete-${region.id}`,
         paint: {
           "line-color": linie,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 9, ["case", ["get", "blatt"], 0.5, 1.4], 14, ["case", ["get", "blatt"], 1.2, 2.4]],
-          "line-opacity": ["case", ["get", "blatt"], 0.3, 0.55],
+          "line-width": ["interpolate", ["linear"], ["zoom"], 9, ["case", ["get", "blatt"], 0.5, 1.1], 14, ["case", ["get", "blatt"], 1, 1.8]],
+          "line-opacity": ["case", ["get", "blatt"], 0.22, 0.35],
         },
       },
       davor,
@@ -205,6 +205,8 @@ export function Karte(props: KartenProps) {
     karteRef.current = karte;
     karte.touchZoomRotate.disableRotation();
     karte.addControl(new AttributionControl({ compact: true }), "top-left");
+    // Credits start folded to the (i) button; tapping it shows them (allowed by the OSM attribution guidelines).
+    karte.once("load", () => box.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
 
     // Runs after every style load (also after switching light/dark).
     karte.on("style.load", () => {

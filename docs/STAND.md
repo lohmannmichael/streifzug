@@ -10,6 +10,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 - 1d: Abgleich Spur → Straßen, gelb auf der Karte, Prozent in Blatt und Gebiete-Liste
 
 ## Offen in Phase 1
+- Design-Paket 1 erledigt 20.11.2026 (Kartenquellen eingeklappt, Prozent mit Kommastelle unter 10 %, feinere Grenzlinien, Blatt herunterziehbar). Nächstes: Design-Pakete 2 und 3 aus docs/IDEEN.md
 - Test draußen durch Michi (Weiden), Feedback einarbeiten
 - Nebel-Karte: Gebiete leuchten herausgezoomt gelb nach Prozent (erledigt 20.11.2026); offen: echter Nebel über Unentdecktem, optional
 - Teilen-Bild mit Privatzone

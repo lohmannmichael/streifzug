@@ -95,7 +95,9 @@ export function prozent(gesehenM: number, gesamtM: number): number {
   return Math.min(100, (gesehenM / gesamtM) * 100);
 }
 
+/** Under 10 % with one decimal (every step counts at the start), otherwise whole numbers. */
 export function prozentText(p: number): string {
-  if (p > 0 && p < 1) return "<1";
+  if (p > 0 && p < 0.1) return "0,1";
+  if (p > 0 && p < 10) return (Math.floor(p * 10) / 10).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   return String(Math.floor(p));
 }

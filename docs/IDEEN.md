@@ -4,6 +4,13 @@ Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. B
 
 | Datum | Idee | Details | Vorschlag Zeitpunkt |
 |---|---|---|---|
+| 20.11.2026 | Design: Gebiete-Liste lebendiger | gelbe Mini-Balken je Viertel, Sortierung „In deiner Nähe“ / „Am meisten entdeckt“ | als Nächstes (Design-Paket 2) |
+| 20.11.2026 | Design: Nebel über Unentdecktem | leichter grauer Schleier, Erkundetes bleibt klar („die Stadt aus dem Nebel holen“) | Design-Paket 2 |
+| 20.11.2026 | Design: Zeichen-Moment | neu entdeckte Straße wird mit Textmarker-Animation gelb, „+25 m“ erscheint kurz | Design-Paket 2 |
+| 20.11.2026 | Design: Streifzüge als Logbuch | je Runde kleiner Kartenausschnitt mit Spur (UX-Entwurf C) | Design-Paket 3 |
+| 20.11.2026 | Weißer Fleck in der Nähe | statt Leertext im Blatt: „Unentdeckte Straße 300 m entfernt: …“ | Design-Paket 3 |
+| 20.11.2026 | Erster Start mit 3 Bildschirmen | Idee, Standort-Erlaubnis mit Erklärung, Heimat-Viertel | vor Freund:innen-Test |
+| 20.11.2026 | App-Icon, Startbildschirm, Teilen-Bild im gleichen Look | | vor Freund:innen-Test |
 | 20.11.2026 | Sehenswürdigkeiten als Checkliste (Urlaub) | automatisch abhaken bei 75 m, manuell abhaken, Top 10/25 je Stadt nach Bekanntheit; `docs/idee-sehenswuerdigkeiten.md` | MVP direkt nach Phase 1 |
 | 19.11.2026 | Echte Viertel für US-Städte | offizielle Neighborhood Tabulation Areas statt OSM-Mischmasch (NYC) | mit Start USA |
 | 19.11.2026 | Automatisch neue Städte anlegen | beim Betreten einer unbekannten Stadt Region im Hintergrund bauen (Job, R2) | Phase „Ausbau“ |
