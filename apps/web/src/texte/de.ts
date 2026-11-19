@@ -3,7 +3,6 @@ export const de = {
   app: { name: "Streifzug" },
   tabs: { karte: "Karte", gebiete: "Gebiete", streifzuege: "Streifzüge" },
   karte: {
-    oberGebiet: (bezirk: string) => `${bezirk}, Köln`,
     prozentLabel: "der Straßen entdeckt",
     kmZeile: (gesehen: string, gesamt: string) => `${gesehen} von ${gesamt} entdeckt`,
     kmLaedt: "Straßen werden gezählt …",
@@ -15,8 +14,7 @@ export const de = {
   },
   gebiete: {
     titel: "Gebiete",
-    koeln: "Köln",
-    stadtZeile: (gesamt: string, anzahl: number) => `${gesamt} Straßen in ${anzahl} Stadtteilen`,
+    stadtZeile: (gesamt: string, anzahl: number) => `${gesamt} Straßen in ${anzahl} Gebieten`,
     zeile: (gesamt: string) => `0 % von ${gesamt}`,
     stand: (datum: string) => `Straßendaten: OpenStreetMap, Stand ${datum}`,
     leer: "Hier sammelst du deine Stadtteile, Bezirke und Städte. Jeder bekommt eine Karte mit Prozent und Kilometern, sobald du losgezogen bist.",
@@ -39,7 +37,7 @@ export const de = {
     kontoLaedt: "Verbinde …",
     daten: "Deine Daten",
     datenHinweis: "Exportieren und Löschen kommen mit dem Konto.",
-    quelle: "Kartendaten © OpenStreetMap-Mitwirkende. Stadtteilgrenzen: Stadt Köln, Offene Daten (CC BY).",
+    quelle: "Kartendaten © OpenStreetMap-Mitwirkende. Gebietsgrenzen: Overture Maps (OpenStreetMap, ODbL).",
   },
 } as const;
 

@@ -331,3 +331,5 @@ button { font: inherit; color: inherit; }
 }
 .gebiet-zeile-name { font-weight: 600; }
 .gebiet-zeile-wert { font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.region + .region { margin-top: 36px; }

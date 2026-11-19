@@ -1,0 +1,13 @@
+{
+  "id": "freising",
+  "name": "Freising",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Freising",
+    "punkt": [
+      11.7489,
+      48.4029
+    ]
+  },
+  "tiefe": 1
+}

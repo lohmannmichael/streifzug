@@ -1,15 +1,16 @@
-// Spot check: length of named streets inside one Cologne district, from the same vector tiles.
-// Run: NODE_USE_ENV_PROXY=1 npx tsx scripts/strassenlaenge.ts 307 "Ostlandstraße" "Goethestraße"
+// Spot check: raw length of named streets inside one area (both carriageways counted, no weighting).
+// Compare with your own knowledge of the place; long main roads with two carriageways show double here.
 import { VectorTile } from "@mapbox/vector-tile";
 import { PbfReader } from "pbf";
 import { readFile } from "node:fs/promises";
 import { gunzipSync } from "node:zlib";
 import { TILE_ZOOM, clipLine, pointAlong, pointInGeometry, splitWay, tileBounds, tileFor, type LonLat, type PolygonGeometry } from "../packages/core/src/index";
 
-const [nr, ...namen] = process.argv.slice(2);
-const roh = JSON.parse(await readFile("apps/web/public/gebiete/koeln-stadtteile.geojson", "utf8"));
-const feature = roh.features.find((f: { properties: { nr: string } }) => f.properties.nr === nr);
-if (!feature) throw new Error(`Stadtteil ${nr} nicht gefunden`);
+const [, gebietName, ...namen] = process.argv.slice(2);
+// Usage: NODE_USE_ENV_PROXY=1 npx tsx scripts/strassenlaenge.ts koeln Weiden "Ostlandstraße" "Goethestraße"
+const roh = JSON.parse(await readFile(`.region-cache/${process.argv[2]}-overture.geojson`, "utf8"));
+const feature = roh.features.find((f: { properties: { name: string } }) => f.properties.name === gebietName);
+if (!feature) throw new Error(`Gebiet ${gebietName} nicht gefunden`);
 const geometry = feature.geometry as PolygonGeometry;
 const ringe = geometry.type === "Polygon" ? geometry.coordinates : geometry.coordinates.flat();
 const punkte = ringe.flat();

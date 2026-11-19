@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         // The map style, tiles and street data come from other hosts and are not precached.
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}", "gebiete/*.json"],
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}", "regionen/**/*.json"],
         // Street tiles are loaded when needed and then kept on the device.
         runtimeCaching: [
           {

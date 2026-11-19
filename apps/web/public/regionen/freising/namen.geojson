@@ -1,0 +1,12 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.72732,48.39205]},"properties":{"id":"f3936e7e-93ce-432b-940b-89b658abe42b","name":"Freising","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.6697,48.3821]},"properties":{"id":"2fda1952-0c94-4bc6-b49b-5eaefe82f986","name":"Lageltshausen","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.76136,48.39092]},"properties":{"id":"721aa80e-8915-48dc-a80c-6b7e88124851","name":"Lerchenfeld","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.72246,48.40027]},"properties":{"id":"0a118322-098f-42df-81e4-e924fc7711dd","name":"Vötting","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.75454,48.40806]},"properties":{"id":"49314359-cf8c-4063-8bad-52aa9e087eaa","name":"Neustift","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.77029,48.40936]},"properties":{"id":"dd69e193-a63b-4751-93bf-8b89c2daf459","name":"Tuching","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.73316,48.40029]},"properties":{"id":"5d74054b-d9d3-43a0-925e-3fb4e408ec0c","name":"Goldberg","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.7391,48.40818]},"properties":{"id":"a995322c-9f07-40f1-a349-16e1f193c8f5","name":"Freising Nord","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.73621,48.38984]},"properties":{"id":"306e7d27-c16a-4ec8-9dce-818fb1897b44","name":"Freising Süd","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[11.7446,48.39956]},"properties":{"id":"147722ac-637a-4731-aa8b-a5509cd733e7","name":"Innenstadt","rang":1,"eltern":"f3936e7e-93ce-432b-940b-89b658abe42b","art":"neighborhood"}}
+]}
