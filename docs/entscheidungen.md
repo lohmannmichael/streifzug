@@ -1,6 +1,8 @@
 # Entscheidungen
 
 ## 19.11.2026: Phase 0 begonnen
+- Cloudflare-Pages-Projekt `streifzug` per API angelegt und mit GitHub verbunden: https://streifzug.pages.dev
+- Supabase: Site-URL und erlaubte Weiterleitungen auf streifzug.pages.dev und localhost gesetzt
 - Design „Textmarker auf dem Stadtplan“ statt Papier-Creme mit Orange (siehe PLAN Abschnitt 6)
 - Supabase-Projekt liegt in Irland (eu-west-1) statt Frankfurt: EU und DSGVO-konform, Unterschied in der Antwortzeit spielt durch „offline zuerst“ keine Rolle
 - Code und Kommentare auf Englisch (für spätere Entwickler:innen), Oberfläche auf Deutsch

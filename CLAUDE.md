@@ -15,7 +15,7 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 - Monorepo: `packages/core` (TypeScript, Logik mit Tests), `apps/web` (Vite + React + TypeScript + MapLibre GL JS, PWA), ab Phase 3 `apps/mobile` (Expo), `supabase/` (Migrationen, Zugriffsregeln)
 - Supabase (Postgres + PostGIS, Auth), Projekt `jbtrjmuztsjnzpokmymq`, Region Irland (EU). Jede Tabelle mit `user_id` und Row Level Security
 - Große Dateien (Straßen-Kacheln, Rohdaten): Cloudflare R2
-- Web-Hosting: Cloudflare Pages
+- Web-Hosting: Cloudflare Pages, Projekt `streifzug`, Adresse https://streifzug.pages.dev. Jeder Push nach `main` wird automatisch veröffentlicht (Build `npm run build`, Ausgabe `apps/web/dist`, `NODE_VERSION=22`). Nach jedem Push prüfen, ob die Veröffentlichung durchgelaufen ist (Pages-API, Token liegt in der Umgebung „Michis Apps“)
 - Karte: MapLibre + OpenFreeMap; Straßen und Gebiete aus OpenStreetMap (Overpass), Namensnennung „© OpenStreetMap-Mitwirkende“
 
 ## Befehle
