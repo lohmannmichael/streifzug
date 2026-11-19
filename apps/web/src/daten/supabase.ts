@@ -20,7 +20,12 @@ export function useSitzung(): Sitzung {
     let aktiv = true;
     async function start() {
       const { data } = await supabase.auth.getSession();
-      if (data.session) return data.session;
+      if (data.session) {
+        // A stored session can belong to an account that no longer exists on the server; start fresh then.
+        const pruefung = await supabase.auth.getUser();
+        if (!pruefung.error || pruefung.error.status === undefined || pruefung.error.status >= 500) return data.session;
+        await supabase.auth.signOut({ scope: "local" });
+      }
       const anmeldung = await supabase.auth.signInAnonymously();
       return anmeldung.data.session;
     }
