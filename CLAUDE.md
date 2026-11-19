@@ -18,6 +18,12 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 - Web-Hosting: Cloudflare Pages, Projekt `streifzug`, Adresse https://streifzug.pages.dev. Jeder Push nach `main` wird automatisch veröffentlicht (Build `npm run build`, Ausgabe `apps/web/dist`, `NODE_VERSION=22`). Nach jedem Push prüfen, ob die Veröffentlichung durchgelaufen ist (Pages-API, Token liegt in der Umgebung „Michis Apps“)
 - Karte: MapLibre + OpenFreeMap; Straßen und Gebiete aus OpenStreetMap (Overpass), Namensnennung „© OpenStreetMap-Mitwirkende“
 
+## Datenbank
+
+- Migrationen liegen in `supabase/migrations/` und werden über die Supabase-Verwaltungs-API eingespielt (`POST /v1/projects/<ref>/database/query`, Token liegt in der Umgebung „Michis Apps“). Danach den Sicherheits-Check prüfen (`GET /v1/projects/<ref>/advisors/security`)
+- Die App nutzt nur den öffentlichen Publishable Key (`apps/web/src/konfig.ts`); was jemand sehen darf, regelt der Zeilenschutz (RLS)
+- Supabase-Anfragen laufen erst, wenn man sie mit `await` oder `.then()` abwartet
+
 ## Befehle
 
 - `npm install` einmal, dann `npm run dev` (Web-App lokal), `npm test` (Tests), `npm run check` (Typen, Tests, Build wie in der GitHub-Prüfung)

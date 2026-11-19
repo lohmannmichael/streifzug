@@ -1,28 +1,36 @@
 import { useState, type ReactNode } from "react";
+import { useSitzung, type Sitzung } from "./daten/supabase";
 import { useEinstellungen } from "./einstellungen";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
-import { IconGebiete, IconIch, IconKarte } from "./ui/Icons";
+import { IconGebiete, IconIch, IconKarte, IconStreifzuege, IconZurueck } from "./ui/Icons";
 
-type Reiter = "karte" | "gebiete" | "ich";
+type Reiter = "karte" | "gebiete" | "streifzuege";
 
 export function App() {
+  const sitzung = useSitzung();
   const [reiter, setReiter] = useState<Reiter>("karte");
+  const [profilOffen, setProfilOffen] = useState(false);
+
+  if (profilOffen) return <Profil sitzung={sitzung} schliessen={() => setProfilOffen(false)} />;
 
   return (
     <div className="app">
       <main className="inhalt">
         <div className="ansicht" hidden={reiter !== "karte"}>
           <Karte />
+          <button type="button" className="profil-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
+            <IconIch />
+          </button>
           <KartenBlatt />
         </div>
-        {reiter === "gebiete" && <Gebiete />}
-        {reiter === "ich" && <Ich />}
+        {reiter === "gebiete" && <LeereSeite titel={t.gebiete.titel} text={t.gebiete.leer} />}
+        {reiter === "streifzuege" && <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />}
       </main>
       <nav className="leiste" aria-label="Hauptnavigation">
         <ReiterKnopf aktiv={reiter === "karte"} onClick={() => setReiter("karte")} icon={<IconKarte />} label={t.tabs.karte} />
         <ReiterKnopf aktiv={reiter === "gebiete"} onClick={() => setReiter("gebiete")} icon={<IconGebiete />} label={t.tabs.gebiete} />
-        <ReiterKnopf aktiv={reiter === "ich"} onClick={() => setReiter("ich")} icon={<IconIch />} label={t.tabs.ich} />
+        <ReiterKnopf aktiv={reiter === "streifzuege"} onClick={() => setReiter("streifzuege")} icon={<IconStreifzuege />} label={t.tabs.streifzuege} />
       </nav>
     </div>
   );
@@ -61,31 +69,43 @@ function KartenBlatt() {
   );
 }
 
-function Gebiete() {
+function LeereSeite(props: { titel: string; text: string }) {
   return (
-    <section className="seite" aria-labelledby="gebiete-titel">
-      <h1 id="gebiete-titel">{t.gebiete.titel}</h1>
-      <p className="leer gross">{t.gebiete.leer}</p>
+    <section className="seite" aria-labelledby="seiten-titel">
+      <h1 id="seiten-titel">{props.titel}</h1>
+      <p className="leer gross">{props.text}</p>
     </section>
   );
 }
 
-function Ich() {
-  const [werte, aendern] = useEinstellungen();
+function Profil(props: { sitzung: Sitzung; schliessen: () => void }) {
+  const [werte, aendern] = useEinstellungen(props.sitzung);
+  const kontoText =
+    props.sitzung.status === "bereit" ? t.ich.kontoAnonym : props.sitzung.status === "offline" ? t.ich.kontoOffline : t.ich.kontoLaedt;
   return (
-    <section className="seite" aria-labelledby="ich-titel">
-      <h1 id="ich-titel">{t.ich.titel}</h1>
-      <h2>{t.ich.zaehlen}</h2>
-      <div className="gruppe">
-        <Schalter label={t.ich.wege} hinweis={t.ich.wegeHinweis} an={werte.wegeZaehlen} onChange={(an) => aendern({ wegeZaehlen: an })} />
-        <Schalter label={t.ich.auto} hinweis={t.ich.autoHinweis} an={werte.autoZaehlen} onChange={(an) => aendern({ autoZaehlen: an })} />
-      </div>
-      <h2>{t.ich.daten}</h2>
-      <div className="gruppe">
-        <p className="zeile-text">{t.ich.datenHinweis}</p>
-      </div>
-      <p className="quelle">{t.ich.quelle}</p>
-    </section>
+    <div className="app">
+      <section className="seite seite-voll" aria-labelledby="profil-titel">
+        <button type="button" className="zurueck" onClick={props.schliessen}>
+          <IconZurueck />
+          <span>{t.ich.zurueck}</span>
+        </button>
+        <h1 id="profil-titel">{t.ich.titel}</h1>
+        <h2>{t.ich.zaehlen}</h2>
+        <div className="gruppe">
+          <Schalter label={t.ich.wege} hinweis={t.ich.wegeHinweis} an={werte.wegeZaehlen} onChange={(an) => aendern({ wegeZaehlen: an })} />
+          <Schalter label={t.ich.auto} hinweis={t.ich.autoHinweis} an={werte.autoZaehlen} onChange={(an) => aendern({ autoZaehlen: an })} />
+        </div>
+        <h2>{t.ich.konto}</h2>
+        <div className="gruppe">
+          <p className="zeile-text">{kontoText}</p>
+        </div>
+        <h2>{t.ich.daten}</h2>
+        <div className="gruppe">
+          <p className="zeile-text">{t.ich.datenHinweis}</p>
+        </div>
+        <p className="quelle">{t.ich.quelle}</p>
+      </section>
+    </div>
   );
 }
 

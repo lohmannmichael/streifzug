@@ -64,6 +64,7 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 - Supabase-Projekt (EU, Frankfurt), Anmeldung per Mail-Link, Zugriffsregeln je Nutzer:in (Row Level Security)
 - Web-App auf Cloudflare Pages, R2-Speicher für Straßen-Kacheln und Rohdaten (in deinem bestehenden Cloudflare-Konto)
 - **DoD:** leere App ist online und auf dem iPhone-Homescreen; Anmeldung klappt; automatisch veröffentlicht
+- **Stand 19.11.2026:** online unter streifzug.pages.dev, anonyme Anmeldung und Datenbank laufen, Einstellungen werden gesichert. Offen: R2 einschalten (Michi), Test auf dem iPhone
 
 ### Phase 1: Prozent-Jagd in Köln (Web-App, MVP, 4–6 Sitzungen)
 

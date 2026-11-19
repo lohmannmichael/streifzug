@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase, type Sitzung } from "./daten/supabase";
 
 export interface Einstellungen {
   wegeZaehlen: boolean;
@@ -17,15 +18,49 @@ function lesen(): Einstellungen {
   }
 }
 
-/** Settings stay on this device for now; they move to the account in Phase 0 (Supabase). */
-export function useEinstellungen() {
+/** Local first: the device copy is shown at once, the account copy is loaded and saved in the background. */
+export function useEinstellungen(sitzung: Sitzung) {
   const [werte, setWerte] = useState<Einstellungen>(lesen);
-  const aendern = useCallback((teil: Partial<Einstellungen>) => {
-    setWerte((alt) => {
-      const neu = { ...alt, ...teil };
+  const aktuell = useRef(werte);
+  aktuell.current = werte;
+  const userId = sitzung.status === "bereit" ? sitzung.session.user.id : null;
+
+  useEffect(() => {
+    if (!userId) return;
+    let aktiv = true;
+    supabase
+      .from("user_settings")
+      .select("count_paths, count_car")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!aktiv || !data) return;
+        const neu = { wegeZaehlen: data.count_paths, autoZaehlen: data.count_car };
+        localStorage.setItem(KEY, JSON.stringify(neu));
+        setWerte(neu);
+      });
+    return () => {
+      aktiv = false;
+    };
+  }, [userId]);
+
+  const aendern = useCallback(
+    (teil: Partial<Einstellungen>) => {
+      const neu = { ...aktuell.current, ...teil };
+      aktuell.current = neu;
+      setWerte(neu);
       localStorage.setItem(KEY, JSON.stringify(neu));
-      return neu;
-    });
-  }, []);
+      if (!userId) return;
+      // Supabase queries only run when awaited or then'd.
+      supabase
+        .from("user_settings")
+        .upsert({ user_id: userId, count_paths: neu.wegeZaehlen, count_car: neu.autoZaehlen, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) console.warn("Einstellungen nicht gesichert, bleiben auf dem Gerät.", error.message);
+        });
+    },
+    [userId],
+  );
+
   return [werte, aendern] as const;
 }

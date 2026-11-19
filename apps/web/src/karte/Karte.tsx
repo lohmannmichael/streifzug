@@ -29,7 +29,7 @@ export function Karte() {
       dragRotate: false,
     });
     karte.touchZoomRotate.disableRotation();
-    karte.addControl(new AttributionControl({ compact: true }), "top-right");
+    karte.addControl(new AttributionControl({ compact: true }), "top-left");
     const wechsel = (e: MediaQueryListEvent) => karte.setStyle(stilAdresse(e.matches));
     dunkel.addEventListener("change", wechsel);
     return () => {

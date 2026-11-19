@@ -1,7 +1,7 @@
 /** All visible texts in one place, so English can follow later. */
 export const de = {
   app: { name: "Streifzug" },
-  tabs: { karte: "Karte", gebiete: "Gebiete", ich: "Ich" },
+  tabs: { karte: "Karte", gebiete: "Gebiete", streifzuege: "Streifzüge" },
   karte: {
     gebiet: "Weiden",
     oberGebiet: "Lindenthal, Köln",
@@ -9,22 +9,31 @@ export const de = {
     leer: "Noch keine Straße markiert. Jede Straße, die du gehst oder fährst, wird hier gelb.",
     losziehen: "Losziehen",
     bald: "Das Aufzeichnen kommt im nächsten Bauschritt.",
-    standort: "Zu meinem Standort",
-    kartenRegion: "Karte",
+    profil: "Profil und Einstellungen",
+    kartenRegion: "Karte von Weiden. Noch keine Straße entdeckt.",
   },
   gebiete: {
     titel: "Gebiete",
-    leer: "Hier erscheinen deine Städte, Bezirke und Stadtteile, sobald du losgezogen bist. Mit Prozent und Kilometern.",
+    leer: "Hier sammelst du deine Stadtteile, Bezirke und Städte. Jeder bekommt eine Karte mit Prozent und Kilometern, sobald du losgezogen bist.",
+  },
+  streifzuege: {
+    titel: "Streifzüge",
+    leer: "Jede Runde landet hier, mit Kartenausschnitt, Kilometern und neuen Straßen. Meilensteine kannst du teilen.",
   },
   ich: {
-    titel: "Ich",
+    titel: "Profil",
+    zurueck: "Zurück zur Karte",
     zaehlen: "Was zählt",
     wege: "Fuß- und Radwege mitzählen",
     wegeHinweis: "Gehwege direkt neben Straßen zählen nie doppelt.",
     auto: "Autofahrten mitzählen",
     autoHinweis: "Erscheinen als eigener Wert, getrennt von Fuß und Rad.",
+    konto: "Konto",
+    kontoAnonym: "Du nutzt Streifzug ohne Konto. Deine Einstellungen werden schon gesichert. Ein Konto, mit dem du alles auf andere Geräte mitnimmst, kommt bald.",
+    kontoOffline: "Gerade offline. Alles wird gespeichert und später abgeglichen.",
+    kontoLaedt: "Verbinde …",
     daten: "Deine Daten",
-    datenHinweis: "Exportieren und Löschen kommen mit der Anmeldung.",
+    datenHinweis: "Exportieren und Löschen kommen mit dem Konto.",
     quelle: "Kartendaten © OpenStreetMap-Mitwirkende",
   },
 } as const;

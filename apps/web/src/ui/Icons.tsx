@@ -11,9 +11,18 @@ export function IconKarte() {
 export function IconGebiete() {
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-      <path {...strich} d="M4 6h10M4 12h16M4 18h7" />
-      <circle {...strich} cx="18" cy="6" r="2" />
-      <circle {...strich} cx="15" cy="18" r="2" />
+      <rect {...strich} x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect {...strich} x="13" y="4" width="7" height="7" rx="1.5" />
+      <rect {...strich} x="4" y="13" width="7" height="7" rx="1.5" />
+      <rect {...strich} x="13" y="13" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+export function IconStreifzuege() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path {...strich} d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Zm0 13a3 3 0 0 1 3-3h11" />
     </svg>
   );
 }
@@ -23,6 +32,14 @@ export function IconIch() {
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
       <circle {...strich} cx="12" cy="8.5" r="3.5" />
       <path {...strich} d="M5 20c1.2-3.5 3.8-5.5 7-5.5s5.8 2 7 5.5" />
+    </svg>
+  );
+}
+
+export function IconZurueck() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path {...strich} d="M15 5 8 12l7 7" />
     </svg>
   );
 }

@@ -261,9 +261,46 @@ button { font: inherit; color: inherit; }
 .quelle { margin-top: 28px; font-size: var(--t-klein); color: var(--text-leise); text-align: center; }
 
 /* Map credits sit top right, below the status bar, collapsed to the (i) button. */
-.maplibregl-ctrl-top-right { top: env(safe-area-inset-top); }
+.maplibregl-ctrl-top-left { top: env(safe-area-inset-top); }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
   .haupt:active { transform: none; }
 }
+
+/* Profile button on the map, top right. Map credits sit top left. */
+.profil-knopf {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--flaeche);
+  color: var(--tinte);
+  box-shadow: 0 2px 10px rgb(30 42 74 / 0.18);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.seite-voll { position: relative; inset: auto; min-height: 100%; }
+
+.zurueck {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  margin: 0 0 8px -8px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--tinte);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Keep the expanded map credits clear of the profile button. */
+.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib { max-width: calc(100vw - 120px); }
