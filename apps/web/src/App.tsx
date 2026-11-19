@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
 import { useFortschritt, type Fortschritt } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
@@ -33,6 +33,11 @@ export function App() {
   const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
   const spuren = [...zaehlende.map((s) => s.fixes), ...(aufzeichnung.aktiv ? [aufzeichnung.fixes] : [])];
   const fortschritt = useFortschritt(spuren, daten);
+  // Progress before the current outing, to show what it added afterwards.
+  const vorher = useRef<Fortschritt | null>(null);
+  const warAktiv = useRef(false);
+  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], proGebiet: new Map() };
+  warAktiv.current = aufzeichnung.aktiv;
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);
@@ -82,6 +87,7 @@ export function App() {
             aufzeichnung={aufzeichnung}
             standortFehler={standortFehler}
             fortschritt={fortschritt}
+            vorher={vorher.current}
           />
         </div>
         {reiter === "gebiete" && (
@@ -132,6 +138,7 @@ function KartenBlatt(props: {
   aufzeichnung: Aufzeichnung;
   standortFehler: boolean;
   fortschritt: Fortschritt | null;
+  vorher: Fortschritt | null;
 }) {
   const { gebiet, daten, aufzeichnung: a } = props;
   const wege = props.einstellungen.wegeZaehlen;
@@ -157,11 +164,32 @@ function KartenBlatt(props: {
         <p className="km">{kmText}</p>
       </div>
       {a.aktiv ? <Unterwegs a={a} /> : <Ruhe a={a} />}
+      {!a.aktiv && a.letzter && gebiet && props.vorher && (
+        <Belohnung
+          name={gebiet.name}
+          vorherM={zaehlendeMeter(props.vorher.proGebiet.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, wege)}
+          jetztM={gesehen}
+          gesamtM={gesamt}
+        />
+      )}
       <button type="button" className={a.aktiv ? "haupt zweit" : "haupt"} onClick={a.aktiv ? a.beenden : a.starten}>
         {a.aktiv ? t.karte.beenden : t.karte.losziehen}
       </button>
       <p className="hinweis" aria-live="polite">{props.standortFehler ? t.karte.standortFehler : a.aktiv ? t.karte.hinweisOffen : ""}</p>
     </section>
+  );
+}
+
+/** What the last outing added in the shown area. */
+function Belohnung(props: { name: string; vorherM: number; jetztM: number; gesamtM: number }) {
+  const neu = props.jetztM - props.vorherM;
+  if (neu < 1) return null;
+  const von = prozentText(prozent(props.vorherM, props.gesamtM));
+  const auf = prozentText(prozent(props.jetztM, props.gesamtM));
+  return (
+    <p className="belohnung" role="status">
+      <span className="marker">+{alsStrecke(neu)}</span> {t.karte.belohnung(props.name, von, auf)}
+    </p>
   );
 }
 

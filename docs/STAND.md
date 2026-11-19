@@ -13,7 +13,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 - Test draußen durch Michi (Weiden), Feedback einarbeiten
 - Nebel-Karte: Gebiete leuchten herausgezoomt gelb nach Prozent (erledigt 20.11.2026); offen: echter Nebel über Unentdecktem, optional
 - Teilen-Bild mit Privatzone
-- Belohnungsmoment nach einer Runde, „weißer Fleck in der Nähe“
+- Belohnungsmoment nach einer Runde (erledigt 20.11.2026); offen: „weißer Fleck in der Nähe“
 - Ideenliste: docs/IDEEN.md (u. a. Sehenswürdigkeiten-Checkliste, Konzept in docs/idee-sehenswuerdigkeiten.md)
 - Danach Phase 2 (Import GPX/Apple Health), Phase 3 (iPhone-App mit Hintergrund-Aufzeichnung)
 

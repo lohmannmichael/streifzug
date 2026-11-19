@@ -20,6 +20,7 @@ export const de = {
     },
     zusammenfassung: (km: string, dauer: string, art: string) => `${km} in ${dauer}, ${art}`,
     gesichert: "Gesichert.",
+    belohnung: (gebiet: string, von: string, auf: string) => (von === auf ? `neu entdeckt in ${gebiet}` : `neu entdeckt in ${gebiet}, von ${von} auf ${auf} %`),
     wirdGesichert: "Auf diesem Gerät gespeichert, wird gesichert, sobald Netz da ist.",
     standort: "Zu meinem Standort",
     standortFehler: "Standort nicht verfügbar.",

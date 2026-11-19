@@ -357,3 +357,7 @@ button { font: inherit; color: inherit; }
 .streifzug-datum { font-weight: 600; }
 .status { font-size: var(--t-klein); white-space: nowrap; color: var(--text-leise); }
 .status-gesichert { color: #2f9e6e; }
+
+/* Reward after an outing */
+.belohnung { font-weight: 600; font-size: var(--t-gross); }
+.belohnung .marker { font-family: var(--schrift-zahl); font-variant-numeric: tabular-nums; padding: 0 0.1em; }
