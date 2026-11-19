@@ -2,44 +2,44 @@
  "stand": "2026-11-19",
  "quelle": "OpenStreetMap über OpenFreeMap (20261115_080022_pt)",
  "stadt": {
-  "strasse_m": 2255440,
+  "strasse_m": 2274325,
   "weg_m": 2783876
  },
  "bezirke": {
   "Mülheim": {
-   "strasse_m": 298433,
+   "strasse_m": 300213,
    "weg_m": 365764
   },
   "Kalk": {
-   "strasse_m": 218285,
+   "strasse_m": 219371,
    "weg_m": 296035
   },
   "Porz": {
-   "strasse_m": 305191,
+   "strasse_m": 306780,
    "weg_m": 412312
   },
   "Nippes": {
-   "strasse_m": 215283,
+   "strasse_m": 219105,
    "weg_m": 276803
   },
   "Innenstadt": {
-   "strasse_m": 212038,
+   "strasse_m": 213332,
    "weg_m": 194730
   },
   "Chorweiler": {
-   "strasse_m": 240891,
+   "strasse_m": 244329,
    "weg_m": 308408
   },
   "Ehrenfeld": {
-   "strasse_m": 178069,
+   "strasse_m": 180373,
    "weg_m": 213941
   },
   "Rodenkirchen": {
-   "strasse_m": 276337,
+   "strasse_m": 279121,
    "weg_m": 322841
   },
   "Lindenthal": {
-   "strasse_m": 310913,
+   "strasse_m": 311701,
    "weg_m": 393042
   }
  },
@@ -47,397 +47,397 @@
   "101": {
    "name": "Altstadt/Süd",
    "bezirk": "Innenstadt",
-   "strasse_m": 40530,
+   "strasse_m": 41571,
    "weg_m": 24979
   },
   "102": {
    "name": "Neustadt/Süd",
    "bezirk": "Innenstadt",
-   "strasse_m": 37890,
+   "strasse_m": 37210,
    "weg_m": 32542
   },
   "103": {
    "name": "Altstadt/Nord",
    "bezirk": "Innenstadt",
-   "strasse_m": 49202,
+   "strasse_m": 48826,
    "weg_m": 18816
   },
   "104": {
    "name": "Neustadt/Nord",
    "bezirk": "Innenstadt",
-   "strasse_m": 41844,
+   "strasse_m": 42318,
    "weg_m": 46875
   },
   "105": {
    "name": "Deutz",
    "bezirk": "Innenstadt",
-   "strasse_m": 42572,
+   "strasse_m": 43407,
    "weg_m": 71518
   },
   "201": {
    "name": "Bayenthal",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 12248,
+   "strasse_m": 12270,
    "weg_m": 11649
   },
   "202": {
    "name": "Marienburg",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 20941,
+   "strasse_m": 21185,
    "weg_m": 20858
   },
   "203": {
    "name": "Raderberg",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 5873,
+   "strasse_m": 5978,
    "weg_m": 6850
   },
   "204": {
    "name": "Raderthal",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 16128,
+   "strasse_m": 16286,
    "weg_m": 43264
   },
   "205": {
    "name": "Zollstock",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 31049,
+   "strasse_m": 31443,
    "weg_m": 66847
   },
   "206": {
    "name": "Rondorf",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 32663,
+   "strasse_m": 32892,
    "weg_m": 34339
   },
   "207": {
    "name": "Hahnwald",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 20325,
+   "strasse_m": 20496,
    "weg_m": 7321
   },
   "208": {
    "name": "Rodenkirchen",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 51703,
+   "strasse_m": 51893,
    "weg_m": 60844
   },
   "209": {
    "name": "Weiß",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 14038,
+   "strasse_m": 13989,
    "weg_m": 15162
   },
   "210": {
    "name": "Sürth",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 24805,
+   "strasse_m": 24948,
    "weg_m": 31059
   },
   "211": {
    "name": "Godorf",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 13234,
+   "strasse_m": 13412,
    "weg_m": 10836
   },
   "212": {
    "name": "Immendorf",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 11954,
+   "strasse_m": 12190,
    "weg_m": 5008
   },
   "213": {
    "name": "Meschenich",
    "bezirk": "Rodenkirchen",
-   "strasse_m": 21376,
+   "strasse_m": 22139,
    "weg_m": 8804
   },
   "301": {
    "name": "Klettenberg",
    "bezirk": "Lindenthal",
-   "strasse_m": 14835,
+   "strasse_m": 15103,
    "weg_m": 22210
   },
   "302": {
    "name": "Sülz",
    "bezirk": "Lindenthal",
-   "strasse_m": 43085,
+   "strasse_m": 42750,
    "weg_m": 63810
   },
   "303": {
    "name": "Lindenthal",
    "bezirk": "Lindenthal",
-   "strasse_m": 59169,
+   "strasse_m": 60078,
    "weg_m": 138033
   },
   "304": {
    "name": "Braunsfeld",
    "bezirk": "Lindenthal",
-   "strasse_m": 18305,
+   "strasse_m": 18031,
    "weg_m": 14589
   },
   "305": {
    "name": "Müngersdorf",
    "bezirk": "Lindenthal",
-   "strasse_m": 36514,
+   "strasse_m": 37143,
    "weg_m": 43464
   },
   "306": {
    "name": "Junkersdorf",
    "bezirk": "Lindenthal",
-   "strasse_m": 45927,
+   "strasse_m": 45981,
    "weg_m": 37620
   },
   "307": {
    "name": "Weiden",
    "bezirk": "Lindenthal",
-   "strasse_m": 28032,
+   "strasse_m": 28284,
    "weg_m": 32710
   },
   "308": {
    "name": "Lövenich",
    "bezirk": "Lindenthal",
-   "strasse_m": 28443,
+   "strasse_m": 28610,
    "weg_m": 19224
   },
   "309": {
    "name": "Widdersdorf",
    "bezirk": "Lindenthal",
-   "strasse_m": 36603,
+   "strasse_m": 35721,
    "weg_m": 21382
   },
   "401": {
    "name": "Ehrenfeld",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 40172,
+   "strasse_m": 40880,
    "weg_m": 39621
   },
   "402": {
    "name": "Neuehrenfeld",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 29402,
+   "strasse_m": 29800,
    "weg_m": 20645
   },
   "403": {
    "name": "Bickendorf",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 22864,
+   "strasse_m": 23047,
    "weg_m": 17872
   },
   "404": {
    "name": "Vogelsang",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 27957,
+   "strasse_m": 28216,
    "weg_m": 38617
   },
   "405": {
    "name": "Bocklemünd/Mengenich",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 23221,
+   "strasse_m": 23321,
    "weg_m": 28895
   },
   "406": {
    "name": "Ossendorf",
    "bezirk": "Ehrenfeld",
-   "strasse_m": 34453,
+   "strasse_m": 35109,
    "weg_m": 68291
   },
   "501": {
    "name": "Nippes",
    "bezirk": "Nippes",
-   "strasse_m": 39105,
+   "strasse_m": 39776,
    "weg_m": 42024
   },
   "502": {
    "name": "Mauenheim",
    "bezirk": "Nippes",
-   "strasse_m": 8381,
+   "strasse_m": 8395,
    "weg_m": 3111
   },
   "503": {
    "name": "Riehl",
    "bezirk": "Nippes",
-   "strasse_m": 21087,
+   "strasse_m": 21528,
    "weg_m": 40179
   },
   "504": {
    "name": "Niehl",
    "bezirk": "Nippes",
-   "strasse_m": 54435,
+   "strasse_m": 55744,
    "weg_m": 66423
   },
   "505": {
    "name": "Weidenpesch",
    "bezirk": "Nippes",
-   "strasse_m": 22079,
+   "strasse_m": 22197,
    "weg_m": 32979
   },
   "506": {
    "name": "Longerich",
    "bezirk": "Nippes",
-   "strasse_m": 43744,
+   "strasse_m": 44545,
    "weg_m": 53939
   },
   "507": {
    "name": "Bilderstöckchen",
    "bezirk": "Nippes",
-   "strasse_m": 26452,
+   "strasse_m": 26920,
    "weg_m": 38148
   },
   "601": {
    "name": "Merkenich",
    "bezirk": "Chorweiler",
-   "strasse_m": 38005,
+   "strasse_m": 38878,
    "weg_m": 37422
   },
   "602": {
    "name": "Fühlingen",
    "bezirk": "Chorweiler",
-   "strasse_m": 16684,
+   "strasse_m": 16897,
    "weg_m": 26578
   },
   "603": {
    "name": "Seeberg",
    "bezirk": "Chorweiler",
-   "strasse_m": 13683,
+   "strasse_m": 13925,
    "weg_m": 24242
   },
   "604": {
    "name": "Heimersdorf",
    "bezirk": "Chorweiler",
-   "strasse_m": 18649,
+   "strasse_m": 18701,
    "weg_m": 19326
   },
   "605": {
    "name": "Lindweiler",
    "bezirk": "Chorweiler",
-   "strasse_m": 8607,
+   "strasse_m": 8821,
    "weg_m": 9758
   },
   "606": {
    "name": "Pesch",
    "bezirk": "Chorweiler",
-   "strasse_m": 20898,
+   "strasse_m": 21250,
    "weg_m": 27128
   },
   "607": {
    "name": "Esch/Auweiler",
    "bezirk": "Chorweiler",
-   "strasse_m": 24754,
+   "strasse_m": 24940,
    "weg_m": 21152
   },
   "608": {
    "name": "Volkhoven/Weiler",
    "bezirk": "Chorweiler",
-   "strasse_m": 19661,
+   "strasse_m": 20128,
    "weg_m": 27871
   },
   "609": {
    "name": "Chorweiler",
    "bezirk": "Chorweiler",
-   "strasse_m": 13681,
+   "strasse_m": 14147,
    "weg_m": 38696
   },
   "610": {
    "name": "Blumenberg",
    "bezirk": "Chorweiler",
-   "strasse_m": 9161,
+   "strasse_m": 9156,
    "weg_m": 19898
   },
   "611": {
    "name": "Roggendorf/Thenhoven",
    "bezirk": "Chorweiler",
-   "strasse_m": 23341,
+   "strasse_m": 23386,
    "weg_m": 32761
   },
   "612": {
    "name": "Worringen",
    "bezirk": "Chorweiler",
-   "strasse_m": 33767,
+   "strasse_m": 34100,
    "weg_m": 23576
   },
   "701": {
    "name": "Poll",
    "bezirk": "Porz",
-   "strasse_m": 30587,
+   "strasse_m": 30679,
    "weg_m": 50100
   },
   "702": {
    "name": "Westhoven",
    "bezirk": "Porz",
-   "strasse_m": 15960,
+   "strasse_m": 15951,
    "weg_m": 30998
   },
   "703": {
    "name": "Ensen",
    "bezirk": "Porz",
-   "strasse_m": 13917,
+   "strasse_m": 13942,
    "weg_m": 19613
   },
   "704": {
    "name": "Gremberghoven",
    "bezirk": "Porz",
-   "strasse_m": 21718,
+   "strasse_m": 21754,
    "weg_m": 27487
   },
   "705": {
    "name": "Eil",
    "bezirk": "Porz",
-   "strasse_m": 33272,
+   "strasse_m": 33639,
    "weg_m": 69645
   },
   "706": {
    "name": "Porz",
    "bezirk": "Porz",
-   "strasse_m": 27443,
+   "strasse_m": 27937,
    "weg_m": 37679
   },
   "707": {
    "name": "Urbach",
    "bezirk": "Porz",
-   "strasse_m": 21563,
+   "strasse_m": 21650,
    "weg_m": 27454
   },
   "708": {
    "name": "Elsdorf",
    "bezirk": "Porz",
-   "strasse_m": 7264,
+   "strasse_m": 7304,
    "weg_m": 8618
   },
   "709": {
    "name": "Grengel",
    "bezirk": "Porz",
-   "strasse_m": 28730,
+   "strasse_m": 28438,
    "weg_m": 26002
   },
   "710": {
    "name": "Wahnheide",
    "bezirk": "Porz",
-   "strasse_m": 15173,
+   "strasse_m": 15349,
    "weg_m": 19859
   },
   "711": {
    "name": "Wahn",
    "bezirk": "Porz",
-   "strasse_m": 19549,
+   "strasse_m": 19769,
    "weg_m": 16502
   },
   "712": {
    "name": "Lind",
    "bezirk": "Porz",
-   "strasse_m": 12812,
+   "strasse_m": 12572,
    "weg_m": 10705
   },
   "713": {
    "name": "Libur",
    "bezirk": "Porz",
-   "strasse_m": 10987,
+   "strasse_m": 11063,
    "weg_m": 3781
   },
   "714": {
    "name": "Zündorf",
    "bezirk": "Porz",
-   "strasse_m": 28079,
+   "strasse_m": 28576,
    "weg_m": 33297
   },
   "715": {
@@ -449,115 +449,115 @@
   "716": {
    "name": "Finkenberg",
    "bezirk": "Porz",
-   "strasse_m": 5494,
+   "strasse_m": 5514,
    "weg_m": 19589
   },
   "801": {
    "name": "Humboldt/Gremberg",
    "bezirk": "Kalk",
-   "strasse_m": 18157,
+   "strasse_m": 18070,
    "weg_m": 19847
   },
   "802": {
    "name": "Kalk",
    "bezirk": "Kalk",
-   "strasse_m": 29799,
+   "strasse_m": 30183,
    "weg_m": 28661
   },
   "803": {
    "name": "Vingst",
    "bezirk": "Kalk",
-   "strasse_m": 13575,
+   "strasse_m": 13721,
    "weg_m": 18840
   },
   "804": {
    "name": "Höhenberg",
    "bezirk": "Kalk",
-   "strasse_m": 18863,
+   "strasse_m": 19062,
    "weg_m": 37022
   },
   "805": {
    "name": "Ostheim",
    "bezirk": "Kalk",
-   "strasse_m": 24915,
+   "strasse_m": 25029,
    "weg_m": 49244
   },
   "806": {
    "name": "Merheim",
    "bezirk": "Kalk",
-   "strasse_m": 29361,
+   "strasse_m": 29623,
    "weg_m": 37257
   },
   "807": {
    "name": "Brück",
    "bezirk": "Kalk",
-   "strasse_m": 31378,
+   "strasse_m": 31470,
    "weg_m": 46982
   },
   "808": {
    "name": "Rath/Heumar",
    "bezirk": "Kalk",
-   "strasse_m": 41258,
+   "strasse_m": 41433,
    "weg_m": 38640
   },
   "809": {
    "name": "Neubrück",
    "bezirk": "Kalk",
-   "strasse_m": 10979,
+   "strasse_m": 10780,
    "weg_m": 19542
   },
   "901": {
    "name": "Mülheim",
    "bezirk": "Mülheim",
-   "strasse_m": 61148,
+   "strasse_m": 61717,
    "weg_m": 64193
   },
   "902": {
    "name": "Buchforst",
    "bezirk": "Mülheim",
-   "strasse_m": 9125,
+   "strasse_m": 9399,
    "weg_m": 10103
   },
   "903": {
    "name": "Buchheim",
    "bezirk": "Mülheim",
-   "strasse_m": 22393,
+   "strasse_m": 22879,
    "weg_m": 24022
   },
   "904": {
    "name": "Holweide",
    "bezirk": "Mülheim",
-   "strasse_m": 35792,
+   "strasse_m": 35780,
    "weg_m": 39830
   },
   "905": {
    "name": "Dellbrück",
    "bezirk": "Mülheim",
-   "strasse_m": 55476,
+   "strasse_m": 55802,
    "weg_m": 67410
   },
   "906": {
    "name": "Höhenhaus",
    "bezirk": "Mülheim",
-   "strasse_m": 41415,
+   "strasse_m": 41669,
    "weg_m": 33810
   },
   "907": {
    "name": "Dünnwald",
    "bezirk": "Mülheim",
-   "strasse_m": 32232,
+   "strasse_m": 32364,
    "weg_m": 56712
   },
   "908": {
    "name": "Stammheim",
    "bezirk": "Mülheim",
-   "strasse_m": 16393,
+   "strasse_m": 16261,
    "weg_m": 33788
   },
   "909": {
    "name": "Flittard",
    "bezirk": "Mülheim",
-   "strasse_m": 24459,
+   "strasse_m": 24342,
    "weg_m": 35896
   }
  }

@@ -22,6 +22,7 @@ import {
   type LonLat,
   type OmtTransportation,
   type PolygonGeometry,
+  type StreetGroup,
 } from "../packages/core/src/index";
 
 interface Stadtteil {
@@ -89,7 +90,7 @@ async function main() {
       if (daten[0] === 0x1f && daten[1] === 0x8b) daten = gunzipSync(daten);
       const ebene = new VectorTile(new Protobuf(daten)).layers.transportation;
       const grenzen = tileBounds({ z: TILE_ZOOM, x, y });
-      const linien: { art: "street" | "path"; major: boolean; coords: LonLat[] }[] = [];
+      const linien: { art: "street" | "path"; group: StreetGroup; coords: LonLat[] }[] = [];
 
       for (let i = 0; ebene && i < ebene.length; i++) {
         const feature = ebene.feature(i);
@@ -101,12 +102,13 @@ async function main() {
           geo.type === "LineString" ? [geo.coordinates as unknown as LonLat[]] : geo.type === "MultiLineString" ? (geo.coordinates as unknown as LonLat[][]) : [];
         for (const teil of teile)
           for (const stueck of clipLine(teil, grenzen))
-            if (lineLengthM(stueck) >= 0.5) linien.push({ art, major: GROSS.has(String(props.class)), coords: stueck });
+            if (lineLengthM(stueck) >= 0.5)
+              linien.push({ art, group: art === "path" ? null : GROSS.has(String(props.class)) ? "major" : "minor", coords: stueck });
       }
 
-      // 25 m pieces; dual carriageways count half per side.
-      const stuecke = linien.flatMap((linie, lineId) => splitWay(lineId, linie.coords).map((seg) => ({ lineId, seg, major: linie.major })));
-      const gewichte = parallelWeights(stuecke.map((s) => ({ lineId: s.lineId, major: s.major, coords: s.seg.coords })));
+      // 25 m pieces; every street counts once, two carriageways count half each.
+      const stuecke = linien.flatMap((linie, lineId) => splitWay(lineId, linie.coords).map((seg) => ({ lineId, seg, group: linie.group })));
+      const gewichte = parallelWeights(stuecke.map((s) => ({ lineId: s.lineId, group: s.group, coords: s.seg.coords })));
       const gewichtJeLinie = linien.map(() => [] as number[]);
       stuecke.forEach((s, i) => {
         const w = gewichte[i]!;
