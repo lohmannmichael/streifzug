@@ -24,17 +24,27 @@ export async function hochladen(): Promise<void> {
     const user = data.session?.user;
     if (!user) return;
     const offen = (await alleLaden()).filter((s) => s.status === "lokal");
-    for (const s of offen) await einen(s, user.id);
+    for (const s of offen) {
+      if (await einen(s, user.id)) continue;
+      // The account may no longer exist on the server: start a fresh one and try once more.
+      const pruefung = await supabase.auth.getUser();
+      if (!pruefung.error) continue;
+      await supabase.auth.signOut({ scope: "local" });
+      const neu = await supabase.auth.signInAnonymously();
+      if (neu.data.user) await einen(s, neu.data.user.id);
+      break;
+    }
   } finally {
     laeuft = false;
   }
 }
 
-async function einen(s: Streifzug, userId: string) {
+/** Uploads one outing; true when it is safely stored on the server. */
+async function einen(s: Streifzug, userId: string): Promise<boolean> {
   const datei = `${userId}/${s.id}.json.gz`;
   const inhalt = await gzip(JSON.stringify(encodeTrack(s.fixes)));
   const hoch = await supabase.storage.from("spuren").upload(datei, inhalt, { contentType: "application/gzip", upsert: true });
-  if (hoch.error) return;
+  if (hoch.error) return false;
   const zeile = await supabase.from("tracks").upsert({
     id: s.id,
     user_id: userId,
@@ -44,13 +54,19 @@ async function einen(s: Streifzug, userId: string) {
     distance_m: Math.round(s.distanceM),
     file_key: datei,
   });
-  if (zeile.error) return;
+  if (zeile.error) return false;
   await speichern({ ...s, status: "gesichert" });
   melden();
+  return true;
 }
 
 /** Upload when the app starts and whenever the network comes back. */
 export function hochladenEinrichten() {
   void hochladen();
   window.addEventListener("online", () => void hochladen());
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void hochladen();
+  });
+  // Keep trying while something is still only on this device.
+  window.setInterval(() => void hochladen(), 60_000);
 }

@@ -25,6 +25,8 @@ export const de = {
     standort: "Zu meinem Standort",
     standortFehler: "Standort nicht verfügbar.",
     profil: "Profil und Einstellungen",
+    blattAuf: "Details einblenden",
+    blattZu: "Details ausblenden, mehr Karte",
     kartenRegion: (gebiet: string) => `Karte, ausgewählt: ${gebiet}. Noch keine Straße entdeckt. Stadtteile lassen sich durch Antippen wählen.`,
   },
   gebiete: {

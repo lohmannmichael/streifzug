@@ -361,3 +361,16 @@ button { font: inherit; color: inherit; }
 /* Reward after an outing */
 .belohnung { font-weight: 600; font-size: var(--t-gross); }
 .belohnung .marker { font-family: var(--schrift-zahl); font-variant-numeric: tabular-nums; padding: 0 0.1em; }
+
+/* Pull-down sheet: the handle is a button (tap or drag the sheet). */
+.blatt { touch-action: none; transition: transform 0.2s; user-select: none; -webkit-user-select: none; }
+.griff { border: 0; padding: 0; cursor: pointer; width: 44px; height: 5px; box-shadow: 0 0 0 12px transparent; }
+.blatt.klein .fortschritt,
+.blatt.klein .leer,
+.blatt.klein .belohnung,
+.blatt.klein .hinweis,
+.blatt.klein .gps { display: none; }
+.blatt.klein .unterwegs .werte b { font-size: 1.3rem; }
+.blatt.klein .zahl { font-size: 2.6rem; }
+.blatt.klein .prozent-label { display: none; }
+.blatt.klein .gebiet { font-size: var(--t-gross); }

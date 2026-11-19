@@ -145,10 +145,24 @@ function KartenBlatt(props: {
   const gesamt = gebiet ? zaehlendeMeter(gebiet, wege) : 0;
   const gesehen = gebiet ? zaehlendeMeter(props.fortschritt?.proGebiet.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, wege) : 0;
   const p = prozent(gesehen, gesamt);
+  // The sheet can be pulled down (or the handle tapped) to free the map, and pulled up again.
+  const [klein, setKlein] = useState(false);
+  const zug = useRef<number | null>(null);
   const kmText = gebiet ? t.karte.kmZeile(alsKm(gesehen), alsKm(gesamt)) : t.karte.kmLaedt;
   return (
-    <section className="blatt" aria-labelledby="gebiet-name">
-      <div className="griff" aria-hidden="true" />
+    <section
+      className={klein ? "blatt klein" : "blatt"}
+      aria-labelledby="gebiet-name"
+      onPointerDown={(e) => (zug.current = e.clientY)}
+      onPointerUp={(e) => {
+        if (zug.current === null) return;
+        const weg = e.clientY - zug.current;
+        zug.current = null;
+        if (weg > 40) setKlein(true);
+        else if (weg < -40) setKlein(false);
+      }}
+    >
+      <button type="button" className="griff" aria-label={klein ? t.karte.blattAuf : t.karte.blattZu} aria-expanded={!klein} onClick={() => setKlein(!klein)} />
       <div className="blatt-kopf">
         <div>
           <h1 id="gebiet-name" className="gebiet">{gebiet?.name ?? "\u00a0"}</h1>
