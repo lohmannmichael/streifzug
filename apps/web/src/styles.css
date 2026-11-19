@@ -1,0 +1,269 @@
+/* Streifzug: "Textmarker auf dem Stadtplan".
+   Entdecktes wird gelb markiert wie früher mit dem Textmarker auf dem Papier-Stadtplan.
+   Tinte (Kugelschreiber-Blau) für Text und Knöpfe, sonst ruhig. Das Gelb ist das einzige Laute. */
+
+:root {
+  --tinte: #1e2a4a;
+  --tinte-weich: #4a5573;
+  --marker: #ffe14a;
+  --marker-kante: #e9c400;
+  --nebel: #e9ecef;
+  --flaeche: #ffffff;
+  --linie: #d9dde3;
+  --text: #1e2a4a;
+  --text-leise: #5b6475;
+  --schatten: 0 -1px 0 rgb(30 42 74 / 0.06), 0 -8px 24px rgb(30 42 74 / 0.10);
+
+  --schrift: "Barlow", system-ui, sans-serif;
+  --schrift-zahl: "Barlow Condensed", "Barlow", system-ui, sans-serif;
+
+  /* Type scale (major third). */
+  --t-klein: 0.8rem;
+  --t-text: 1rem;
+  --t-gross: 1.25rem;
+  --t-titel: 1.95rem;
+  --t-zahl: 4.2rem;
+
+  --leiste-hoehe: 56px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tinte: #f3f5f9;
+    --tinte-weich: #aab3c5;
+    --nebel: #12161c;
+    --flaeche: #1b2129;
+    --linie: #2c3440;
+    --text: #eef1f6;
+    --text-leise: #9aa4b6;
+    --schatten: 0 -1px 0 rgb(0 0 0 / 0.4), 0 -8px 24px rgb(0 0 0 / 0.35);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--schrift);
+  font-size: var(--t-text);
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--nebel);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, p { margin: 0; }
+
+button { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--marker-kante);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+}
+
+.inhalt { position: relative; overflow: hidden; }
+
+.ansicht { position: absolute; inset: 0; }
+.ansicht[hidden] { display: none; }
+
+.karte { position: absolute; inset: 0; }
+
+/* Bottom sheet over the map */
+.blatt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 20px 16px;
+  background: var(--flaeche);
+  border-radius: 20px 20px 0 0;
+  box-shadow: var(--schatten);
+  display: grid;
+  gap: 12px;
+}
+
+.griff {
+  justify-self: center;
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--linie);
+}
+
+.blatt-kopf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.gebiet {
+  font-size: var(--t-titel);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.ober { color: var(--text-leise); font-size: var(--t-klein); margin-top: 2px; }
+
+.prozent { display: grid; justify-items: end; gap: 4px; }
+
+.zahl {
+  font-family: var(--schrift-zahl);
+  font-weight: 600;
+  font-size: var(--t-zahl);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinte);
+  white-space: nowrap;
+}
+
+/* The one loud element: a highlighter stroke across the lower part of the number,
+   slightly tilted and wider than the digits, like a real marker on paper. */
+.marker {
+  position: relative;
+  isolation: isolate;
+}
+.marker::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -0.07em;
+  right: -0.07em;
+  top: 0.4em;
+  bottom: 0.06em;
+  background: var(--marker);
+  border-radius: 0.05em 0.12em 0.06em 0.14em;
+  transform: rotate(-2deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* On dark ground the whole digit sits on the marker, in dark ink. */
+  .marker { color: #1e2a4a; }
+  .marker::before { top: 0.04em; bottom: 0.02em; }
+}
+
+.einheit { font-size: 0.55em; margin-left: 0.12em; }
+
+.prozent-label { font-size: var(--t-klein); color: var(--text-leise); }
+
+.leer { color: var(--text-leise); max-width: 60ch; }
+.leer.gross { font-size: var(--t-gross); line-height: 1.4; margin-top: 12px; }
+
+.haupt {
+  min-height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tinte);
+  color: var(--flaeche);
+  font-weight: 600;
+  font-size: var(--t-gross);
+  cursor: pointer;
+}
+.haupt:active { transform: scale(0.98); }
+
+.hinweis { min-height: 1.2em; font-size: var(--t-klein); color: var(--text-leise); text-align: center; }
+
+/* Tab bar */
+.leiste {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: var(--leiste-hoehe);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--flaeche);
+  border-top: 1px solid var(--linie);
+}
+
+.reiter {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  color: var(--text-leise);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.reiter[aria-current="page"] { color: var(--tinte); font-weight: 600; }
+
+/* Plain pages */
+.seite {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: calc(24px + env(safe-area-inset-top)) 20px 32px;
+  background: var(--nebel);
+}
+.seite h1 { font-size: var(--t-titel); font-weight: 600; line-height: 1.1; }
+.seite h2 { font-size: var(--t-klein); font-weight: 600; color: var(--text-leise); margin: 28px 4px 8px; }
+
+.gruppe {
+  background: var(--flaeche);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.gruppe > * + * { border-top: 1px solid var(--linie); }
+
+.schalter-zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  min-height: 56px;
+  cursor: pointer;
+}
+.schalter-label { display: block; }
+.schalter-hinweis { display: block; font-size: var(--t-klein); color: var(--text-leise); margin-top: 2px; }
+
+.schalter {
+  appearance: none;
+  flex: none;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 16px;
+  background: var(--linie);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.schalter::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.2);
+  transition: transform 0.2s;
+}
+.schalter:checked { background: var(--tinte); }
+.schalter:checked::after { transform: translateX(20px); }
+@media (prefers-color-scheme: dark) { .schalter:checked::after { background: #1e2a4a; } }
+
+.zeile-text { padding: 14px 16px; color: var(--text-leise); }
+
+.quelle { margin-top: 28px; font-size: var(--t-klein); color: var(--text-leise); text-align: center; }
+
+/* Map credits sit top right, below the status bar, collapsed to the (i) button. */
+.maplibregl-ctrl-top-right { top: env(safe-area-inset-top); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  .haupt:active { transform: none; }
+}

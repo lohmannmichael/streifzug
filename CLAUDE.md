@@ -13,11 +13,18 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 ## Stack
 
 - Monorepo: `packages/core` (TypeScript, Logik mit Tests), `apps/web` (Vite + React + TypeScript + MapLibre GL JS, PWA), ab Phase 3 `apps/mobile` (Expo), `supabase/` (Migrationen, Zugriffsregeln)
-- Supabase (Postgres + PostGIS, Auth, Storage), Region Frankfurt. Jede Tabelle mit `user_id` und Row Level Security
+- Supabase (Postgres + PostGIS, Auth), Projekt `jbtrjmuztsjnzpokmymq`, Region Irland (EU). Jede Tabelle mit `user_id` und Row Level Security
+- Große Dateien (Straßen-Kacheln, Rohdaten): Cloudflare R2
 - Web-Hosting: Cloudflare Pages
 - Karte: MapLibre + OpenFreeMap; Straßen und Gebiete aus OpenStreetMap (Overpass), Namensnennung „© OpenStreetMap-Mitwirkende“
 
+## Befehle
+
+- `npm install` einmal, dann `npm run dev` (Web-App lokal), `npm test` (Tests), `npm run check` (Typen, Tests, Build wie in der GitHub-Prüfung)
+
 ## Regeln
+
+- Code und Kommentare auf Englisch, Oberfläche und Doku auf Deutsch
 
 - Immer nur die aktuelle Phase aus `docs/PLAN.md` bauen, in kleinen, prüfbaren Schritten (Skill `incremental-implementation`)
 - Logik in `packages/core` immer mit Tests (Skill `test-driven-development`)

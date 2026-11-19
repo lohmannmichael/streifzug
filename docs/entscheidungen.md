@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 19.11.2026: Phase 0 begonnen
+- Design „Textmarker auf dem Stadtplan“ statt Papier-Creme mit Orange (siehe PLAN Abschnitt 6)
+- Supabase-Projekt liegt in Irland (eu-west-1) statt Frankfurt: EU und DSGVO-konform, Unterschied in der Antwortzeit spielt durch „offline zuerst“ keine Rolle
+- Code und Kommentare auf Englisch (für spätere Entwickler:innen), Oberfläche auf Deutsch
+- Overpass sperrt Server aus Rechenzentren (auch die Claude-Umgebung). Die App lädt Straßendaten direkt vom Gerät; zum Testen hier brauchen wir Beispieldaten
+- MapLibre 6: Worker-Datei wird über `setWorkerUrl` eingebunden, sonst lädt die Karte im Build nicht
+
 ## 19.11.2026: Skalierungs-Check vor dem Anlegen
 - Fortschritt hängt nicht an OSM-Straßen-IDs: Wahrheit = Rohdaten (R2) + Abdeckung im H3-Raster; Prozente sind Zwischenspeicher und neu berechenbar
 - Speicherung je Nutzer:in und Kachel als kompakter Block statt einer Zeile je Straßenstück

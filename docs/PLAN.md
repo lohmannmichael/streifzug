@@ -126,7 +126,7 @@ streifzug/
 | Grundkarte | OpenFreeMap (kostenlos, ohne Schlüssel) | ab Stufe C eigene Karte (Protomaps-Datei auf R2), weil OpenFreeMap keine Verfügbarkeit garantiert | ja, eine Adresse ändern |
 | Straßen | OSM als **Kacheln** (Zoomstufe 14, ca. 2 × 2 km), zuerst über Overpass, ab Stufe C aus eigener Verarbeitung | Kacheln funktionieren für Weiden genauso wie für Tokio; geladen wird nur, wo man ist | Quelle ja, Format bleibt |
 | Große Dateien | Cloudflare R2 (Straßen-Kacheln, Rohdaten) | **keine Gebühren für Datenverkehr**, sehr günstiger Speicher | ja |
-| Datenbank, Anmeldung | Supabase (Postgres + PostGIS, Auth), Region Frankfurt | Geodaten, Zugriffsregeln je Nutzer:in, Anmeldung mit Apple/Google; Open Source, jederzeit umziehbar | ja (Standard-Postgres) |
+| Datenbank, Anmeldung | Supabase (Postgres + PostGIS, Auth), Region Irland (EU) | Geodaten, Zugriffsregeln je Nutzer:in, Anmeldung mit Apple/Google; Open Source, jederzeit umziehbar | ja (Standard-Postgres) |
 | Hosting Web | Cloudflare Pages | kennst du schon von Lohmis | ja |
 | iPhone | Expo + EAS (Build, TestFlight, Updates) | eine Codebasis für iOS und später Android | – |
 | Fehler und Messung | später Sentry und einfache Produkt-Kennzahlen | erst ab der Testphase mit Freund:innen | ja |
@@ -189,20 +189,19 @@ Drei Ebenen, von „nie verlieren“ bis „schnell anzeigen“:
 
 ---
 
-## 6. Design (Vorschlag)
+## 6. Design: „Textmarker auf dem Stadtplan“
 
-**Idee: „Die Stadt aus dem Nebel holen.“** Die Karte ist der Star, alles andere hält sich zurück.
+**Idee:** Früher hat man gelaufene Straßen mit dem Textmarker auf dem Papier-Stadtplan markiert. Genau das macht die App: Entdecktes wird **textmarker-gelb**, alles andere bleibt ruhig. Das Gelb ist das einzige Laute und wird zum Wiedererkennungszeichen (auch auf Teilen-Bildern).
 
-- **Startbildschirm = Karte**, darüber ein unteres Blatt wie in Apple Karten: aktueller Stadtteil, großer Prozentwert, Knopf „Losziehen“
-- **Untere Leiste mit drei Reitern:** Karte · Gebiete · Ich
-- **Nebel:** Unentdecktes liegt unter einem warmen, papierartigen Schleier. Entdeckte Straßen leuchten in **Signalorange** (#FF5A1F); entdeckte Stadtteile werden klarer
-- **Farben hell:** Papier #F5F2EA, Nebel #E6E1D6, Text #1C1B19, Akzent #FF5A1F, Erfolg #2F9E6E
-- **Farben dunkel:** Nachtblau #0F1720, Nebel #1C2632, entdeckte Straßen leuchten orange (wirkt nachts wie Laternen)
-- **Schrift:** Systemschrift des iPhones (SF Pro), Zahlen gleich breit; Prozentwerte groß und selbstbewusst
-- **Gebiete-Liste:** je Zeile Name, Fortschrittsring, km; aufklappbar Stadt → Bezirk → Stadtteil
-- **Gebiet-Detail:** Prozent, km gesehen/gesamt, Straßen komplett, „fehlt noch“ (Top 10 nächste Straßen), Teilen
-- **Belohnung:** kurzer, edler Effekt, wenn ein Stück freigeschaltet wird, und bei 25/50/75/100 %; abschaltbar, ruhig bei „Bewegung reduzieren“
+- **Startbildschirm = Karte** (ruhige graue Grundkarte), darüber ein unteres Blatt: Stadtteil, großer Prozentwert mit Textmarker-Strich, Knopf „Losziehen“
+- **Untere Leiste:** Karte · Gebiete · Ich
+- **Farben hell:** Nebel #E9ECEF, Fläche #FFFFFF, Tinte (Kugelschreiber-Blau) #1E2A4A für Text und Knöpfe, Textmarker #FFE14A
+- **Farben dunkel:** Nebel #12161C, Fläche #1B2129, heller Text #EEF1F6; der Textmarker bleibt gelb, Ziffern darauf in Tinte
+- **Schrift:** Barlow (an Straßenschilder angelehnt), Zahlen in Barlow Condensed, gleich breit
+- **Gebiete-Liste:** je Zeile Name, Fortschritt, km; aufklappbar Stadt → Bezirk → Stadtteil
+- **Belohnung:** kurzer Effekt, wenn ein Stück gelb wird, und bei 25/50/75/100 %; ruhig bei „Bewegung reduzieren“
 - **Sprache:** Deutsch, Du-Form, keine Emojis, kurze Texte; Gendern mit Doppelpunkt
+- Vorher geplant (verworfen 19.11.2026): Papier-Creme mit Signalorange. Grund: wirkt wie eine Vorlage und erzählt nichts über das Produkt
 
 ---
 
