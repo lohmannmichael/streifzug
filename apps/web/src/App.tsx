@@ -1,10 +1,12 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
+import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
-import { alsKm, elternText, findeNachName, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
+import { alsKm, alsStrecke, elternText, findeNachName, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
-import { IconGebiete, IconIch, IconKarte, IconStreifzuege, IconZurueck } from "./ui/Icons";
+import { IconGebiete, IconIch, IconKarte, IconStandort, IconStreifzuege, IconZurueck } from "./ui/Icons";
 
 type Reiter = "karte" | "gebiete" | "streifzuege";
 
@@ -24,6 +26,22 @@ export function App() {
     setGewaehlt(id);
     localStorage.setItem(MERKEN, id);
   };
+  const aufzeichnung = useAufzeichnung();
+  const streifzuege = useStreifzuege();
+  const [position, setPosition] = useState<[number, number] | null>(null);
+  const [zentrieren, setZentrieren] = useState(0);
+  const [standortFehler, setStandortFehler] = useState(false);
+  const zumStandort = () => {
+    setStandortFehler(false);
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setPosition([p.coords.longitude, p.coords.latitude]);
+        setZentrieren((n) => n + 1);
+      },
+      () => setStandortFehler(true),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 30_000 },
+    );
+  };
 
   if (profilOffen)
     return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} schliessen={() => setProfilOffen(false)} />;
@@ -32,11 +50,25 @@ export function App() {
     <div className="app">
       <main className="inhalt">
         <div className="ansicht" hidden={reiter !== "karte"}>
-          <Karte daten={daten} gewaehlt={gebiet?.id ?? null} gewaehltName={gebiet?.name ?? ""} onWaehlen={waehlen} />
-          <button type="button" className="profil-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
-            <IconIch />
-          </button>
-          <KartenBlatt gebiet={gebiet} daten={daten} einstellungen={einstellungen} />
+          <Karte
+            daten={daten}
+            gewaehlt={gebiet?.id ?? null}
+            gewaehltName={gebiet?.name ?? ""}
+            onWaehlen={waehlen}
+            spur={aufzeichnung.fixes}
+            folgen={aufzeichnung.aktiv}
+            position={position}
+            zentrieren={zentrieren}
+          />
+          <div className="karten-knoepfe">
+            <button type="button" className="rund-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
+              <IconIch />
+            </button>
+            <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
+              <IconStandort />
+            </button>
+          </div>
+          <KartenBlatt gebiet={gebiet} daten={daten} einstellungen={einstellungen} aufzeichnung={aufzeichnung} standortFehler={standortFehler} />
         </div>
         {reiter === "gebiete" && (
           <GebieteSeite
@@ -48,7 +80,7 @@ export function App() {
             }}
           />
         )}
-        {reiter === "streifzuege" && <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />}
+        {reiter === "streifzuege" && <StreifzuegeSeite liste={streifzuege} />}
       </main>
       <nav className="leiste" aria-label="Hauptnavigation">
         <ReiterKnopf aktiv={reiter === "karte"} onClick={() => setReiter("karte")} icon={<IconKarte />} label={t.tabs.karte} />
@@ -68,9 +100,14 @@ function ReiterKnopf(props: { aktiv: boolean; onClick: () => void; icon: ReactNo
   );
 }
 
-function KartenBlatt(props: { gebiet: GebietDaten | null; daten: Regionen | null; einstellungen: Einstellungen }) {
-  const [hinweis, setHinweis] = useState(false);
-  const { gebiet, daten } = props;
+function KartenBlatt(props: {
+  gebiet: GebietDaten | null;
+  daten: Regionen | null;
+  einstellungen: Einstellungen;
+  aufzeichnung: Aufzeichnung;
+  standortFehler: boolean;
+}) {
+  const { gebiet, daten, aufzeichnung: a } = props;
   const kmText = gebiet ? t.karte.kmZeile(alsKm(0), alsKm(zaehlendeMeter(gebiet, props.einstellungen.wegeZaehlen))) : t.karte.kmLaedt;
   return (
     <section className="blatt" aria-labelledby="gebiet-name">
@@ -89,11 +126,80 @@ function KartenBlatt(props: { gebiet: GebietDaten | null; daten: Regionen | null
         <div className="balken" aria-hidden="true"><i style={{ width: "0%" }} /></div>
         <p className="km">{kmText}</p>
       </div>
-      <p className="leer">{t.karte.leer}</p>
-      <button type="button" className="haupt" onClick={() => setHinweis(true)}>
-        {t.karte.losziehen}
+      {a.aktiv ? <Unterwegs a={a} /> : <Ruhe a={a} />}
+      <button type="button" className={a.aktiv ? "haupt zweit" : "haupt"} onClick={a.aktiv ? a.beenden : a.starten}>
+        {a.aktiv ? t.karte.beenden : t.karte.losziehen}
       </button>
-      <p className="hinweis" aria-live="polite">{hinweis ? t.karte.bald : ""}</p>
+      <p className="hinweis" aria-live="polite">{props.standortFehler ? t.karte.standortFehler : a.aktiv ? t.karte.hinweisOffen : ""}</p>
+    </section>
+  );
+}
+
+/** Live numbers while recording. */
+function Unterwegs({ a }: { a: Aufzeichnung }) {
+  const [jetzt, setJetzt] = useState(Date.now());
+  useEffect(() => {
+    const takt = window.setInterval(() => setJetzt(Date.now()), 1000);
+    return () => window.clearInterval(takt);
+  }, []);
+  const sekunden = a.startedAt ? Math.max(0, Math.round((jetzt - a.startedAt) / 1000)) : 0;
+  return (
+    <div className="unterwegs" aria-live="polite">
+      <div className="werte">
+        <div><b>{dauerText(sekunden, true)}</b><span>{t.karte.unterwegs}</span></div>
+        <div><b>{alsStrecke(a.distanzM)}</b><span>Strecke</span></div>
+      </div>
+      <p className={`gps gps-${a.gps}`}>{t.karte.gps[a.gps]}</p>
+    </div>
+  );
+}
+
+/** Before the first outing: the invitation; after one: its summary. */
+function Ruhe({ a }: { a: Aufzeichnung }) {
+  const s = a.letzter;
+  if (!s) return <p className="leer">{t.karte.leer}</p>;
+  return (
+    <p className="leer" aria-live="polite">
+      {t.karte.zusammenfassung(alsStrecke(s.distanceM), dauerText(Math.round(((s.endedAt ?? s.startedAt) - s.startedAt) / 1000)), t.streifzuege.art[s.mode])}.{" "}
+      <StatusText s={s} />
+    </p>
+  );
+}
+
+function StatusText({ s }: { s: Streifzug }) {
+  const liste = useStreifzuege();
+  const aktuell = liste.find((x) => x.id === s.id) ?? s;
+  return <>{aktuell.status === "gesichert" ? t.karte.gesichert : t.karte.wirdGesichert}</>;
+}
+
+function dauerText(sekunden: number, uhr = false): string {
+  const h = Math.floor(sekunden / 3600);
+  const m = Math.floor((sekunden % 3600) / 60);
+  const s = sekunden % 60;
+  if (uhr) return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+  return h ? `${h} Std. ${m} Min.` : `${Math.max(1, m)} Min.`;
+}
+
+const datum = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+function StreifzuegeSeite({ liste }: { liste: Streifzug[] }) {
+  if (liste.length === 0) return <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />;
+  return (
+    <section className="seite" aria-labelledby="streifzuege-titel">
+      <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
+      <ul className="gruppe liste streifzug-liste">
+        {liste.map((s) => (
+          <li key={s.id} className="streifzug-zeile">
+            <div>
+              <p className="streifzug-datum">{datum.format(s.startedAt)}</p>
+              <p className="leise">
+                {alsStrecke(s.distanceM)}, {dauerText(Math.round(((s.endedAt ?? s.startedAt) - s.startedAt) / 1000))}, {t.streifzuege.art[s.mode]}
+              </p>
+            </div>
+            <span className={`status status-${s.status}`}>{s.status === "gesichert" ? t.streifzuege.status.gesichert : t.streifzuege.status.lokal}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

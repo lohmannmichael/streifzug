@@ -71,8 +71,8 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 | Schritt | Inhalt | DoD |
 |---|---|---|
 | 1a Straßendaten (erledigt 19.11.2026, Quelle OpenFreeMap-Kacheln) | Straßen-Kacheln laden, Filter nach Abschnitt 2, 25-m-Stücke, Gebiete, km-Summen je Gebiet | Köln, Lindenthal und Weiden haben plausible km-Summen (Gegenprobe mit 3 bekannten Straßen) |
-| 1b Karte | MapLibre-Karte, Straßen grau, Grenzen der Stadtteile, eigener Standort | Karte flüssig auf dem iPhone, Weiden vollständig sichtbar |
-| 1c Aufzeichnen | Knopf „Losziehen“: Standort laufend, Bildschirm bleibt an, Fortbewegung erkannt, offline gepuffert, später hochgeladen | 30-Minuten-Runde ohne Lücken aufgezeichnet, auch kurz offline |
+| 1b Karte (gebaut 19.11.2026) | MapLibre-Karte, Straßen grau, Grenzen der Stadtteile, eigener Standort | Karte flüssig auf dem iPhone, Weiden vollständig sichtbar |
+| 1c Aufzeichnen (gebaut 19.11.2026, Test draußen offen) | Knopf „Losziehen“: Standort laufend, Bildschirm bleibt an, Fortbewegung erkannt, offline gepuffert, später hochgeladen | 30-Minuten-Runde ohne Lücken aufgezeichnet, auch kurz offline |
 | 1d Abgleich und Prozent | Abgleich auf dem Handy, Rohdaten und Abdeckung speichern, Fortschritt je Gebiet, Liste „Gebiete“, Detailseite, Nebel-Karte | Nach einer Runde stimmen Prozent und km (Stichprobe 3 Straßen) |
 | 1e Neue Städte | Betrittst du ein unbekanntes Gebiet, lädt die App es automatisch | Test mit einer zweiten Stadt (z. B. Freising) |
 | 1f Teilen | Bild je Gebiet (Kartenausschnitt, %, km), Privatzone ums Zuhause wird ausgeblendet | Bild über das iPhone-Teilen-Menü verschickt, Haus nicht erkennbar |

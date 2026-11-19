@@ -43,3 +43,11 @@ export function IconZurueck() {
     </svg>
   );
 }
+
+export function IconStandort() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path {...strich} d="M20 4 4 11l7 2 2 7 7-16Z" />
+    </svg>
+  );
+}

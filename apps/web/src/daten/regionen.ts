@@ -83,3 +83,8 @@ const km = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 1, maximumFra
 export function alsKm(meter: number): string {
   return `${km.format(meter / 1000)} km`;
 }
+
+/** Short distances in meters, longer ones in km. */
+export function alsStrecke(meter: number): string {
+  return meter < 1000 ? `${Math.round(meter)} m` : alsKm(meter);
+}

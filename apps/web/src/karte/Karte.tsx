@@ -8,6 +8,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import type { Fix } from "@streifzug/core";
 import { useEffect, useRef } from "react";
 import type { Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
@@ -131,7 +132,38 @@ async function zeigeGebiet(karte: MapLibreMap, daten: Regionen, id: string) {
   else karte.easeTo({ ...ziel, duration: 600 });
 }
 
-export function Karte(props: { daten: Regionen | null; gewaehlt: string | null; gewaehltName: string; onWaehlen: (id: string) => void }) {
+export interface KartenProps {
+  daten: Regionen | null;
+  gewaehlt: string | null;
+  gewaehltName: string;
+  onWaehlen: (id: string) => void;
+  /** The current outing (drawn live) and whether the map follows the position. */
+  spur: Fix[];
+  folgen: boolean;
+  /** Own position from the location button; the counter moves the map there each time. */
+  position: [number, number] | null;
+  zentrieren: number;
+}
+
+const LEER = { type: "FeatureCollection" as const, features: [] };
+
+/** Own track and position, on top of everything. */
+function eigenesZeichnen(karte: MapLibreMap) {
+  if (karte.getSource("spur")) return;
+  karte.addSource("spur", { type: "geojson", data: LEER });
+  karte.addSource("ich", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "spur", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffe14a", "line-width": 7, "line-opacity": 0.95 } });
+  karte.addLayer({ id: "spur-kern", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": TINTE, "line-width": 1.5 } });
+  karte.addLayer({ id: "ich-hof", type: "circle", source: "ich", paint: { "circle-radius": 14, "circle-color": "#2b6ef2", "circle-opacity": 0.18 } });
+  karte.addLayer({ id: "ich", type: "circle", source: "ich", paint: { "circle-radius": 7, "circle-color": "#2b6ef2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+}
+
+function setzeDaten(karte: MapLibreMap, quelle: string, data: unknown) {
+  const q = karte.getSource(quelle) as { setData?: (d: unknown) => void } | undefined;
+  q?.setData?.(data);
+}
+
+export function Karte(props: KartenProps) {
   const box = useRef<HTMLDivElement>(null);
   const karteRef = useRef<MapLibreMap | null>(null);
   const gewaehltRef = useRef(props.gewaehlt);
@@ -161,6 +193,7 @@ export function Karte(props: { daten: Regionen | null; gewaehlt: string | null; 
 
     // Runs after every style load (also after switching light/dark).
     karte.on("style.load", () => {
+      eigenesZeichnen(karte);
       if (datenRef.current) void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current);
     });
     karte.on("click", (e: MapLayerMouseEvent) => {
@@ -203,6 +236,38 @@ export function Karte(props: { daten: Regionen | null; gewaehlt: string | null; 
     for (const r of daten.liste) if (karte.getLayer(`gewaehlt-${r.id}`)) karte.setFilter(`gewaehlt-${r.id}`, ["==", ["get", "id"], neu ?? ""]);
     if (neu && alt !== neu) void zeigeGebiet(karte, daten, neu);
   }, [props.gewaehlt, props.daten]);
+
+  // Live track, own position, following, and choosing the area you are in.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (!karte || !karte.getSource("spur")) return;
+    const coords = props.spur.map((f) => [f.lon, f.lat]);
+    setzeDaten(karte, "spur", { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords.length > 1 ? coords : [] } });
+    const letzter = props.spur.at(-1);
+    const hier: [number, number] | null = letzter ? [letzter.lon, letzter.lat] : props.position;
+    setzeDaten(karte, "ich", hier ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: hier } } : LEER);
+    if (!props.folgen || !letzter) return;
+    const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ziel = { center: hier!, padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
+    if (ruhig) karte.jumpTo(ziel);
+    else karte.easeTo({ ...ziel, duration: 500 });
+    karte.once("moveend", () => {
+      const ebenen = (datenRef.current?.liste ?? []).map((r) => `flaeche-${r.id}`).filter((l) => karte.getLayer(l));
+      if (!ebenen.length) return;
+      const id = karte.queryRenderedFeatures(karte.project(hier!), { layers: ebenen })[0]?.properties?.id;
+      if (id && String(id) !== gewaehltRef.current) waehlenRef.current(String(id));
+    });
+  }, [props.spur, props.folgen, props.position]);
+
+  // Location button: move to the own position.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (!karte || !props.position || props.zentrieren === 0) return;
+    const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const ziel = { center: props.position, zoom: Math.max(karte.getZoom(), 15), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
+    if (ruhig) karte.jumpTo(ziel);
+    else karte.easeTo({ ...ziel, duration: 600 });
+  }, [props.zentrieren]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />;
 }

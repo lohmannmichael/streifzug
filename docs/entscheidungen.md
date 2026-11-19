@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 19.11.2026: Schritt 1b/1c Standort und Aufzeichnen (Web-App)
+- „Losziehen“: GPS mit hoher Genauigkeit, solange die App offen ist; Bildschirm bleibt an (Wake Lock). Hintergrund-Aufzeichnung erst mit der iPhone-App (Phase 3), die App sagt das beim Aufzeichnen
+- GPS-Punkte mit Ungenauigkeit über 25 m, ohne Zeitfortschritt oder mit Sprüngen über 50 m/s werden aussortiert; Lücken über 60 s werden nicht überbrückt; Fortbewegung nach Median-Tempo (bis 7,2 km/h zu Fuß, bis 30 km/h Rad, darüber Auto) – `packages/core/src/track.ts`
+- Gespeichert alle 10 s auf dem Gerät (IndexedDB); bricht die App ab, wird die Runde beim nächsten Öffnen am letzten Punkt beendet. Nach „Beenden“ und bei Netz: Rohdatei komprimiert nach Supabase Storage, Zusammenfassung in `tracks`
+- Karte folgt der Position, zeigt die Spur gelb und wählt automatisch das Gebiet, in dem man gerade ist
+- Getestet mit simuliertem Spaziergang (Playwright): 35 m, zu Fuß, gesichert, Datei 96 Byte. Echter Test draußen steht aus
+
 ## 19.11.2026: Orte per Name hinzufügen; Hameln, Emmerthal, New York City
 - `npm run region -- "<Name>"` sucht den Ort in Overture (Stadt/Gemeinde bevorzugt, dann Einwohnerzahl, ähnliche Schreibweisen), schreibt die Konfiguration und baut; Tiefe automatisch (bis 2 Ebenen)
 - Gleiche Ebene darf sich nicht überlappen: liegt ein Gebiet in einem anderen (in beide Richtungen geprüft), bleibt das größere. Köln dadurch exakt 86 Stadtteile (vorher 87 mit Grenzort Horbell)
