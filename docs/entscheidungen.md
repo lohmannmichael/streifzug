@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 19.11.2026: Skalierungs-Check vor dem Anlegen
+- Fortschritt hängt nicht an OSM-Straßen-IDs: Wahrheit = Rohdaten (R2) + Abdeckung im H3-Raster; Prozente sind Zwischenspeicher und neu berechenbar
+- Speicherung je Nutzer:in und Kachel als kompakter Block statt einer Zeile je Straßenstück
+- Straßendaten als Kacheln (Zoom 14) statt Stadtpakete; große Dateien auf Cloudflare R2 (keine Traffic-Gebühren)
+- Offline zuerst, IDs vom Gerät, Uploads dürfen doppelt ankommen, Abdeckung wird vereinigt (konfliktfrei)
+- Anmeldung ohne Passwörter, neutrale Bundle-ID, alles einer Person unter ihrer ID (vollständig löschbar)
+
 ## 19.11.2026: Start
 - Eigene App „Streifzug“ (Arbeitstitel), nicht Teil von Lohmis
 - Erst Web-App zum Ausprobieren, dann iPhone-App (Expo) mit Hintergrund-Aufzeichnung

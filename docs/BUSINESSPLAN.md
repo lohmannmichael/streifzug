@@ -57,7 +57,7 @@ Ein Hobby-Projekt mit eingebauter Ausstiegsoption: Wenn es dir und deinen Testpe
 |---|---|---|
 | Apple-Entwicklerkonto | 99 $/Jahr (ab Phase 3) | 99 $/Jahr |
 | Supabase | 0 € (Gratis) | ca. 25 $/Monat (Pro) |
-| Cloudflare, Karten (OpenFreeMap) | 0 € | 0 € (später ggf. 25–100 €/Monat für eigene Kacheln) |
+| Cloudflare (Pages, R2-Speicher ohne Traffic-Gebühren), Karten | 0 € | 0–10 €/Monat (bei 100.000 Nutzer:innen ca. 50–150 €/Monat) |
 | RevenueCat (Abo-Abwicklung) | – | 0 € bis 2.500 $ Monatsumsatz, danach 1 % |
 | Domain und Mail | – | ca. 2 €/Monat |
 | Gewerbe-Anmeldung | – | einmalig ca. 20–60 € |

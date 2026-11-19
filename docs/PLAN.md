@@ -62,17 +62,17 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 ### Phase 0: Fundament (1 Sitzung)
 - Repo `streifzug`, Ordner wie in Abschnitt 4, Prüfungen bei jedem Push (Lint, Tests, Build)
 - Supabase-Projekt (EU, Frankfurt), Anmeldung per Mail-Link, Zugriffsregeln je Nutzer:in (Row Level Security)
-- Web-App auf Cloudflare Pages
+- Web-App auf Cloudflare Pages, R2-Speicher für Straßen-Kacheln und Rohdaten (in deinem bestehenden Cloudflare-Konto)
 - **DoD:** leere App ist online und auf dem iPhone-Homescreen; Anmeldung klappt; automatisch veröffentlicht
 
 ### Phase 1: Prozent-Jagd in Köln (Web-App, MVP, 4–6 Sitzungen)
 
 | Schritt | Inhalt | DoD |
 |---|---|---|
-| 1a Straßendaten | Laden über Overpass, Filter nach Abschnitt 2, 25-m-Stücke, Gebiete, km-Summen je Gebiet | Köln, Lindenthal und Weiden haben plausible km-Summen (Gegenprobe mit 3 bekannten Straßen) |
+| 1a Straßendaten | Straßen-Kacheln über Overpass laden, Filter nach Abschnitt 2, 25-m-Stücke, Gebiete, km-Summen je Gebiet | Köln, Lindenthal und Weiden haben plausible km-Summen (Gegenprobe mit 3 bekannten Straßen) |
 | 1b Karte | MapLibre-Karte, Straßen grau, Grenzen der Stadtteile, eigener Standort | Karte flüssig auf dem iPhone, Weiden vollständig sichtbar |
 | 1c Aufzeichnen | Knopf „Losziehen“: Standort laufend, Bildschirm bleibt an, Fortbewegung erkannt, offline gepuffert, später hochgeladen | 30-Minuten-Runde ohne Lücken aufgezeichnet, auch kurz offline |
-| 1d Abgleich und Prozent | Abgleich auf dem Handy, Stücke speichern, Fortschritt je Gebiet, Liste „Gebiete“, Detailseite, Nebel-Karte | Nach einer Runde stimmen Prozent und km (Stichprobe 3 Straßen) |
+| 1d Abgleich und Prozent | Abgleich auf dem Handy, Rohdaten und Abdeckung speichern, Fortschritt je Gebiet, Liste „Gebiete“, Detailseite, Nebel-Karte | Nach einer Runde stimmen Prozent und km (Stichprobe 3 Straßen) |
 | 1e Neue Städte | Betrittst du ein unbekanntes Gebiet, lädt die App es automatisch | Test mit einer zweiten Stadt (z. B. Freising) |
 | 1f Teilen | Bild je Gebiet (Kartenausschnitt, %, km), Privatzone ums Zuhause wird ausgeblendet | Bild über das iPhone-Teilen-Menü verschickt, Haus nicht erkennbar |
 
@@ -109,41 +109,68 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 ### Aufbau (ein Repo, mehrere Teile)
 ```
 streifzug/
-  packages/core/     TypeScript: OSM → Stücke, Abgleich, Prozent, Regeln (mit Tests)
+  packages/core/     TypeScript: Straßen-Kacheln, Abdeckung, Abgleich, Prozent, Regeln (mit Tests)
   apps/web/          Web-App: Vite + React + TypeScript + MapLibre GL JS (PWA)
   apps/mobile/       ab Phase 3: Expo (React Native) + MapLibre Native
   supabase/          Datenbank-Migrationen, Zugriffsregeln, Edge Functions
+  pipeline/          ab Stufe C: eigene Verarbeitung der OSM-Daten (weltweit, monatlich)
   docs/              Plan, Businessplan, Entscheidungen
 ```
 
 ### Bausteine
 
-| Baustein | Wahl | Warum |
-|---|---|---|
-| Logik | `packages/core` in TypeScript | Web und iPhone nutzen denselben Code; mit Tests abgesichert |
-| Web-App | React + Vite + MapLibre GL JS | gleiche Denkweise wie später in Expo; große Community |
-| Karte | OpenFreeMap (kostenlos, ohne Schlüssel) | später bei Bedarf eigene Kacheln (Protomaps) oder MapTiler |
-| Straßen und Gebiete | OSM über Overpass, je Gebiet einmal verarbeitet und gespeichert | später eigene Verarbeitung aus Geofabrik-Extrakten, sobald viele Städte nötig sind |
-| Datenbank, Anmeldung | Supabase (Postgres + PostGIS, Auth, Storage), Region Frankfurt | Geodaten-Abfragen, Zugriffsregeln je Nutzer:in, später Anmeldung mit Apple; skaliert bis zu einem echten Produkt |
-| Hosting Web | Cloudflare Pages | kennst du schon von Lohmis |
-| iPhone | Expo + EAS (Build, TestFlight, Updates) | eine Codebasis für iOS und später Android |
-| Fehler und Messung | später Sentry und einfache Produkt-Kennzahlen | erst ab der Testphase mit Freund:innen |
+| Baustein | Wahl | Warum | Später austauschbar? |
+|---|---|---|---|
+| Logik | `packages/core` in TypeScript | Web und iPhone nutzen denselben Code; mit Tests abgesichert | – |
+| Web-App | React + Vite + MapLibre GL JS | gleiche Denkweise wie später in Expo | ja |
+| Grundkarte | OpenFreeMap (kostenlos, ohne Schlüssel) | ab Stufe C eigene Karte (Protomaps-Datei auf R2), weil OpenFreeMap keine Verfügbarkeit garantiert | ja, eine Adresse ändern |
+| Straßen | OSM als **Kacheln** (Zoomstufe 14, ca. 2 × 2 km), zuerst über Overpass, ab Stufe C aus eigener Verarbeitung | Kacheln funktionieren für Weiden genauso wie für Tokio; geladen wird nur, wo man ist | Quelle ja, Format bleibt |
+| Große Dateien | Cloudflare R2 (Straßen-Kacheln, Rohdaten) | **keine Gebühren für Datenverkehr**, sehr günstiger Speicher | ja |
+| Datenbank, Anmeldung | Supabase (Postgres + PostGIS, Auth), Region Frankfurt | Geodaten, Zugriffsregeln je Nutzer:in, Anmeldung mit Apple/Google; Open Source, jederzeit umziehbar | ja (Standard-Postgres) |
+| Hosting Web | Cloudflare Pages | kennst du schon von Lohmis | ja |
+| iPhone | Expo + EAS (Build, TestFlight, Updates) | eine Codebasis für iOS und später Android | – |
+| Fehler und Messung | später Sentry und einfache Produkt-Kennzahlen | erst ab der Testphase mit Freund:innen | ja |
+
+### Wie Fortschritt gespeichert wird (die wichtigste Entscheidung)
+
+Drei Ebenen, von „nie verlieren“ bis „schnell anzeigen“:
+
+1. **Rohdaten (die Wahrheit):** jede Aufzeichnung als komprimierte Datei auf R2, Ordner je Nutzer:in. Damit lässt sich alles jederzeit neu berechnen
+2. **Abdeckung (unabhängig von Straßendaten):** welche Waben eines feinen Rasters (H3, ca. 10 m) man berührt hat. Je Nutzer:in und Kachel ein kompakter Block. Bleibt gültig, auch wenn OSM Straßen ändert, teilt oder umbenennt
+3. **Fortschritt (Zwischenspeicher, jederzeit neu berechenbar):** gesehene Straßenstücke und Prozent je Gebiet. Wird neu berechnet, wenn sich Straßendaten oder Regeln ändern
 
 ### Datenmodell (vereinfacht)
-- `areas` (id, osm_id, name, admin_level, parent_id, geom, total_m)
-- `segments` (id `way:n`, area_ids, geom, length_m, kind, name)
-- `user_segments` (user_id, segment_id, first_seen_at, mode): **nur die IDs der gesehenen Stücke**, klein und schnell
-- `user_area_progress` (user_id, area_id, seen_m, segments_seen, updated_at): vorberechnet für schnelle Listen
-- `tracks` (id, user_id, started_at, ended_at, mode, distance_m, file_path): **Rohdaten komprimiert als Datei** im Speicher, nicht als Millionen Tabellenzeilen
+- `areas` (id, osm_id, name, admin_level, parent_id, geom, total_m, data_version)
+- `user_tile_coverage` (user_id, tile_id, cells_blob, updated_at): **ein Block je Nutzer:in und Kachel**, nicht eine Zeile je Straßenstück
+- `user_area_progress` (user_id, area_id, seen_m, streets_complete, data_version, updated_at): für Listen, Ranglisten und Teilen
+- `tracks` (id vom Gerät erzeugt, user_id, started_at, ended_at, mode, distance_m, file_key): Rohdaten liegen als Datei auf R2
 - `privacy_zones` (user_id, center, radius_m)
+- Straßen-Kacheln liegen nicht in der Datenbank, sondern als Dateien auf R2
 
 ### Prinzipien, damit es skaliert
 1. **Mehrere Nutzer:innen ab Tag 1:** jede Tabelle mit `user_id` und Zugriffsregel, auch wenn erst nur du drin bist
-2. **Abgleich auf dem Handy:** Server-Kosten bleiben fast null; die Rohdaten müssen dafür nicht zum Server (Datenschutz als Verkaufsargument)
-3. **Feste Stück-IDs:** Fortschritt bleibt erhalten, auch wenn Straßendaten aktualisiert werden (Abgleich bei OSM-Änderungen)
-4. **Gebietspakete als Dateien:** Je Stadt eine komprimierte Datei, später über ein CDN verteilt, weltweit günstig
-5. **Texte von Anfang an in einer Sprachdatei** (Deutsch zuerst, Englisch für den App Store später)
-6. **Export und Löschen** der eigenen Daten jederzeit (DSGVO, App-Store-Pflicht)
+2. **Rohdaten + Abdeckung sind die Wahrheit, Prozente nur Zwischenspeicher:** OSM ändert sich täglich, dein Fortschritt geht dadurch nie verloren
+3. **Kompakt speichern:** ein Block je Nutzer:in und Kachel. Bei 1 Mio. Nutzer:innen ca. 300 Mio. Zeilen statt ca. 50 Mrd.
+4. **Abgleich auf dem Gerät:** Server-Kosten bleiben fast null. Für Ranglisten rechnet der Server aus der Abdeckung nach (Schutz vor Schummeln)
+5. **Offline zuerst, Doppeltes schadet nicht:** IDs entstehen auf dem Gerät, ein Upload darf mehrfach ankommen; Abdeckung wird nur vereinigt, deshalb gibt es keine Konflikte zwischen iPhone, iPad und Web
+6. **Anmeldung ohne Passwörter** (Mail-Link, Apple, Google): Wechsel des Anbieters bleibt möglich
+7. **Texte von Anfang an in einer Sprachdatei** (Deutsch zuerst, Englisch für den App Store später)
+8. **Export und Löschen** jederzeit; alles einer Person liegt unter ihrer ID und lässt sich vollständig löschen (DSGVO, App Store)
+9. **Neutrale App-Kennung** bei Apple (z. B. `de.lohmann.erkunden`), damit der Name änderbar bleibt
+
+### Kosten bei Wachstum (grobe Schätzung)
+
+| Aktive Nutzer:innen | Infrastruktur pro Monat | Was dazukommt |
+|---|---|---|
+| 1 (du) | 0 € | – |
+| 50 (Freund:innen-Test) | 0 € | – |
+| 10.000 | ca. 30–60 $ | Supabase Pro |
+| 100.000 | ca. 150–400 $ | stärkere Datenbank, eigene Grundkarte auf R2, eigene OSM-Verarbeitung |
+| 1.000.000 | ca. 1.000–2.500 $ | große Datenbank mit Lese-Kopie, Warteschlange für Neuberechnungen, Betreuung |
+
+### Was später ohnehin dazukommt (geplant, kein Umbau)
+- Ab Stufe C: eigene OSM-Verarbeitung statt Overpass (öffentlicher Dienst, nicht für viele Nutzer:innen gedacht) und eigene Grundkarte statt OpenFreeMap
+- Ab ca. 100.000 Nutzer:innen: Datenbank vergrößern, Lese-Kopie, Hintergrund-Jobs für Neuberechnungen, Monitoring, Backups mit Zeitpunkt-Wiederherstellung
 
 ---
 
@@ -154,7 +181,8 @@ streifzug/
 | Web-App zeichnet nur bei offener App auf | Bewusst: Phase 1 testet nur den Spaß. Hintergrund kommt in Phase 3 |
 | GPS ungenau in engen Straßen | 20-m-Abstand, 60-%-Regel, Ungenaues verwerfen; Werte in Phase 1 an echten Runden einstellen |
 | Akku | Phase 3 mit Akku-Test und bewegungsgesteuerter Ortung |
-| Overpass-Grenzen (öffentlicher Dienst) | Gebiete nur einmal laden und speichern; später eigene Verarbeitung |
+| Overpass-Grenzen (öffentlicher Dienst) | Kacheln nur einmal laden und auf R2 speichern; ab Stufe C eigene Verarbeitung |
+| OSM ändert Straßen | Fortschritt hängt an Rohdaten und Abdeckung, nicht an Straßen-IDs; Prozente werden neu berechnet |
 | OSM-Lizenz (ODbL) | Namensnennung „© OpenStreetMap-Mitwirkende“; abgeleitete Straßendaten bleiben unter ODbL (Rechtliches vor dem Start prüfen) |
 | Apple lehnt Hintergrund-Ortung ab | Klarer Nutzen im Text, nur bei Bewegung aktiv, Ortungs-Hinweis sichtbar, keine Werbe-SDKs |
 | Supabase-Gratisprojekt pausiert nach 7 Tagen ohne Nutzung | Für dich egal (du nutzt es); für ein Produkt Pro-Tarif (ca. 25 $/Monat) |
