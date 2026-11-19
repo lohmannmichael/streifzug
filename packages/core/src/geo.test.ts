@@ -53,3 +53,18 @@ describe("sliceLine", () => {
     expect(distanceM(piece[1]!, b)).toBeLessThan(0.001);
   });
 });
+
+describe("pointAlong", () => {
+  it("finds the middle of a line", async () => {
+    const { pointAlong } = await import("./geo");
+    const mid = pointAlong([a, b], distanceM(a, b) / 2);
+    expect(distanceM(mid, a)).toBeCloseTo(50, 1);
+    expect(distanceM(mid, b)).toBeCloseTo(50, 1);
+  });
+
+  it("clamps to the ends", async () => {
+    const { pointAlong } = await import("./geo");
+    expect(pointAlong([a, b], -5)).toEqual(a);
+    expect(distanceM(pointAlong([a, b], 1000), b)).toBeLessThan(0.001);
+  });
+});

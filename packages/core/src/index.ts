@@ -2,3 +2,7 @@ export * from "./geo";
 export * from "./rules";
 export * from "./segments";
 export * from "./tiles";
+export * from "./omt";
+export * from "./polygon";
+export * from "./clip";
+export * from "./parallel";

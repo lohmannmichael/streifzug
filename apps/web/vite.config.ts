@@ -25,7 +25,15 @@ export default defineConfig({
       },
       workbox: {
         // The map style, tiles and street data come from other hosts and are not precached.
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}", "gebiete/*.json"],
+        // Street tiles are loaded when needed and then kept on the device.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/strassen/"),
+            handler: "CacheFirst",
+            options: { cacheName: "strassen", expiration: { maxEntries: 2000 } },
+          },
+        ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
     }),

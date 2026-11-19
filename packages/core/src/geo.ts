@@ -46,6 +46,19 @@ export function sliceLine(line: readonly LonLat[], startM: number, endM: number)
   return out;
 }
 
+/** The point at a given distance from the start of a line (clamped to its ends). */
+export function pointAlong(line: readonly LonLat[], distance: number): LonLat {
+  if (line.length === 0) throw new Error("empty line");
+  if (distance <= 0) return line[0]!;
+  let walked = 0;
+  for (let i = 1; i < line.length; i++) {
+    const part = distanceM(line[i - 1]!, line[i]!);
+    if (walked + part >= distance && part > 0) return pointOn(line[i - 1]!, line[i]!, (distance - walked) / part);
+    walked += part;
+  }
+  return line[line.length - 1]!;
+}
+
 function pointOn(from: LonLat, to: LonLat, t: number): LonLat {
   const k = Math.min(1, Math.max(0, t));
   return [from[0] + (to[0] - from[0]) * k, from[1] + (to[1] - from[1]) * k];

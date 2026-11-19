@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useSitzung, type Sitzung } from "./daten/supabase";
-import { useEinstellungen } from "./einstellungen";
+import { alsKm, useSummen, zaehlendeMeter, type Summen } from "./daten/summen";
+import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { Karte, type Gebiet } from "./karte/Karte";
 import { t } from "./texte/de";
 import { IconGebiete, IconIch, IconKarte, IconStreifzuege, IconZurueck } from "./ui/Icons";
@@ -15,8 +16,11 @@ export function App() {
   const [reiter, setReiter] = useState<Reiter>("karte");
   const [profilOffen, setProfilOffen] = useState(false);
   const [gebiet, setGebiet] = useState<Gebiet>(START_GEBIET);
+  const [einstellungen, aendern] = useEinstellungen(sitzung);
+  const summen = useSummen();
 
-  if (profilOffen) return <Profil sitzung={sitzung} schliessen={() => setProfilOffen(false)} />;
+  if (profilOffen)
+    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} schliessen={() => setProfilOffen(false)} />;
 
   return (
     <div className="app">
@@ -26,9 +30,18 @@ export function App() {
           <button type="button" className="profil-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
             <IconIch />
           </button>
-          <KartenBlatt gebiet={gebiet} />
+          <KartenBlatt gebiet={gebiet} summen={summen} einstellungen={einstellungen} />
         </div>
-        {reiter === "gebiete" && <LeereSeite titel={t.gebiete.titel} text={t.gebiete.leer} />}
+        {reiter === "gebiete" && (
+          <GebieteSeite
+            summen={summen}
+            einstellungen={einstellungen}
+            waehlen={(g) => {
+              setGebiet(g);
+              setReiter("karte");
+            }}
+          />
+        )}
         {reiter === "streifzuege" && <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />}
       </main>
       <nav className="leiste" aria-label="Hauptnavigation">
@@ -49,8 +62,10 @@ function ReiterKnopf(props: { aktiv: boolean; onClick: () => void; icon: ReactNo
   );
 }
 
-function KartenBlatt(props: { gebiet: Gebiet }) {
+function KartenBlatt(props: { gebiet: Gebiet; summen: Summen | null; einstellungen: Einstellungen }) {
   const [hinweis, setHinweis] = useState(false);
+  const summe = props.summen?.stadtteile[props.gebiet.nr];
+  const kmText = summe ? t.karte.kmZeile(alsKm(0), alsKm(zaehlendeMeter(summe, props.einstellungen.wegeZaehlen))) : t.karte.kmLaedt;
   return (
     <section className="blatt" aria-labelledby="gebiet-name">
       <div className="griff" aria-hidden="true" />
@@ -63,6 +78,10 @@ function KartenBlatt(props: { gebiet: Gebiet }) {
           <span className="zahl"><span className="marker">0</span><span className="einheit">%</span></span>
           <span className="prozent-label" aria-hidden="true">{t.karte.prozentLabel}</span>
         </p>
+      </div>
+      <div className="fortschritt">
+        <div className="balken" aria-hidden="true"><i style={{ width: "0%" }} /></div>
+        <p className="km">{kmText}</p>
       </div>
       <p className="leer">{t.karte.leer}</p>
       <button type="button" className="haupt" onClick={() => setHinweis(true)}>
@@ -82,8 +101,13 @@ function LeereSeite(props: { titel: string; text: string }) {
   );
 }
 
-function Profil(props: { sitzung: Sitzung; schliessen: () => void }) {
-  const [werte, aendern] = useEinstellungen(props.sitzung);
+function Profil(props: {
+  sitzung: Sitzung;
+  werte: Einstellungen;
+  aendern: (teil: Partial<Einstellungen>) => void;
+  schliessen: () => void;
+}) {
+  const { werte, aendern } = props;
   const kontoText =
     props.sitzung.status === "bereit" ? t.ich.kontoAnonym : props.sitzung.status === "offline" ? t.ich.kontoOffline : t.ich.kontoLaedt;
   return (
@@ -110,6 +134,41 @@ function Profil(props: { sitzung: Sitzung; schliessen: () => void }) {
         <p className="quelle">{t.ich.quelle}</p>
       </section>
     </div>
+  );
+}
+
+function GebieteSeite(props: { summen: Summen | null; einstellungen: Einstellungen; waehlen: (g: Gebiet) => void }) {
+  const { summen, einstellungen } = props;
+  if (!summen) return <LeereSeite titel={t.gebiete.titel} text={t.karte.kmLaedt} />;
+  const stadtteile = Object.entries(summen.stadtteile).map(([nr, s]) => ({ nr, ...s }));
+  const bezirke = [...new Set(stadtteile.map((s) => s.bezirk))].sort((a, b) => a.localeCompare(b, "de"));
+  return (
+    <section className="seite" aria-labelledby="gebiete-titel">
+      <h1 id="gebiete-titel">{t.gebiete.titel}</h1>
+      <div className="stadt-kopf">
+        <h2 className="stadt-name">{t.gebiete.koeln}</h2>
+        <p className="leise">{t.gebiete.stadtZeile(alsKm(zaehlendeMeter(summen.stadt, einstellungen.wegeZaehlen)), stadtteile.length)}</p>
+      </div>
+      {bezirke.map((bezirk) => (
+        <div key={bezirk}>
+          <h2>{bezirk}</h2>
+          <ul className="gruppe liste">
+            {stadtteile
+              .filter((s) => s.bezirk === bezirk)
+              .sort((a, b) => a.name.localeCompare(b.name, "de"))
+              .map((s) => (
+                <li key={s.nr}>
+                  <button type="button" className="gebiet-zeile" onClick={() => props.waehlen({ nr: s.nr, name: s.name, bezirk: s.bezirk })}>
+                    <span className="gebiet-zeile-name">{s.name}</span>
+                    <span className="gebiet-zeile-wert">{t.gebiete.zeile(alsKm(zaehlendeMeter(s, einstellungen.wegeZaehlen)))}</span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </div>
+      ))}
+      <p className="quelle">{t.gebiete.stand(new Date(summen.stand).toLocaleDateString("de-DE"))}</p>
+    </section>
   );
 }
 

@@ -105,6 +105,29 @@ function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, gewaehlt: string |
   }
 }
 
+let mittelpunkte: Promise<Map<string, [number, number]>> | null = null;
+
+function ladeMittelpunkte() {
+  mittelpunkte ??= fetch("/gebiete/koeln-namen.geojson")
+    .then((r) => r.json() as Promise<{ features: { properties: { nr: string }; geometry: { coordinates: [number, number] } }[] }>)
+    .then((d) => new Map(d.features.map((f) => [String(f.properties.nr), f.geometry.coordinates])));
+  return mittelpunkte;
+}
+
+/** Moves the map to a district unless it is already visible above the sheet. */
+async function zeigeGebiet(karte: MapLibreMap, nr: string) {
+  const punkt = (await ladeMittelpunkte()).get(nr);
+  if (!punkt) return;
+  const sichtbar = karte.getBounds();
+  const oben = karte.unproject([0, 0]).lat;
+  const untenSichtbar = karte.unproject([0, karte.getContainer().clientHeight * 0.55]).lat;
+  if (sichtbar.contains(punkt) && punkt[1] < oben && punkt[1] > untenSichtbar) return;
+  const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ziel = { center: punkt, zoom: Math.max(karte.getZoom(), 13), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
+  if (ruhig) karte.jumpTo(ziel);
+  else karte.easeTo({ ...ziel, duration: 600 });
+}
+
 export function Karte(props: { gewaehlt: Gebiet | null; onWaehlen: (gebiet: Gebiet) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const karteRef = useRef<MapLibreMap | null>(null);
@@ -151,7 +174,7 @@ export function Karte(props: { gewaehlt: Gebiet | null; onWaehlen: (gebiet: Gebi
     };
   }, []);
 
-  // Highlight the chosen district.
+  // Highlight the chosen district and bring it into view if it is off screen.
   useEffect(() => {
     const karte = karteRef.current;
     const neu = props.gewaehlt?.nr ?? null;
@@ -161,6 +184,7 @@ export function Karte(props: { gewaehlt: Gebiet | null; onWaehlen: (gebiet: Gebi
     if (alt) karte.setFeatureState({ source: "stadtteile", id: alt }, { gewaehlt: false });
     if (neu) karte.setFeatureState({ source: "stadtteile", id: neu }, { gewaehlt: true });
     karte.setFilter("stadtteil-gewaehlt", ["==", ["get", "nr"], neu ?? ""]);
+    if (neu) void zeigeGebiet(karte, neu);
   }, [props.gewaehlt?.nr]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehlt?.name ?? "Köln")} />;

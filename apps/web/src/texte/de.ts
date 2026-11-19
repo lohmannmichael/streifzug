@@ -5,6 +5,8 @@ export const de = {
   karte: {
     oberGebiet: (bezirk: string) => `${bezirk}, Köln`,
     prozentLabel: "der Straßen entdeckt",
+    kmZeile: (gesehen: string, gesamt: string) => `${gesehen} von ${gesamt} entdeckt`,
+    kmLaedt: "Straßen werden gezählt …",
     leer: "Noch keine Straße markiert. Jede Straße, die du gehst oder fährst, wird hier gelb.",
     losziehen: "Losziehen",
     bald: "Das Aufzeichnen kommt im nächsten Bauschritt.",
@@ -13,6 +15,10 @@ export const de = {
   },
   gebiete: {
     titel: "Gebiete",
+    koeln: "Köln",
+    stadtZeile: (gesamt: string, anzahl: number) => `${gesamt} Straßen in ${anzahl} Stadtteilen`,
+    zeile: (gesamt: string) => `0 % von ${gesamt}`,
+    stand: (datum: string) => `Straßendaten: OpenStreetMap, Stand ${datum}`,
     leer: "Hier sammelst du deine Stadtteile, Bezirke und Städte. Jeder bekommt eine Karte mit Prozent und Kilometern, sobald du losgezogen bist.",
   },
   streifzuege: {
