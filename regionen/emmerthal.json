@@ -1,0 +1,13 @@
+{
+  "id": "emmerthal",
+  "name": "Emmerthal",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Emmerthal",
+    "punkt": [
+      9.38438,
+      52.04842
+    ]
+  },
+  "tiefe": "auto"
+}

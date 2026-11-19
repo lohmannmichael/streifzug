@@ -146,7 +146,8 @@ async function main() {
     gebiete: Object.fromEntries(
       gebiete.map((g) => {
         const s = summen.get(g.id)!;
-        return [g.id, { name: g.name, rang: g.rang, eltern: g.eltern, strasse_m: Math.round(s.strasse_m), weg_m: Math.round(s.weg_m) }];
+        // The root shows the display name from the config (e.g. "New York City" instead of "New York").
+        return [g.id, { name: g.rang === 0 ? konfig.name : g.name, rang: g.rang, eltern: g.eltern, strasse_m: Math.round(s.strasse_m), weg_m: Math.round(s.weg_m) }];
       }),
     ),
   };

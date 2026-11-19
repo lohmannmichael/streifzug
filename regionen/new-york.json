@@ -1,0 +1,14 @@
+{
+  "id": "new-york",
+  "name": "New York City",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "New York",
+    "punkt": [
+      -74.00602,
+      40.71273
+    ]
+  },
+  "tiefe": 1,
+  "hinweis": "Nur Boroughs: Viertel-Grenzen in OpenStreetMap/Overture sind für NYC ein Mischmasch (Community Boards, Historic Districts). Später offizielle Neighborhood Tabulation Areas der Stadt."
+}

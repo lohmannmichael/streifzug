@@ -28,7 +28,7 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 ## Befehle
 
 - `npm install` einmal, dann `npm run dev` (Web-App lokal), `npm test` (Tests), `npm run check` (Typen, Tests, Build wie in der GitHub-Prüfung)
-- `npm run region -- <id>`: Region bauen oder neu berechnen (Konfiguration `regionen/<id>.json`). Ablauf, Prüfung und Grenzen: Skill `region-hinzufuegen`
+- `npm run region -- "<Ortsname>"`: neuen Ort finden und aufnehmen; `npm run region -- <id>`: bestehende Region neu berechnen. Ablauf, Prüfung und Grenzen: Skill `region-hinzufuegen`
 
 ## Regeln
 

@@ -23,8 +23,6 @@ from shapely.geometry import Point, mapping  # noqa: E402
 RELEASE = "2026-11-18.0"
 # Small named places (squares, single buildings) are not areas you explore street by street.
 SKIP_SUBTYPES = {"microhood"}
-# When areas of the same depth overlap, keep the one most likely to be an official district.
-PREFERENCE = ["county", "localadmin", "locality", "borough", "macrohood", "neighborhood"]
 
 
 def name_of(names, sprache):
@@ -43,7 +41,8 @@ def main():
     config_path, out_path = sys.argv[1], sys.argv[2]
     config = json.load(open(config_path, encoding="utf-8"))
     wurzel = config["wurzel"]
-    tiefe = int(config.get("tiefe", 2))
+    # "auto": down to two levels below the root, as far as areas exist there.
+    tiefe = 2 if config.get("tiefe", "auto") == "auto" else int(config["tiefe"])
     sprache = config.get("sprache", "de")
     release = config.get("overture", RELEASE)
 
@@ -99,18 +98,19 @@ def main():
         if row["division_id"] in wanted and row["is_land"] and row["division_id"] not in found:
             found[row["division_id"]] = (row, wkb.loads(row["geometry"]))
 
-    # 4. Same depth must not overlap: a smaller area inside a sibling of the same depth is dropped.
+    # 4. Same depth must not overlap: when one area lies inside another of the same depth (either way),
+    #    only the larger one stays, so every street belongs to one area per level.
     keep = {}
     for did, (row, geom) in found.items():
         keep.setdefault(depth_of[did], []).append((did, row, geom))
     features = []
     counts = {}
     for depth, items in sorted(keep.items()):
-        items.sort(key=lambda x: (PREFERENCE.index(x[1]["subtype"]) if x[1]["subtype"] in PREFERENCE else 99, -x[2].area))
+        items.sort(key=lambda x: -x[2].area)
         chosen = []
         for did, row, geom in items:
             p = geom.representative_point()
-            if any(g.contains(p) for _, _, g in chosen):
+            if any(g.contains(p) or geom.contains(g.representative_point()) for _, _, g in chosen):
                 continue
             chosen.append((did, row, geom))
         for did, row, geom in chosen:

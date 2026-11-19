@@ -1,0 +1,5 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[9.39674,52.01439]},"properties":{"id":"19add1e9-c2e1-41df-826d-15f0fef3c5fb","name":"Emmerthal","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[9.40832,52.02478]},"properties":{"id":"7278178f-2668-492f-a385-83cc6507db69","name":"Grohnde","rang":1,"eltern":"19add1e9-c2e1-41df-826d-15f0fef3c5fb","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[9.43169,52.03691]},"properties":{"id":"e6307f3b-d52d-4ca8-aef4-99e0ff0fc46e","name":"Latferde","rang":1,"eltern":"19add1e9-c2e1-41df-826d-15f0fef3c5fb","art":"neighborhood"}}
+]}

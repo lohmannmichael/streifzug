@@ -1,0 +1,8 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.91026,40.65292]},"properties":{"id":"a4c73b33-ce85-45ac-99e5-44abe35b6732","name":"New York","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.79367,40.68719]},"properties":{"id":"b69e2f82-61d4-41dc-bf8f-cde92ffb7911","name":"Queens","rang":1,"eltern":"a4c73b33-ce85-45ac-99e5-44abe35b6732","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.1387,40.56195]},"properties":{"id":"5a4eda04-f261-469a-8313-8affcd200012","name":"Staten Island","rang":1,"eltern":"a4c73b33-ce85-45ac-99e5-44abe35b6732","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.95028,40.63432]},"properties":{"id":"d6bbeae3-72bd-402d-8374-db153a63597b","name":"Brooklyn","rang":1,"eltern":"a4c73b33-ce85-45ac-99e5-44abe35b6732","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.85322,40.84911]},"properties":{"id":"3cf5ebc1-6c96-4e39-a0eb-b8de27b57689","name":"Bronx","rang":1,"eltern":"a4c73b33-ce85-45ac-99e5-44abe35b6732","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.96992,40.77442]},"properties":{"id":"84d8a97e-4624-43a4-9c7f-5c853ac90703","name":"Manhattan","rang":1,"eltern":"a4c73b33-ce85-45ac-99e5-44abe35b6732","art":"locality"}}
+]}

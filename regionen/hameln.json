@@ -1,0 +1,13 @@
+{
+  "id": "hameln",
+  "name": "Hameln",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Hameln",
+    "punkt": [
+      9.3564,
+      52.10412
+    ]
+  },
+  "tiefe": "auto"
+}

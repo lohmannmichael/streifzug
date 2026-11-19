@@ -1,5 +1,17 @@
 [
  {
+  "id": "emmerthal",
+  "name": "Emmerthal",
+  "wurzel": "19add1e9-c2e1-41df-826d-15f0fef3c5fb",
+  "bbox": [
+   9.2905,
+   51.9709,
+   9.5392,
+   52.081
+  ],
+  "stand": "2026-11-19"
+ },
+ {
   "id": "freising",
   "name": "Freising",
   "wurzel": "f3936e7e-93ce-432b-940b-89b658abe42b",
@@ -12,6 +24,18 @@
   "stand": "2026-11-19"
  },
  {
+  "id": "hameln",
+  "name": "Hameln",
+  "wurzel": "6f1ac06d-fcb3-4b04-8560-05d3f2a46737",
+  "bbox": [
+   9.2592,
+   52.0453,
+   9.4618,
+   52.1676
+  ],
+  "stand": "2026-11-19"
+ },
+ {
   "id": "koeln",
   "name": "Köln",
   "wurzel": "17375791-94e6-49fb-8f4a-bfd3196ccc77",
@@ -20,6 +44,18 @@
    50.8304,
    7.162,
    51.085
+  ],
+  "stand": "2026-11-19"
+ },
+ {
+  "id": "new-york",
+  "name": "New York City",
+  "wurzel": "a4c73b33-ce85-45ac-99e5-44abe35b6732",
+  "bbox": [
+   -74.2588,
+   40.4766,
+   -73.7002,
+   40.9176
   ],
   "stand": "2026-11-19"
  }

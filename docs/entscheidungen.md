@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 19.11.2026: Orte per Name hinzufügen; Hameln, Emmerthal, New York City
+- `npm run region -- "<Name>"` sucht den Ort in Overture (Stadt/Gemeinde bevorzugt, dann Einwohnerzahl, ähnliche Schreibweisen), schreibt die Konfiguration und baut; Tiefe automatisch (bis 2 Ebenen)
+- Gleiche Ebene darf sich nicht überlappen: liegt ein Gebiet in einem anderen (in beide Richtungen geprüft), bleibt das größere. Köln dadurch exakt 86 Stadtteile (vorher 87 mit Grenzort Horbell)
+- Hameln: Kernstadt + 10 Ortsteile, 12 Viertel darunter, 332,7 km Straßen
+- Emmerthal (Eingabe „Emmertal“ automatisch korrigiert): 163,7 km, nur 2 Ortsteile mit Grenzen in OSM (Grohnde, Latferde)
+- New York City: 5 Boroughs, 9.614,7 km Straßen (Stadt nennt ca. 6.000–6.300 Meilen ≈ 9.700–10.100 km). Viertel-Ebene bewusst weggelassen (OSM/Overture dort Mischmasch aus Community Boards und Historic Districts); später offizielle Neighborhood Tabulation Areas
+
 ## 19.11.2026: Rohdaten vorerst in Supabase Storage statt R2
 - R2 ließ sich im richtigen Cloudflare-Konto nicht einfach einschalten (Michi hat zwei Konten; R2 wurde im leeren Zweitkonto aktiviert, das Einschalten geht nur im Dashboard). Statt dieser Hürde: privater Bucket `spuren` in Supabase Storage (EU, Irland), Ordner je Nutzer:in `spuren/<user_id>/<track_id>.json.gz`
 - Zugriff nur auf den eigenen Ordner (Policies in `supabase/migrations/20261119210000_storage_spuren.sql`), mit zwei Testkonten geprüft. Vorteil: die App lädt direkt hoch, kein eigener Server-Code nötig
