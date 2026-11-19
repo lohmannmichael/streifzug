@@ -62,7 +62,7 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 ### Phase 0: Fundament (1 Sitzung)
 - Repo `streifzug`, Ordner wie in Abschnitt 4, Prüfungen bei jedem Push (Lint, Tests, Build)
 - Supabase-Projekt (EU, Frankfurt), Anmeldung per Mail-Link, Zugriffsregeln je Nutzer:in (Row Level Security)
-- Web-App auf Cloudflare Pages, R2-Speicher für Straßen-Kacheln und Rohdaten (in deinem bestehenden Cloudflare-Konto)
+- Web-App auf Cloudflare Pages; Rohdaten zunächst in Supabase Storage (EU), später R2
 - **DoD:** leere App ist online und auf dem iPhone-Homescreen; Anmeldung klappt; automatisch veröffentlicht
 - **Stand 19.11.2026:** online unter streifzug.pages.dev, anonyme Anmeldung und Datenbank laufen, Einstellungen werden gesichert. Offen: R2 einschalten (Michi), Test auf dem iPhone
 
