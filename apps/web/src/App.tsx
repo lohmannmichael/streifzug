@@ -62,6 +62,7 @@ export function App() {
             onWaehlen={waehlen}
             spur={aufzeichnung.fixes}
             entdeckt={fortschritt?.stuecke ?? []}
+            prozente={prozenteJeGebiet(daten, fortschritt, einstellungen.wegeZaehlen)}
             folgen={aufzeichnung.aktiv}
             position={position}
             zentrieren={zentrieren}
@@ -103,6 +104,16 @@ export function App() {
       </nav>
     </div>
   );
+}
+
+function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null, wege: boolean): Map<string, number> {
+  const m = new Map<string, number>();
+  if (!daten || !f) return m;
+  for (const [id, gesehen] of f.proGebiet) {
+    const g = daten.gebiete.get(id);
+    if (g) m.set(id, prozent(zaehlendeMeter(gesehen, wege), zaehlendeMeter(g, wege)));
+  }
+  return m;
 }
 
 function ReiterKnopf(props: { aktiv: boolean; onClick: () => void; icon: ReactNode; label: string }) {

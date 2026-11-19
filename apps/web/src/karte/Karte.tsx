@@ -62,7 +62,16 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
         type: "fill",
         source: `gebiete-${region.id}`,
         filter: ["==", ["get", "blatt"], true],
-        paint: { "fill-color": linie, "fill-opacity": ["case", ["boolean", ["feature-state", "gewaehlt"], false], 0.08, 0] },
+        // Zoomed out, areas glow in highlighter yellow by how much is discovered; zoomed in, single streets take over.
+        paint: {
+          // Areas with progress glow yellow (also when chosen); a chosen area without progress gets a light ink tint.
+          "fill-color": ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], "#ffe14a", linie],
+          "fill-opacity": [
+            "interpolate", ["linear"], ["zoom"],
+            11, ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], ["min", 0.65, ["+", 0.15, ["*", 0.005, ["coalesce", ["feature-state", "prozent"], 0]]]], ["boolean", ["feature-state", "gewaehlt"], false], 0.08, 0],
+            15, ["case", ["boolean", ["feature-state", "gewaehlt"], false], 0.06, 0],
+          ],
+        },
       },
       davor,
     );
@@ -141,6 +150,8 @@ export interface KartenProps {
   spur: Fix[];
   /** Street pieces already seen (all outings), drawn in highlighter yellow. */
   entdeckt: Piece[];
+  /** Discovered share (0–100) per area id, for coloring areas when zoomed out. */
+  prozente: Map<string, number>;
   folgen: boolean;
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
@@ -273,6 +284,17 @@ export function Karte(props: KartenProps) {
       features: props.entdeckt.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: p.coords } })),
     });
   }, [props.entdeckt]);
+
+  // Area coloring by discovered share.
+  useEffect(() => {
+    const karte = karteRef.current;
+    const daten = props.daten;
+    if (!karte || !daten) return;
+    for (const [id, prozent] of props.prozente) {
+      const regionId = daten.gebiete.get(id)?.regionId;
+      if (regionId && karte.getSource(`gebiete-${regionId}`)) karte.setFeatureState({ source: `gebiete-${regionId}`, id }, { prozent });
+    }
+  }, [props.prozente, props.daten]);
 
   // Location button: move to the own position.
   useEffect(() => {
