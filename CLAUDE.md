@@ -10,6 +10,7 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 - Geschäftsseite: `docs/BUSINESSPLAN.md`
 - Entscheidungen: `docs/entscheidungen.md` (neue Einträge oben, mit Datum)
 - Aktueller Stand und nächste Schritte: `docs/STAND.md` (zu Beginn jeder Sitzung lesen, am Ende aktualisieren); Lizenzen: `docs/lizenzen.md`
+- Ideenliste: `docs/IDEEN.md` (neue Ideen von Michi dort eintragen, mit Datum)
 
 ## Stack
 

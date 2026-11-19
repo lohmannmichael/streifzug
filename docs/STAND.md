@@ -14,7 +14,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 - Nebel-Karte / Gebiete nach Prozent einfärben (semantischer Zoom)
 - Teilen-Bild mit Privatzone
 - Belohnungsmoment nach einer Runde, „weißer Fleck in der Nähe“
-- Neue Idee Michi: Sehenswürdigkeiten als Checkliste (Urlaub), Konzept in docs/idee-sehenswuerdigkeiten.md; Vorschlag: MVP direkt nach Phase 1
+- Ideenliste: docs/IDEEN.md (u. a. Sehenswürdigkeiten-Checkliste, Konzept in docs/idee-sehenswuerdigkeiten.md)
 - Danach Phase 2 (Import GPX/Apple Health), Phase 3 (iPhone-App mit Hintergrund-Aufzeichnung)
 
 ## Wichtig zu wissen

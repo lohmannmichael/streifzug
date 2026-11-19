@@ -1,0 +1,19 @@
+# Ideenliste (Backlog)
+
+Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. Beim Einplanen in `docs/PLAN.md` übernehmen und hier als „eingeplant“ markieren.
+
+| Datum | Idee | Details | Vorschlag Zeitpunkt |
+|---|---|---|---|
+| 20.11.2026 | Sehenswürdigkeiten als Checkliste (Urlaub) | automatisch abhaken bei 75 m, manuell abhaken, Top 10/25 je Stadt nach Bekanntheit; `docs/idee-sehenswuerdigkeiten.md` | MVP direkt nach Phase 1 |
+| 19.11.2026 | Echte Viertel für US-Städte | offizielle Neighborhood Tabulation Areas statt OSM-Mischmasch (NYC) | mit Start USA |
+| 19.11.2026 | Automatisch neue Städte anlegen | beim Betreten einer unbekannten Stadt Region im Hintergrund bauen (Job, R2) | Phase „Ausbau“ |
+| 19.11.2026 | Stadt gegen Stadt (Köln vs. Düsseldorf) | gemeinsamer Fortschrittsbalken je Stadt, Presseanlass | Phase 4 |
+| 19.11.2026 | Veedel-Meister:in | Krone für höchsten Prozentwert je Stadtteil | Phase 4 |
+| 19.11.2026 | Jahresrückblick und Zeitraffer-Video | „Dein Streifzug-Jahr“, Nebel lichtet sich in 10 s | Phase 4 |
+| 19.11.2026 | Erkunden zu zweit / Familie | gemeinsame Karte, Einladung mit Pro-Monat | Phase 4 |
+| 19.11.2026 | Anstecker je Stadtteil, Poster „Mein Köln“ | Merch auf Bestellung, Urkunde bei 100 % | nach Start |
+| 19.11.2026 | Team-Challenges für Firmen (BGM) | B2B-Knopf „Bring Streifzug in dein Unternehmen“ | nach Start, wenn Firmen fragen |
+| 19.11.2026 | Marketing-Agents | Stadtteil-Seiten für Google, Store-Texte in 10 Sprachen, Content- und Kennzahlen-Agent | Phase 5b |
+| 19.11.2026 | Hunde-Zielgruppe | Hundeschulen, „neue Gassi-Runden“ | Marketing |
+
+Mehr zu Marketing und Business: `docs/BUSINESSPLAN.md`.
