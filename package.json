@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "mapshaper": "^0.8.5",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"
   },

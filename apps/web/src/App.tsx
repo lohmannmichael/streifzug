@@ -1,16 +1,20 @@
 import { useState, type ReactNode } from "react";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { useEinstellungen } from "./einstellungen";
-import { Karte } from "./karte/Karte";
+import { Karte, type Gebiet } from "./karte/Karte";
 import { t } from "./texte/de";
 import { IconGebiete, IconIch, IconKarte, IconStreifzuege, IconZurueck } from "./ui/Icons";
 
 type Reiter = "karte" | "gebiete" | "streifzuege";
 
+// Until the location is used, the map starts at home.
+const START_GEBIET: Gebiet = { nr: "307", name: "Weiden", bezirk: "Lindenthal" };
+
 export function App() {
   const sitzung = useSitzung();
   const [reiter, setReiter] = useState<Reiter>("karte");
   const [profilOffen, setProfilOffen] = useState(false);
+  const [gebiet, setGebiet] = useState<Gebiet>(START_GEBIET);
 
   if (profilOffen) return <Profil sitzung={sitzung} schliessen={() => setProfilOffen(false)} />;
 
@@ -18,11 +22,11 @@ export function App() {
     <div className="app">
       <main className="inhalt">
         <div className="ansicht" hidden={reiter !== "karte"}>
-          <Karte />
+          <Karte gewaehlt={gebiet} onWaehlen={setGebiet} />
           <button type="button" className="profil-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
             <IconIch />
           </button>
-          <KartenBlatt />
+          <KartenBlatt gebiet={gebiet} />
         </div>
         {reiter === "gebiete" && <LeereSeite titel={t.gebiete.titel} text={t.gebiete.leer} />}
         {reiter === "streifzuege" && <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />}
@@ -45,15 +49,15 @@ function ReiterKnopf(props: { aktiv: boolean; onClick: () => void; icon: ReactNo
   );
 }
 
-function KartenBlatt() {
+function KartenBlatt(props: { gebiet: Gebiet }) {
   const [hinweis, setHinweis] = useState(false);
   return (
     <section className="blatt" aria-labelledby="gebiet-name">
       <div className="griff" aria-hidden="true" />
       <div className="blatt-kopf">
         <div>
-          <h1 id="gebiet-name" className="gebiet">{t.karte.gebiet}</h1>
-          <p className="ober">{t.karte.oberGebiet}</p>
+          <h1 id="gebiet-name" className="gebiet">{props.gebiet.name}</h1>
+          <p className="ober">{t.karte.oberGebiet(props.gebiet.bezirk)}</p>
         </div>
         <p className="prozent" aria-label={`0 Prozent ${t.karte.prozentLabel}`}>
           <span className="zahl"><span className="marker">0</span><span className="einheit">%</span></span>

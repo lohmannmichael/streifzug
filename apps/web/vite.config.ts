@@ -25,7 +25,7 @@ export default defineConfig({
       },
       workbox: {
         // The map style, tiles and street data come from other hosts and are not precached.
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}"],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
     }),

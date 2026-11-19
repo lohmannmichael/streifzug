@@ -3,14 +3,13 @@ export const de = {
   app: { name: "Streifzug" },
   tabs: { karte: "Karte", gebiete: "Gebiete", streifzuege: "Streifzüge" },
   karte: {
-    gebiet: "Weiden",
-    oberGebiet: "Lindenthal, Köln",
+    oberGebiet: (bezirk: string) => `${bezirk}, Köln`,
     prozentLabel: "der Straßen entdeckt",
     leer: "Noch keine Straße markiert. Jede Straße, die du gehst oder fährst, wird hier gelb.",
     losziehen: "Losziehen",
     bald: "Das Aufzeichnen kommt im nächsten Bauschritt.",
     profil: "Profil und Einstellungen",
-    kartenRegion: "Karte von Weiden. Noch keine Straße entdeckt.",
+    kartenRegion: (gebiet: string) => `Karte, ausgewählt: ${gebiet}. Noch keine Straße entdeckt. Stadtteile lassen sich durch Antippen wählen.`,
   },
   gebiete: {
     titel: "Gebiete",
@@ -34,7 +33,7 @@ export const de = {
     kontoLaedt: "Verbinde …",
     daten: "Deine Daten",
     datenHinweis: "Exportieren und Löschen kommen mit dem Konto.",
-    quelle: "Kartendaten © OpenStreetMap-Mitwirkende",
+    quelle: "Kartendaten © OpenStreetMap-Mitwirkende. Stadtteilgrenzen: Stadt Köln, Offene Daten (CC BY).",
   },
 } as const;
 
