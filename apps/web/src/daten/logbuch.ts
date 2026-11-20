@@ -57,7 +57,10 @@ export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege:
   const roh = new Map<string, { umgebung: Piece[]; gesehen: Set<string>; nachId: Map<string, Piece> }>();
   for (const s of chronologisch) {
     const umgebung = (await Promise.all(kachelnMitRand(s.fixes).map((k) => stueckeDerKachel({ z: TILE_ZOOM, ...k })))).flat();
-    roh.set(s.id, { umgebung, gesehen: seenPieceIds(umgebung, s.fixes), nachId: new Map(umgebung.map((p) => [p.id, p])) });
+    const nachId = new Map(umgebung.map((p) => [p.id, p]));
+    // Only what counts (streets; paths with the switch) is "seen" and yellow in the logbook.
+    const gesehen = new Set([...seenPieceIds(umgebung, s.fixes)].filter((id) => nachId.get(id)!.kind === "street" || wege));
+    roh.set(s.id, { umgebung, gesehen, nachId });
   }
   const neuJe = newPerOuting(chronologisch.filter(zaehlt).map((s) => ({ id: s.id, seen: roh.get(s.id)!.gesehen })));
 

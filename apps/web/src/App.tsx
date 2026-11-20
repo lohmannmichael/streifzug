@@ -49,8 +49,13 @@ export function App() {
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
-  const neuUnterwegs = aufzeichnung.aktiv && fortschritt ? fortschritt.stuecke.filter((p) => !vorherIds.has(p.id)) : [];
-  const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + (p.kind === "street" || einstellungen.wegeZaehlen ? p.lengthM * p.weight : 0), 0);
+  // Only what counts turns yellow: streets, and paths only with the paths switch (never driveways, see rules.ts).
+  const zaehlendeStuecke = useMemo(
+    () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street" || einstellungen.wegeZaehlen),
+    [fortschritt, einstellungen.wegeZaehlen],
+  );
+  const neuUnterwegs = aufzeichnung.aktiv ? zaehlendeStuecke.filter((p) => !vorherIds.has(p.id)) : [];
+  const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + p.lengthM * p.weight, 0);
   const neueStrassen = useNeueStrassen(neuUnterwegs);
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
@@ -111,7 +116,7 @@ export function App() {
             onWaehlen={(id, sprung) => waehlen(id, sprung)}
             springen={springen.current}
             spur={aufzeichnung.fixes}
-            entdeckt={fortschritt?.stuecke ?? []}
+            entdeckt={zaehlendeStuecke}
             prozente={prozenteJeGebiet(daten, fortschritt, einstellungen.wegeZaehlen)}
             folgen={aufzeichnung.aktiv}
             zeichnen={aufzeichnung.aktiv}

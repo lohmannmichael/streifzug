@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 20.11.2026: Gelb nur für das, was zählt
+- Michi: „Nicht jede Hofeinfahrt soll zählen, nur Straßen.“ Befund (Kachel Weiden): Einfahrten, Parkplatzgassen und Zufahrten (`highway=service`) zählten schon nie. Gelb gezeichnet wurden aber alle gegangenen Fuß- und Feldwege (`footway`, `path`; in Weiden rund 140 kurze Stücke unter 60 m, oft in Höfe), obwohl sie ohne den Schalter „Fuß- und Radwege mitzählen“ nicht in die Prozente eingehen
+- Jetzt gilt überall: gelb wird nur, was zählt (Straßen; Wege nur mit Schalter). Gilt für Karte, Nebel, Zeichen-Moment, Zähler unterwegs und Logbuch
+
 ## 20.11.2026: Verorten und Gebiete-Seite nach Michis Wunsch
 - Standort-Knopf: Karte zum Standort, Blatt zeigt das Viertel an dieser Stelle (`gebietAn` in `daten/fortschritt.ts`, Punkt-im-Polygon auf der kleinsten Ebene). Die Karte springt dabei nicht zur Viertel-Mitte. Ist der Standort schon erlaubt (Permissions-API), passiert das beim Öffnen von selbst, ohne Nachfrage
 - Gebiete: nur Städte, Bezirke und Viertel mit Entdecktem, als aufklappbare Listen (`details`/`summary`, nativ und barrierearm), je Ebene meiste Prozent zuerst; das gewählte Viertel und seine Eltern sind aufgeklappt. Die Sortierungen aus Design-Paket 2 entfallen, weil nur noch Freigeschaltetes erscheint
