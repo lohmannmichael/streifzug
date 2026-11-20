@@ -4,10 +4,12 @@ import { supabase, type Sitzung } from "./daten/supabase";
 export interface Einstellungen {
   wegeZaehlen: boolean;
   autoZaehlen: boolean;
+  /** Fog over undiscovered map parts; only on this device. */
+  nebel: boolean;
 }
 
 const KEY = "streifzug.einstellungen";
-const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false };
+const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true };
 
 function lesen(): Einstellungen {
   try {
@@ -35,7 +37,7 @@ export function useEinstellungen(sitzung: Sitzung) {
       .maybeSingle()
       .then(({ data }) => {
         if (!aktiv || !data) return;
-        const neu = { wegeZaehlen: data.count_paths, autoZaehlen: data.count_car };
+        const neu = { ...aktuell.current, wegeZaehlen: data.count_paths, autoZaehlen: data.count_car };
         localStorage.setItem(KEY, JSON.stringify(neu));
         setWerte(neu);
       });

@@ -1,6 +1,7 @@
 import {
   AttributionControl,
   Map as MapLibreMap,
+  Marker,
   setWorkerUrl,
   type FilterSpecification,
   type MapLayerMouseEvent,
@@ -8,15 +9,22 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import type { Fix, Piece } from "@streifzug/core";
+import type { Fix, LonLat, Piece } from "@streifzug/core";
 import { useEffect, useRef } from "react";
-import type { Regionen } from "../daten/regionen";
+import { alsStrecke, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
+import { nebelAnlegen, type Nebel } from "./nebel";
 
 setWorkerUrl(workerUrl);
 
 const START: [number, number] = [6.8285, 50.9395];
 const TINTE = "#1e2a4a";
+const MARKER = "#ffe14a";
+// Same width for seen streets and the drawing moment.
+const MARKER_BREITE = ["interpolate", ["linear"], ["zoom"], 11, 3, 13, 5, 16, 9] as const;
+// Duration of the highlighter stroke over a newly seen street, and of the glow afterwards.
+const ZEICHNEN_MS = 700;
+const GLANZ_MS = 1400;
 const SCHRIFT = ["Noto Sans Regular"];
 
 function stilAdresse(dunkel: boolean) {
@@ -48,7 +56,8 @@ function ladeRegion(id: string, daten: Regionen) {
 async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regionen, gewaehlt: string | null) {
   const linie = dunkel ? "#aab3c5" : TINTE;
   const halo = dunkel ? "#12161c" : "#ffffff";
-  const davor = karte.getLayer("highway-name-path") ? "highway-name-path" : undefined;
+  // Area layers stay below street names and always below the yellow streets (layer names differ between styles).
+  const davor = karte.getLayer("highway-name-path") ? "highway-name-path" : karte.getLayer("entdeckt") ? "entdeckt" : undefined;
 
   for (const region of daten.liste) {
     const { gebiete, namen } = await ladeRegion(region.id, daten);
@@ -135,9 +144,8 @@ async function zeigeGebiet(karte: MapLibreMap, daten: Regionen, id: string) {
   const oben = karte.unproject([0, 0]).lat;
   const untenSichtbar = karte.unproject([0, karte.getContainer().clientHeight * 0.55]).lat;
   if (karte.getBounds().contains(punkt) && punkt[1] < oben && punkt[1] > untenSichtbar) return;
-  const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const ziel = { center: punkt, zoom: Math.max(karte.getZoom(), 13), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
-  if (ruhig) karte.jumpTo(ziel);
+  if (ruhig()) karte.jumpTo(ziel);
   else karte.easeTo({ ...ziel, duration: 600 });
 }
 
@@ -153,6 +161,12 @@ export interface KartenProps {
   /** Discovered share (0–100) per area id, for coloring areas when zoomed out. */
   prozente: Map<string, number>;
   folgen: boolean;
+  /** While recording: newly seen streets are drawn with a highlighter stroke, "+25 m" pops up. */
+  zeichnen: boolean;
+  /** Whether paths count (for the "+25 m" number). */
+  wegeZaehlen: boolean;
+  /** Fog over undiscovered map parts. */
+  nebel: boolean;
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
   zentrieren: number;
@@ -164,13 +178,30 @@ const LEER = { type: "FeatureCollection" as const, features: [] };
 function eigenesZeichnen(karte: MapLibreMap) {
   if (karte.getSource("spur")) return;
   karte.addSource("entdeckt", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffe14a", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 16, 9], "line-opacity": 0.9 } });
+  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 0.9 } });
+  // Drawing moment: a soft glow and the highlighter stroke running along the new street (line-progress needs lineMetrics).
+  karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
+  karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
+  karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE as never, "line-opacity": 0.9, "line-gradient": strich(0) } });
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
   // The live track is a thin ink line; what it unlocks turns yellow underneath.
   karte.addLayer({ id: "spur-kern", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": TINTE, "line-width": 2, "line-dasharray": [2, 1.5] } });
   karte.addLayer({ id: "ich-hof", type: "circle", source: "ich", paint: { "circle-radius": 14, "circle-color": "#2b6ef2", "circle-opacity": 0.18 } });
   karte.addLayer({ id: "ich", type: "circle", source: "ich", paint: { "circle-radius": 7, "circle-color": "#2b6ef2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+}
+
+/** Highlighter stroke up to share p (0–1) of each line. */
+function strich(p: number) {
+  return ["step", ["line-progress"], MARKER, Math.min(1, Math.max(0.001, p)), "rgba(255, 225, 74, 0)"] as never;
+}
+
+function linienSammlung(stuecke: readonly Piece[]) {
+  return { type: "FeatureCollection", features: stuecke.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: p.coords } })) };
+}
+
+function ruhig() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function setzeDaten(karte: MapLibreMap, quelle: string, data: unknown) {
@@ -181,12 +212,21 @@ function setzeDaten(karte: MapLibreMap, quelle: string, data: unknown) {
 export function Karte(props: KartenProps) {
   const box = useRef<HTMLDivElement>(null);
   const karteRef = useRef<MapLibreMap | null>(null);
+  const nebelRef = useRef<Nebel | null>(null);
   const gewaehltRef = useRef(props.gewaehlt);
   const datenRef = useRef(props.daten);
   datenRef.current = props.daten;
   const waehlenRef = useRef(props.onWaehlen);
   waehlenRef.current = props.onWaehlen;
+  // Latest seen streets and shares, so they can be drawn again whenever the map style (re)loads.
+  const entdecktRef = useRef(props.entdeckt);
+  entdecktRef.current = props.entdeckt;
+  const prozenteRef = useRef(props.prozente);
+  prozenteRef.current = props.prozente;
   const dunkelRef = useRef(false);
+  // Drawing moment: ids already shown, and the running animation.
+  const bekannt = useRef<Set<string> | null>(null);
+  const animation = useRef<{ bild: number; ende: () => void } | null>(null);
 
   useEffect(() => {
     if (!box.current) return;
@@ -207,11 +247,18 @@ export function Karte(props: KartenProps) {
     karte.addControl(new AttributionControl({ compact: true }), "top-left");
     // Credits start folded to the (i) button; tapping it shows them (allowed by the OSM attribution guidelines).
     karte.once("load", () => box.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
+    const nebel = nebelAnlegen(karte);
+    nebel.dunkel(dunkel.matches);
+    nebelRef.current = nebel;
 
-    // Runs after every style load (also after switching light/dark).
+    // Runs after every style load (also after switching light/dark). Seen streets and area shares
+    // may have arrived before the style; draw them now so nothing gets lost.
     karte.on("style.load", () => {
+      animation.current?.ende();
       eigenesZeichnen(karte);
-      if (datenRef.current) void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current);
+      setzeDaten(karte, "entdeckt", linienSammlung(entdecktRef.current));
+      if (datenRef.current)
+        void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
     });
     karte.on("click", (e: MapLayerMouseEvent) => {
       const ebenen = (datenRef.current?.liste ?? []).map((r) => `flaeche-${r.id}`).filter((l) => karte.getLayer(l));
@@ -222,11 +269,15 @@ export function Karte(props: KartenProps) {
 
     const wechsel = (e: MediaQueryListEvent) => {
       dunkelRef.current = e.matches;
+      nebel.dunkel(e.matches);
       karte.setStyle(stilAdresse(e.matches));
     };
     dunkel.addEventListener("change", wechsel);
     return () => {
       dunkel.removeEventListener("change", wechsel);
+      animation.current?.ende();
+      nebel.entfernen();
+      nebelRef.current = null;
       karte.remove();
       karteRef.current = null;
     };
@@ -235,7 +286,8 @@ export function Karte(props: KartenProps) {
   // Draw regions once their data has arrived.
   useEffect(() => {
     const karte = karteRef.current;
-    if (karte && props.daten && karte.isStyleLoaded()) void gebieteZeichnen(karte, dunkelRef.current, props.daten, gewaehltRef.current);
+    if (karte && props.daten && karte.isStyleLoaded())
+      void gebieteZeichnen(karte, dunkelRef.current, props.daten, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
   }, [props.daten]);
 
   // Highlight the chosen area and bring it into view if it is off screen.
@@ -264,10 +316,9 @@ export function Karte(props: KartenProps) {
     const hier: [number, number] | null = letzter ? [letzter.lon, letzter.lat] : props.position;
     setzeDaten(karte, "ich", hier ? { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: hier } } : LEER);
     if (!props.folgen || !letzter) return;
-    const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // While out and about, stay close enough to see single streets turn yellow.
     const ziel = { center: hier!, zoom: Math.max(karte.getZoom(), 16), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
-    if (ruhig) karte.jumpTo(ziel);
+    if (ruhig()) karte.jumpTo(ziel);
     else karte.easeTo({ ...ziel, duration: 500 });
     karte.once("moveend", () => {
       const ebenen = (datenRef.current?.liste ?? []).map((r) => `flaeche-${r.id}`).filter((l) => karte.getLayer(l));
@@ -277,36 +328,124 @@ export function Karte(props: KartenProps) {
     });
   }, [props.spur, props.folgen, props.position]);
 
-  // Seen streets in yellow.
+  // Fog: clear around seen streets, the live track and the own position.
+  useEffect(() => {
+    const nebel = nebelRef.current;
+    if (!nebel) return;
+    nebel.an(props.nebel);
+    const letzter = props.spur.at(-1);
+    const punkt: LonLat | null = letzter ? [letzter.lon, letzter.lat] : props.position;
+    nebel.setzen([...props.entdeckt.map((p) => p.coords), props.spur.map((f) => [f.lon, f.lat] as LonLat)], punkt);
+  }, [props.nebel, props.entdeckt, props.spur, props.position]);
+
+  // Seen streets in yellow. While recording, new ones get the drawing moment.
   useEffect(() => {
     const karte = karteRef.current;
+    const ids = new Set(props.entdeckt.map((p) => p.id));
+    const vorher = bekannt.current;
+    bekannt.current = ids;
     if (!karte || !karte.getSource("entdeckt")) return;
-    setzeDaten(karte, "entdeckt", {
-      type: "FeatureCollection",
-      features: props.entdeckt.map((p) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: p.coords } })),
-    });
+    animation.current?.ende();
+    const neu = props.zeichnen && vorher ? props.entdeckt.filter((p) => !vorher.has(p.id)) : [];
+    if (neu.length === 0) {
+      setzeDaten(karte, "entdeckt", linienSammlung(props.entdeckt));
+      return;
+    }
+    const meter = neu.reduce((m, p) => m + (p.kind === "street" || props.wegeZaehlen ? p.lengthM * p.weight : 0), 0);
+    const letzter = props.spur.at(-1);
+    zeichenMoment(karte, props.entdeckt, neu, meter, letzter ? [letzter.lon, letzter.lat] : null, animation);
   }, [props.entdeckt]);
 
   // Area coloring by discovered share.
   useEffect(() => {
     const karte = karteRef.current;
-    const daten = props.daten;
-    if (!karte || !daten) return;
-    for (const [id, prozent] of props.prozente) {
-      const regionId = daten.gebiete.get(id)?.regionId;
-      if (regionId && karte.getSource(`gebiete-${regionId}`)) karte.setFeatureState({ source: `gebiete-${regionId}`, id }, { prozent });
-    }
+    if (karte) prozenteSetzen(karte, props.daten, props.prozente);
   }, [props.prozente, props.daten]);
 
   // Location button: move to the own position.
   useEffect(() => {
     const karte = karteRef.current;
     if (!karte || !props.position || props.zentrieren === 0) return;
-    const ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ziel = { center: props.position, zoom: Math.max(karte.getZoom(), 15), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
-    if (ruhig) karte.jumpTo(ziel);
+    if (ruhig()) karte.jumpTo(ziel);
     else karte.easeTo({ ...ziel, duration: 600 });
   }, [props.zentrieren]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />;
+}
+
+function prozenteSetzen(karte: MapLibreMap, daten: Regionen | null, prozente: Map<string, number>) {
+  if (!daten) return;
+  for (const [id, prozent] of prozente) {
+    const regionId = daten.gebiete.get(id)?.regionId;
+    if (regionId && karte.getSource(`gebiete-${regionId}`)) karte.setFeatureState({ source: `gebiete-${regionId}`, id }, { prozent });
+  }
+}
+
+/**
+ * New streets are not simply switched on: a highlighter stroke runs along them, a short glow follows,
+ * and "+25 m" rises next to the own position. Calm (no stroke, no rising) with "reduce motion".
+ */
+function zeichenMoment(
+  karte: MapLibreMap,
+  alle: readonly Piece[],
+  neu: readonly Piece[],
+  meter: number,
+  hier: LonLat | null,
+  animation: { current: { bild: number; ende: () => void } | null },
+) {
+  const neuIds = new Set(neu.map((p) => p.id));
+  setzeDaten(karte, "entdeckt", linienSammlung(alle.filter((p) => !neuIds.has(p.id))));
+  setzeDaten(karte, "neu", linienSammlung(neu));
+  navigator.vibrate?.(12);
+
+  // "+25 m" next to where you are (or the new street), as a map marker so it moves with the map.
+  let marke: Marker | null = null;
+  if (meter >= 1) {
+    // MapLibre positions the marker element via transform; the badge (tilted, animated) sits inside.
+    const el = document.createElement("div");
+    const plakette = document.createElement("span");
+    plakette.className = "plus-meter";
+    plakette.textContent = `+${alsStrecke(meter)}`;
+    el.append(plakette);
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-label", t.karte.neuEntdeckt(alsStrecke(meter)));
+    const ort = hier ?? neu.at(-1)!.mid;
+    marke = new Marker({ element: el, anchor: "bottom", offset: [0, -18] }).setLngLat(ort as [number, number]).addTo(karte);
+    el.addEventListener("animationend", () => marke?.remove());
+    window.setTimeout(() => marke?.remove(), 2500);
+  }
+
+  let fertig = false;
+  const ende = () => {
+    if (fertig) return;
+    fertig = true;
+    cancelAnimationFrame(animation.current?.bild ?? 0);
+    animation.current = null;
+    if (!karte.getSource("entdeckt")) return;
+    setzeDaten(karte, "entdeckt", linienSammlung(alle));
+    setzeDaten(karte, "neu", LEER);
+    karte.setPaintProperty("neu", "line-gradient", strich(0));
+    karte.setPaintProperty("neu-glanz", "line-opacity", 0);
+  };
+  if (ruhig()) {
+    karte.setPaintProperty("neu", "line-gradient", strich(1));
+    animation.current = { bild: 0, ende };
+    window.setTimeout(ende, 600);
+    return;
+  }
+  const start = performance.now();
+  const bild = (jetzt: number) => {
+    if (fertig) return;
+    // The frame time can lie slightly before the start time.
+    const z = Math.max(0, jetzt - start);
+    const p = Math.min(1, z / ZEICHNEN_MS);
+    karte.setPaintProperty("neu", "line-gradient", strich(1 - (1 - p) ** 3));
+    // Glow rises with the stroke and fades afterwards.
+    const g = Math.max(0, z < ZEICHNEN_MS ? 0.5 * p : 0.5 * (1 - (z - ZEICHNEN_MS) / (GLANZ_MS - ZEICHNEN_MS)));
+    karte.setPaintProperty("neu-glanz", "line-opacity", g);
+    if (z >= GLANZ_MS) ende();
+    else if (animation.current) animation.current.bild = requestAnimationFrame(bild);
+  };
+  animation.current = { bild: requestAnimationFrame(bild), ende };
 }

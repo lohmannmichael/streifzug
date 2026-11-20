@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 20.11.2026: Design-Paket 2 und Fix „gelbe Straßen fehlen“
+- Fehler (gemeldet von Michi nach der Kita-Fahrt): Prozent stimmte, Straßen waren nicht gelb. Ursache: War der Fortschritt fertig, bevor der Kartenstil geladen war, gingen die gelben Straßen (und die Flächenfarben) verloren. Jetzt merkt sich die Karte den letzten Stand und zeichnet ihn bei jedem Laden des Stils neu (auch beim Wechsel hell/dunkel). Nachgestellt mit absichtlich verzögertem Kartenstil, danach behoben
+- Flächen der Gebiete liegen immer unter den gelben Straßen (im dunklen Stil lagen sie darüber)
+- Nebel: eigene Zeichenfläche (Canvas) über der Karte, Korridore rund um gesehene Straßen, Spur und Standort werden ausgeschnitten (ca. 28 m je Seite, weicher Rand). Blendet unter Zoom 12–13 aus, dort leuchten die Flächen. Schalter im Profil (Standard an, nur auf dem Gerät). Grund für Canvas: MapLibre kann Flächen nicht „ausradieren“, Pufferpolygone wären teuer
+- Zeichen-Moment nur beim Aufzeichnen: neue Stücke laufen als Textmarker-Strich entlang (line-gradient, 0,7 s), kurzer Glanz, „+N m“ steigt über dem Standort auf (zählt wie die Prozente, Wege nur mit Schalter). Bei „Bewegung reduzieren“ ohne Bewegung
+- Gebiete-Liste: Sortierung In deiner Nähe (Standort, sonst gewähltes Gebiet; Abstand zum Namenspunkt), Am meisten entdeckt, A–Z (wie bisher, mit Stadt-Prozent). Je Zeile Mini-Balken, Prozent auf Textmarker, sobald etwas entdeckt ist. Wahl bleibt gemerkt
+
 ## 19.11.2026: Schritt 1d Abgleich Spur → Straßen, gelb und Prozent
 - Gemeinsame Funktion `piecesFromTile` (packages/core/src/pieces.ts) für Gesamt-km (Regionen-Skript) und Gesehenes (Gerät): beide zählen garantiert gleich. Köln nach Umbau unverändert 2.273,9 km
 - Abgleich `seenPieceIds` (match.ts): Stück gilt als gesehen, wenn ≥ 60 % seiner Länge höchstens 20 m seitlich neben der Spur liegen und die Spur in Straßenrichtung verläuft (±45°). Die 20 m wirken nur seitlich, nicht über das Ende der Spur hinaus (sonst zählt „8 m hineingehen und umdrehen“ als ganze Straße). Lücken über 60 s werden nicht überbrückt. Querende Seitenstraßen zählen nicht

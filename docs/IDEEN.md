@@ -4,9 +4,14 @@ Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. B
 
 | Datum | Idee | Details | Vorschlag Zeitpunkt |
 |---|---|---|---|
-| 20.11.2026 | Design: Gebiete-Liste lebendiger | gelbe Mini-Balken je Viertel, Sortierung „In deiner Nähe“ / „Am meisten entdeckt“ | als Nächstes (Design-Paket 2) |
-| 20.11.2026 | Design: Nebel über Unentdecktem | leichter grauer Schleier, Erkundetes bleibt klar („die Stadt aus dem Nebel holen“) | Design-Paket 2 |
-| 20.11.2026 | Design: Zeichen-Moment | neu entdeckte Straße wird mit Textmarker-Animation gelb, „+25 m“ erscheint kurz | Design-Paket 2 |
+| 20.11.2026 | Design: Nächstes Ziel im Blatt | „Noch 300 m bis 1 %“ unter dem Balken, Schwellen 1/5/10/25/50/75/100 % (Leitsatz „immer ein nächstes Ziel“) | Design-Paket 3 |
+| 20.11.2026 | Design: Meilenstein-Stempel | bei 1/5/10/25 % ein Stempel im Blatt („Weiden 10 %“), gleichzeitig Teilen-Motiv | Design-Paket 3 |
+| 20.11.2026 | Design: Straßenname beim Zeichen-Moment | „Neu: Aachener Straße“ statt nur „+25 m“ (Namen aus der Kachel-Ebene transportation_name) | Design-Paket 3 |
+| 20.11.2026 | Design: Unterwegs-Modus | beim Losziehen Blatt automatisch klein, Karte groß, Zähler „+3 Straßen“ oben | nach Test draußen |
+| 20.11.2026 | Design: Eigener Kartenstil „Stadtplan“ | ruhige Grundkarte in Tinte und Nebelgrau statt Positron, Gelb wirkt noch stärker; auch für Teilen-Bild | vor Freund:innen-Test |
+| 20.11.2026 | Design: Gebiete-Liste lebendiger | gelbe Mini-Balken je Viertel, Sortierung „In deiner Nähe“ / „Am meisten entdeckt“ | erledigt 20.11.2026 (Design-Paket 2) |
+| 20.11.2026 | Design: Nebel über Unentdecktem | leichter grauer Schleier, Erkundetes bleibt klar („die Stadt aus dem Nebel holen“) | erledigt 20.11.2026 (Design-Paket 2) |
+| 20.11.2026 | Design: Zeichen-Moment | neu entdeckte Straße wird mit Textmarker-Animation gelb, „+25 m“ erscheint kurz | erledigt 20.11.2026 (Design-Paket 2) |
 | 20.11.2026 | Design: Streifzüge als Logbuch | je Runde kleiner Kartenausschnitt mit Spur (UX-Entwurf C) | Design-Paket 3 |
 | 20.11.2026 | Weißer Fleck in der Nähe | statt Leertext im Blatt: „Unentdeckte Straße 300 m entfernt: …“ | Design-Paket 3 |
 | 20.11.2026 | Erster Start mit 3 Bildschirmen | Idee, Standort-Erlaubnis mit Erklärung, Heimat-Viertel | vor Freund:innen-Test |

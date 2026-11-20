@@ -101,3 +101,27 @@ export function prozentText(p: number): string {
   if (p > 0 && p < 10) return (Math.floor(p * 10) / 10).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   return String(Math.floor(p));
 }
+
+let punkteLaden: Promise<Map<string, [number, number]>> | null = null;
+
+/** Label point of every area (from namen.geojson), for "In deiner Nähe". */
+export function useMittelpunkte(daten: Regionen | null): Map<string, [number, number]> | null {
+  const [punkte, setPunkte] = useState<Map<string, [number, number]> | null>(null);
+  useEffect(() => {
+    if (!daten) return;
+    punkteLaden ??= Promise.all(
+      daten.liste.map(async (r) => {
+        const d = (await (await fetch(`/regionen/${r.id}/namen.geojson`)).json()) as {
+          features: { properties: { id: string }; geometry: { coordinates: [number, number] } }[];
+        };
+        return d.features.map((f) => [String(f.properties.id), f.geometry.coordinates] as const);
+      }),
+    ).then((teile) => new Map(teile.flat()));
+    let aktiv = true;
+    punkteLaden.then((p) => aktiv && setPunkte(p)).catch(() => (punkteLaden = null));
+    return () => {
+      aktiv = false;
+    };
+  }, [daten]);
+  return punkte;
+}

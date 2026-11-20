@@ -10,9 +10,10 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 - 1d: Abgleich Spur → Straßen, gelb auf der Karte, Prozent in Blatt und Gebiete-Liste
 
 ## Offen in Phase 1
-- Design-Paket 1 erledigt 20.11.2026 (Kartenquellen eingeklappt, Prozent mit Kommastelle unter 10 %, feinere Grenzlinien, Blatt herunterziehbar). Nächstes: Design-Pakete 2 und 3 aus docs/IDEEN.md
+- Design-Paket 1 erledigt 20.11.2026 (Kartenquellen eingeklappt, Prozent mit Kommastelle unter 10 %, feinere Grenzlinien, Blatt herunterziehbar)
+- Design-Paket 2 erledigt 20.11.2026: Gebiete-Liste mit Mini-Balken und Sortierung (Nähe, Am meisten entdeckt, A–Z), Nebel über Unentdecktem (Schalter im Profil), Zeichen-Moment beim Aufzeichnen (Textmarker-Strich, „+N m“). Dazu Fix: gelbe Straßen gingen verloren, wenn die Karte langsamer lud als der Fortschritt (Michis Kita-Fahrt). Nächstes: Design-Paket 3 aus docs/IDEEN.md
 - Test draußen durch Michi (Weiden), Feedback einarbeiten
-- Nebel-Karte: Gebiete leuchten herausgezoomt gelb nach Prozent (erledigt 20.11.2026); offen: echter Nebel über Unentdecktem, optional
+- Nebel-Karte: Gebiete leuchten herausgezoomt gelb nach Prozent, reingezoomt Nebel über Unentdecktem (beides erledigt 20.11.2026)
 - Teilen-Bild mit Privatzone
 - Belohnungsmoment nach einer Runde (erledigt 20.11.2026); offen: „weißer Fleck in der Nähe“
 - Ideenliste: docs/IDEEN.md (u. a. Sehenswürdigkeiten-Checkliste, Konzept in docs/idee-sehenswuerdigkeiten.md)
