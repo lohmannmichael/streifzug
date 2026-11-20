@@ -348,30 +348,6 @@ button { font: inherit; color: inherit; }
 .leise .gebiet-prozent { font-size: 1.05rem; }
 @media (prefers-color-scheme: dark) { .gebiet-prozent.an { color: #1e2a4a; background: var(--marker); border-radius: 3px; } }
 
-/* Segmented control for sorting */
-.segmente {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr 0.7fr;
-  gap: 2px;
-  margin: 16px 0 12px;
-  padding: 2px;
-  border-radius: 10px;
-  background: var(--linie);
-}
-.segmente button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: var(--text);
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.segmente button[aria-pressed="true"] { background: var(--flaeche); font-weight: 600; box-shadow: 0 1px 3px rgb(30 42 74 / 0.15); }
-
-.sortier-zeile { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 4px 8px; min-height: 44px; font-size: var(--t-klein); }
-.text-knopf { border: 0; background: none; color: var(--tinte); font-weight: 600; font-size: var(--t-klein); min-height: 44px; padding: 0 4px; cursor: pointer; white-space: nowrap; }
-.mehr-knopf { display: block; width: 100%; margin-top: 10px; min-height: 48px; border: 0; border-radius: 14px; background: var(--flaeche); color: var(--tinte); font-weight: 600; cursor: pointer; }
 
 .region + .region { margin-top: 36px; }
 
@@ -524,3 +500,19 @@ button { font: inherit; color: inherit; }
 .unterwegs-zaehler .marker { font-family: var(--schrift-zahl); font-size: 1.2rem; padding: 0 0.1em; }
 .unterwegs-zaehler .leise { font-weight: 400; }
 @media (prefers-color-scheme: dark) { .unterwegs-zaehler .marker { color: #1e2a4a; } }
+
+/* Areas: fold-out lists (city → district → Stadtteil) */
+.seiten-unterzeile { margin: 6px 4px 16px; font-size: var(--t-klein); }
+.ordner-liste { display: grid; gap: 14px; }
+.ordner.stadt { background: var(--flaeche); border-radius: 14px; overflow: hidden; }
+.ordner summary { list-style: none; cursor: pointer; }
+.ordner summary::-webkit-details-marker { display: none; }
+.ordner.stadt > summary .gebiet-zeile-name { font-size: var(--t-gross); }
+.ordner .liste > li { border-top: 1px solid var(--linie); }
+.ordner .ordner .liste { padding-left: 14px; }
+.pfeil { flex: none; width: 10px; height: 10px; border-right: 2px solid var(--text-leise); border-bottom: 2px solid var(--text-leise); transform: rotate(45deg) translate(-2px, -2px); transition: transform 0.2s; }
+.ordner[open] > summary .pfeil { transform: rotate(225deg) translate(-2px, -2px); }
+.gebiet-zeile[aria-current="true"] .gebiet-zeile-name { text-decoration: underline; text-decoration-color: var(--marker-kante); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+
+/* Plain text button (ink, no frame) */
+.text-knopf { border: 0; background: none; color: var(--tinte); font-weight: 600; font-size: var(--t-klein); min-height: 44px; padding: 0 4px; cursor: pointer; white-space: nowrap; }

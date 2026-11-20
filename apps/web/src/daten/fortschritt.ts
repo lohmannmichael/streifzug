@@ -102,3 +102,16 @@ export function useFortschritt(spuren: Fix[][], daten: Regionen | null): Fortsch
   }, [schluessel, daten]);
   return fortschritt;
 }
+
+/** The smallest area (Stadtteil) that contains a point, or null outside all regions. */
+export async function gebietAn(punkt: [number, number], daten: Regionen): Promise<string | null> {
+  const [x, y] = punkt;
+  for (const r of daten.liste) {
+    if (x < r.bbox[0] || x > r.bbox[2] || y < r.bbox[1] || y > r.bbox[3]) continue;
+    for (const g of await ladeFlaechen(r.id)) {
+      if (x < g.bbox[0] || x > g.bbox[2] || y < g.bbox[1] || y > g.bbox[3]) continue;
+      if ((daten.gebiete.get(g.id)?.kinder.length ?? 1) === 0 && pointInGeometry(punkt, g.geometry)) return g.id;
+    }
+  }
+  return null;
+}

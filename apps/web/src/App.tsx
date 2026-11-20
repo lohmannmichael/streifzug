@@ -1,8 +1,8 @@
-import { distanceM, milestoneReached, type LonLat } from "@streifzug/core";
+import { milestoneReached, type LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
-import { useFortschritt, type Fortschritt } from "./daten/fortschritt";
+import { gebietAn, useFortschritt, type Fortschritt } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
@@ -29,7 +29,10 @@ export function App() {
   const [einstellungen, aendern] = useEinstellungen(sitzung);
   const daten = useRegionen();
   const gebiet = daten ? (daten.gebiete.get(gewaehlt ?? "") ?? findeNachName(daten, START_NAME) ?? null) : null;
-  const waehlen = (id: string) => {
+  // Choosing from a list or the map brings the area into view; locating keeps the map on your position.
+  const springen = useRef(true);
+  const waehlen = (id: string, sprung = true) => {
+    springen.current = sprung;
     setGewaehlt(id);
     localStorage.setItem(MERKEN, id);
   };
@@ -60,17 +63,39 @@ export function App() {
   useEffect(() => {
     if (aufzeichnung.aktiv) setMarkiert(null);
   }, [aufzeichnung.aktiv]);
+  // Locating: move there and show the area you are standing in (with your share) in the sheet.
+  const datenRef = useRef(daten);
+  datenRef.current = daten;
   const zumStandort = () => {
     setStandortFehler(false);
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setPosition([p.coords.longitude, p.coords.latitude]);
+        const hier: [number, number] = [p.coords.longitude, p.coords.latitude];
+        setPosition(hier);
         setZentrieren((n) => n + 1);
+        if (datenRef.current)
+          void gebietAn(hier, datenRef.current).then((id) => {
+            if (id) waehlen(id, false);
+          });
       },
       () => setStandortFehler(true),
       { enableHighAccuracy: true, timeout: 15_000, maximumAge: 30_000 },
     );
   };
+
+  // When location is already allowed, start where you are (no question pops up).
+  const gestartet = useRef(false);
+  useEffect(() => {
+    if (!daten || gestartet.current) return;
+    gestartet.current = true;
+    void navigator.permissions
+      ?.query({ name: "geolocation" })
+      .then((s) => {
+        if (s.state === "granted") zumStandort();
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [daten]);
 
   if (profilOffen)
     return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} schliessen={() => setProfilOffen(false)} />;
@@ -83,7 +108,8 @@ export function App() {
             daten={daten}
             gewaehlt={gebiet?.id ?? null}
             gewaehltName={gebiet?.name ?? ""}
-            onWaehlen={waehlen}
+            onWaehlen={(id, sprung) => waehlen(id, sprung)}
+            springen={springen.current}
             spur={aufzeichnung.fixes}
             entdeckt={fortschritt?.stuecke ?? []}
             prozente={prozenteJeGebiet(daten, fortschritt, einstellungen.wegeZaehlen)}
@@ -134,8 +160,6 @@ export function App() {
             fortschritt={fortschritt}
             einstellungen={einstellungen}
             gewaehlt={gebiet}
-            position={aufzeichnung.fixes.length ? [aufzeichnung.fixes.at(-1)!.lon, aufzeichnung.fixes.at(-1)!.lat] : position}
-            standortHolen={zumStandort}
             waehlen={(id) => {
               waehlen(id);
               setReiter("karte");
@@ -375,135 +399,73 @@ function Profil(props: {
   );
 }
 
-type Sortierung = "naehe" | "entdeckt" | "az";
-const SORTIERUNG = "streifzug.gebiete-sortierung";
-const SCHRITT = 15;
-
+/**
+ * Areas you have unlocked: only cities with something discovered, each as a fold-out list
+ * (city → district → Stadtteil), most discovered first. Nothing about areas you have not been to.
+ */
 function GebieteSeite(props: {
   daten: Regionen | null;
   fortschritt: Fortschritt | null;
   einstellungen: Einstellungen;
   gewaehlt: GebietDaten | null;
-  position: [number, number] | null;
-  standortHolen: () => void;
   waehlen: (id: string) => void;
 }) {
   const { daten, einstellungen } = props;
-  const punkte = useMittelpunkte(daten);
-  const [sortierung, setSortierung] = useState<Sortierung>(() => (localStorage.getItem(SORTIERUNG) as Sortierung | null) ?? "naehe");
-  const [anzahl, setAnzahl] = useState(SCHRITT);
-  const sortieren = (s: Sortierung) => {
-    setSortierung(s);
-    setAnzahl(SCHRITT);
-    localStorage.setItem(SORTIERUNG, s);
-  };
   if (!daten) return <LeereSeite titel={t.gebiete.titel} text={t.karte.kmLaedt} />;
 
   const wege = einstellungen.wegeZaehlen;
   const gesamtM = (g: GebietDaten) => zaehlendeMeter(g, wege);
-  const anteil = (g: GebietDaten) => prozent(zaehlendeMeter(props.fortschritt?.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, wege), gesamtM(g));
-  const blaetter = [...daten.gebiete.values()].filter((g) => g.kinder.length === 0);
-  const sortiert = (ids: string[]) => ids.map((id) => daten.gebiete.get(id)!).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  const gesehenM = (g: GebietDaten) => zaehlendeMeter(props.fortschritt?.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, wege);
+  const anteil = (g: GebietDaten) => prozent(gesehenM(g), gesamtM(g));
+  const entdeckt = (g: GebietDaten) => gesehenM(g) >= 1;
+  const kinder = (g: GebietDaten) => g.kinder.map((id) => daten.gebiete.get(id)!).filter(entdeckt).sort((a, b) => anteil(b) - anteil(a));
+  const viertel = (g: GebietDaten): number => (g.kinder.length === 0 ? (entdeckt(g) ? 1 : 0) : g.kinder.reduce((n, k) => n + viertel(daten.gebiete.get(k)!), 0));
+  // The area chosen on the map and all its parents start opened.
+  const offen = new Set<string>();
+  for (let g = props.gewaehlt; g; g = g.eltern ? (daten.gebiete.get(g.eltern) ?? null) : null) offen.add(g.id);
 
-  // "Near you": from the own position, otherwise from the area chosen on the map.
-  const bezugPunkt = props.position ?? (props.gewaehlt ? punkte?.get(props.gewaehlt.id) : undefined) ?? null;
-  const entfernung = (g: GebietDaten) => {
-    const p = punkte?.get(g.id);
-    return p && bezugPunkt ? distanceM(bezugPunkt, p) : Infinity;
-  };
+  const staedte = daten.liste.map((r) => daten.gebiete.get(r.wurzel)!).filter(entdeckt).sort((a, b) => gesehenM(b) - gesehenM(a));
+  if (staedte.length === 0) return <LeereSeite titel={t.gebiete.titel} text={t.gebiete.nochNichts} />;
 
-  const zeile = (g: GebietDaten, zusatz?: string) => {
+  const wert = (g: GebietDaten) => {
     const p = anteil(g);
     return (
-      <li key={g.id}>
-        <button type="button" className="gebiet-zeile" onClick={() => props.waehlen(g.id)}>
-          <span className="gebiet-zeile-text">
-            <span className="gebiet-zeile-name">{g.name}</span>
-            {zusatz && <span className="gebiet-zeile-zusatz">{zusatz}</span>}
-            {/* Something discovered always shows a visible bit of yellow. */}
-            <span className="mini-balken" aria-hidden="true"><i style={{ width: `${p > 0 ? Math.max(p, 3) : 0}%` }} /></span>
-          </span>
-          <span className="gebiet-zeile-wert">
-            <b className={p > 0 ? "gebiet-prozent an" : "gebiet-prozent"}>{t.gebiete.prozentKurz(prozentText(p))}</b>
-            <span>{t.gebiete.vonKm(alsKm(gesamtM(g)))}</span>
-          </span>
-        </button>
-      </li>
+      <>
+        <span className="gebiet-zeile-text">
+          <span className="gebiet-zeile-name">{g.name}</span>
+          {g.kinder.length > 0 && <span className="gebiet-zeile-zusatz">{t.gebiete.viertelEntdeckt(viertel(g))}</span>}
+          {/* Something discovered always shows a visible bit of yellow. */}
+          <span className="mini-balken" aria-hidden="true"><i style={{ width: `${p > 0 ? Math.max(p, 3) : 0}%` }} /></span>
+        </span>
+        <span className="gebiet-zeile-wert">
+          <b className="gebiet-prozent an">{t.gebiete.prozentKurz(prozentText(p))}</b>
+          <span>{t.gebiete.kmVon(alsKm(gesehenM(g)), alsKm(gesamtM(g)))}</span>
+        </span>
+      </>
     );
   };
-
-  let inhalt: ReactNode;
-  if (sortierung === "naehe") {
-    const liste = [...blaetter].sort((a, b) => entfernung(a) - entfernung(b));
-    inhalt = (
-      <>
-        <div className="sortier-zeile">
-          <p className="leise">{props.position ? t.gebiete.naeheStandort : t.gebiete.naeheGebiet(props.gewaehlt?.name ?? "")}</p>
-          {!props.position && (
-            <button type="button" className="text-knopf" onClick={props.standortHolen}>{t.gebiete.standortNutzen}</button>
-          )}
-        </div>
-        <ul className="gruppe liste">
-          {liste.slice(0, anzahl).map((g) => {
-            const d = entfernung(g);
-            const zusatz = [elternText(daten, g.id).split(", ")[0], d < 400 ? t.gebiete.hier : Number.isFinite(d) ? t.gebiete.entfernung(alsStrecke(d)) : ""].filter(Boolean).join(" · ");
-            return zeile(g, zusatz);
-          })}
-        </ul>
-        {anzahl < liste.length && <button type="button" className="mehr-knopf" onClick={() => setAnzahl(anzahl + SCHRITT)}>{t.gebiete.mehr}</button>}
-      </>
-    );
-  } else if (sortierung === "entdeckt") {
-    const liste = blaetter.map((g) => ({ g, p: anteil(g) })).filter((x) => x.p > 0).sort((a, b) => b.p - a.p);
-    inhalt = liste.length ? (
-      <>
-        <ul className="gruppe liste">{liste.slice(0, anzahl).map(({ g }) => zeile(g, elternText(daten, g.id)))}</ul>
-        {anzahl < liste.length && <button type="button" className="mehr-knopf" onClick={() => setAnzahl(anzahl + SCHRITT)}>{t.gebiete.mehr}</button>}
-      </>
-    ) : (
-      <p className="leer gross">{t.gebiete.nochNichts}</p>
-    );
-  } else {
-    inhalt = daten.liste.map((region) => {
-      const wurzel = daten.gebiete.get(region.wurzel)!;
-      const kinder = sortiert(wurzel.kinder);
-      const mitEnkeln = kinder.some((k) => k.kinder.length > 0);
-      const zaehlen = (g: GebietDaten): number => (g.kinder.length === 0 ? 1 : g.kinder.reduce((n, k) => n + zaehlen(daten.gebiete.get(k)!), 0));
-      const pStadt = anteil(wurzel);
-      return (
-        <div key={region.id} className="region">
-          <div className="stadt-kopf">
-            <h2 className="stadt-name">{region.name}</h2>
-            <p className="leise">
-              <b className={pStadt > 0 ? "gebiet-prozent an" : "gebiet-prozent"}>{t.gebiete.prozentKurz(prozentText(pStadt))}</b> · {t.gebiete.stadtZeile(alsKm(gesamtM(wurzel)), zaehlen(wurzel))}
-            </p>
-          </div>
-          {mitEnkeln ? (
-            kinder.map((kind) => (
-              <div key={kind.id}>
-                <h2>{kind.name}</h2>
-                <ul className="gruppe liste">{kind.kinder.length ? sortiert(kind.kinder).map((g) => zeile(g)) : zeile(kind)}</ul>
-              </div>
-            ))
-          ) : (
-            <ul className="gruppe liste">{kinder.map((g) => zeile(g))}</ul>
-          )}
-        </div>
-      );
-    });
-  }
+  const zeile = (g: GebietDaten) => (
+    <li key={g.id}>
+      <button type="button" className="gebiet-zeile" aria-current={props.gewaehlt?.id === g.id ? "true" : undefined} onClick={() => props.waehlen(g.id)}>
+        {wert(g)}
+      </button>
+    </li>
+  );
+  const ordner = (g: GebietDaten, stadt: boolean) => (
+    <details key={g.id} className={stadt ? "ordner stadt" : "ordner"} open={offen.has(g.id) || (stadt && staedte.length === 1)}>
+      <summary className="gebiet-zeile">
+        {wert(g)}
+        <span className="pfeil" aria-hidden="true" />
+      </summary>
+      <ul className="liste">{kinder(g).map((k) => (k.kinder.length ? <li key={k.id}>{ordner(k, false)}</li> : zeile(k)))}</ul>
+    </details>
+  );
 
   return (
     <section className="seite" aria-labelledby="gebiete-titel">
       <h1 id="gebiete-titel">{t.gebiete.titel}</h1>
-      <div className="segmente" role="group" aria-label={t.gebiete.sortierung}>
-        {(["naehe", "entdeckt", "az"] as const).map((s) => (
-          <button key={s} type="button" aria-pressed={sortierung === s} onClick={() => sortieren(s)}>
-            {t.gebiete.sortiert[s]}
-          </button>
-        ))}
-      </div>
-      {inhalt}
+      <p className="leise seiten-unterzeile">{t.gebiete.unterzeile}</p>
+      <div className="ordner-liste">{staedte.map((g) => ordner(g, true))}</div>
       <p className="quelle">{t.gebiete.stand(new Date(daten.liste[0]?.stand ?? Date.now()).toLocaleDateString("de-DE"))}</p>
     </section>
   );

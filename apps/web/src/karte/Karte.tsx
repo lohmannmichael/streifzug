@@ -153,7 +153,9 @@ export interface KartenProps {
   daten: Regionen | null;
   gewaehlt: string | null;
   gewaehltName: string;
-  onWaehlen: (id: string) => void;
+  onWaehlen: (id: string, springen?: boolean) => void;
+  /** Whether a newly chosen area should be brought into view (not when it was chosen by locating). */
+  springen: boolean;
   /** The current outing (drawn live) and whether the map follows the position. */
   spur: Fix[];
   /** Street pieces already seen (all outings), drawn in highlighter yellow. */
@@ -315,7 +317,7 @@ export function Karte(props: KartenProps) {
       if (id && regionId && karte.getSource(`gebiete-${regionId}`)) karte.setFeatureState({ source: `gebiete-${regionId}`, id }, { gewaehlt: wert });
     }
     for (const r of daten.liste) if (karte.getLayer(`gewaehlt-${r.id}`)) karte.setFilter(`gewaehlt-${r.id}`, ["==", ["get", "id"], neu ?? ""]);
-    if (neu && alt !== neu) void zeigeGebiet(karte, daten, neu);
+    if (neu && alt !== neu && props.springen) void zeigeGebiet(karte, daten, neu);
   }, [props.gewaehlt, props.daten]);
 
   // Live track, own position, following, and choosing the area you are in.
@@ -336,7 +338,8 @@ export function Karte(props: KartenProps) {
       const ebenen = (datenRef.current?.liste ?? []).map((r) => `flaeche-${r.id}`).filter((l) => karte.getLayer(l));
       if (!ebenen.length) return;
       const id = karte.queryRenderedFeatures(karte.project(hier!), { layers: ebenen })[0]?.properties?.id;
-      if (id && String(id) !== gewaehltRef.current) waehlenRef.current(String(id));
+      // Following you: choose the area you are in without moving the map away.
+      if (id && String(id) !== gewaehltRef.current) waehlenRef.current(String(id), false);
     });
   }, [props.spur, props.folgen, props.position]);
 

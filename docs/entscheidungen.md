@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 20.11.2026: Verorten und Gebiete-Seite nach Michis Wunsch
+- Standort-Knopf: Karte zum Standort, Blatt zeigt das Viertel an dieser Stelle (`gebietAn` in `daten/fortschritt.ts`, Punkt-im-Polygon auf der kleinsten Ebene). Die Karte springt dabei nicht zur Viertel-Mitte. Ist der Standort schon erlaubt (Permissions-API), passiert das beim Öffnen von selbst, ohne Nachfrage
+- Gebiete: nur Städte, Bezirke und Viertel mit Entdecktem, als aufklappbare Listen (`details`/`summary`, nativ und barrierearm), je Ebene meiste Prozent zuerst; das gewählte Viertel und seine Eltern sind aufgeklappt. Die Sortierungen aus Design-Paket 2 entfallen, weil nur noch Freigeschaltetes erscheint
+
 ## 20.11.2026: Design-Paket 4 und neue Reihenfolge
 - Michi will die App erst selbst richtig nutzen; Freund:innen-Test (erster Start, Icon, Teilen-Bild) kommt später. Phase 3 (Hintergrund-Aufzeichnung) wird vor Phase 2 (Import) gezogen, weil eine App, die man jedes Mal starten muss, im Alltag kaum genutzt wird
 - Kartenstil „Stadtplan“ (`apps/web/src/karte/stil.ts`): Grundlage ist OpenFreeMap Positron für hell und dunkel (gleiche Ebenen, nur andere Farben, per `transformStyle` beim Laden umgefärbt). Weiße Straßen auf Nebelgrau, Schrift in Tinte, keine Straßenschilder. Vorteil: Ebenen-Reihenfolge und Namen sind in beiden Modi gleich (vorher lag im dunklen Stil das Viertel-Leuchten über den gelben Straßen). Im Dunkeln Nebel und Viertel-Leuchten schwächer
