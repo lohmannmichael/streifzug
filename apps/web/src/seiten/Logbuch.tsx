@@ -11,7 +11,7 @@ const tag = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric",
 const monat = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
 
 /** Streifzüge as a logbook: newest first, grouped by month, each with a small street plan. */
-export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void }) {
+export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void; importieren: () => void }) {
   const e = props.einstellungen;
   const importiert = (s: Streifzug) => s.quelle !== undefined && s.quelle !== "aufnahme";
   const zaehltQuelle = (s: Streifzug) => (s.quelle === "google" ? e.googleZaehlen : s.quelle === "gpx" ? e.gpxZaehlen : true);
@@ -26,6 +26,7 @@ export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null
       <section className="seite" aria-labelledby="streifzuege-titel">
         <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
         <p className="leer gross">{t.streifzuege.leer}</p>
+        <button type="button" className="mehr-knopf" onClick={props.importieren}>{t.import.abkuerzung}</button>
       </section>
     );
 
@@ -48,6 +49,9 @@ export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null
           ))}
           <p className="zeile-text schalter-hinweis">{t.import.logbuchHinweis}</p>
         </div>
+      )}
+      {importe.length === 0 && (
+        <button type="button" className="mehr-knopf" onClick={props.importieren}>{t.import.abkuerzung}</button>
       )}
       {gruppen.map((g) => (
         <div key={g.titel}>

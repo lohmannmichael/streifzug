@@ -26,6 +26,8 @@ export function App() {
   const sitzung = useSitzung();
   const [reiter, setReiter] = useState<Reiter>("karte");
   const [profilOffen, setProfilOffen] = useState(false);
+  // Shortcut from the logbook: open the profile at "Importieren".
+  const [importZeigen, setImportZeigen] = useState(false);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
   const [einstellungen, aendern] = useEinstellungen(sitzung);
   const daten = useRegionen();
@@ -112,7 +114,7 @@ export function App() {
   }, [daten]);
 
   if (profilOffen)
-    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} schliessen={() => setProfilOffen(false)} />;
+    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(false); }} />;
 
   return (
     <div className="app">
@@ -188,6 +190,10 @@ export function App() {
             zeigen={(id) => {
               waehlen(id);
               setReiter("karte");
+            }}
+            importieren={() => {
+              setImportZeigen(true);
+              setProfilOffen(true);
             }}
           />
         )}
@@ -379,8 +385,13 @@ function Profil(props: {
   aendern: (teil: Partial<Einstellungen>) => void;
   daten: Regionen | null;
   streifzuege: Streifzug[];
+  zumImport: boolean;
   schliessen: () => void;
 }) {
+  const importRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (props.zumImport) importRef.current?.scrollIntoView({ block: "start" });
+  }, [props.zumImport]);
   const { werte, aendern } = props;
   const kontoText =
     props.sitzung.status === "bereit" ? t.ich.kontoAnonym : props.sitzung.status === "offline" ? t.ich.kontoOffline : t.ich.kontoLaedt;
@@ -401,7 +412,7 @@ function Profil(props: {
         <div className="gruppe">
           <Schalter label={t.ich.nebel} hinweis={t.ich.nebelHinweis} an={werte.nebel} onChange={(an) => aendern({ nebel: an })} />
         </div>
-        <h2>{t.import.titel}</h2>
+        <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
         <Importieren daten={props.daten} streifzuege={props.streifzuege} werte={werte} aendern={aendern} />
         <h2>{t.ich.konto}</h2>
         <div className="gruppe">

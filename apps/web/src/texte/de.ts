@@ -42,6 +42,7 @@ export const de = {
   },
   import: {
     titel: "Importieren",
+    abkuerzung: "Alte Wege importieren (Google, Apple Health)",
     soGehts: "So geht's",
     google: {
       titel: "Google-Zeitachse",

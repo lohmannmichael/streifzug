@@ -536,3 +536,6 @@ button { font: inherit; color: inherit; }
 .gruppe.import + .gruppe.import { margin-top: 12px; }
 .import-info { margin-top: 16px; }
 .import-kopf .schalter-label { font-weight: 600; }
+
+/* Wide secondary button (e.g. import shortcut in the logbook) */
+.mehr-knopf { display: block; width: 100%; margin-top: 14px; min-height: 48px; border: 0; border-radius: 14px; background: var(--flaeche); color: var(--tinte); font-weight: 600; cursor: pointer; }
