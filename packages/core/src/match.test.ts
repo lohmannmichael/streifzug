@@ -57,4 +57,25 @@ describe("seenPieceIds", () => {
     expect(seenPieceIds([], walk([0, 0], [10, 0])).size).toBe(0);
     expect(seenPieceIds([piece("a", [0, 0], [25, 0])], []).size).toBe(0);
   });
+
+  describe("sparse imported histories (maxGapM)", () => {
+    // Two points 2 minutes apart, 40 m apart, along the street.
+    const sparse: Fix[] = [
+      { t: 0, lon: at(-5, 2)[0], lat: at(-5, 2)[1], acc: 10 },
+      { t: 120_000, lon: at(35, 2)[0], lat: at(35, 2)[1], acc: 10 },
+    ];
+
+    it("does not connect points over a minute apart by default", () => {
+      expect(seenPieceIds([piece("a", [0, 0], [25, 0])], sparse).size).toBe(0);
+    });
+
+    it("connects them when they are close enough in space", () => {
+      expect(seenPieceIds([piece("a", [0, 0], [25, 0])], sparse, { maxGapM: 60 }).has("a")).toBe(true);
+    });
+
+    it("still does not bridge longer distances", () => {
+      const weit: Fix[] = [sparse[0]!, { t: 120_000, lon: at(95, 2)[0], lat: at(95, 2)[1], acc: 10 }];
+      expect(seenPieceIds([piece("a", [0, 0], [25, 0])], weit, { maxGapM: 60 }).size).toBe(0);
+    });
+  });
 });

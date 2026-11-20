@@ -6,10 +6,13 @@ export interface Einstellungen {
   autoZaehlen: boolean;
   /** Fog over undiscovered map parts; only on this device. */
   nebel: boolean;
+  /** Whether imported histories count (switch per source; the data stays either way). */
+  googleZaehlen: boolean;
+  gpxZaehlen: boolean;
 }
 
 const KEY = "streifzug.einstellungen";
-const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true };
+const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true, googleZaehlen: true, gpxZaehlen: true };
 
 function lesen(): Einstellungen {
   try {

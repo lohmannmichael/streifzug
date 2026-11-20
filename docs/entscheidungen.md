@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 20.11.2026: Import Google-Zeitachse und GPX (Phase 2 vorgezogen)
+- Kein Abruf per Google-Anmeldung: Google speichert die Zeitachse seit 2024/25 nur noch auf dem Handy, es gibt keine öffentliche Schnittstelle (die Data Portability API braucht eine aufwendige App-Prüfung, Zeitachse dort nicht bestätigt). Stattdessen Import der Exportdatei
+- Leser in `packages/core/src/import.ts` mit Tests: iPhone-Export (`location-history.json`, `geo:`-Punkte mit Minuten-Versatz), Android-Export (`semanticSegments`/`timelinePath`, `rawSignals`), alte Takeout `Records.json` und alte Monatsdateien (`simplifiedRawPath`); GPX (Apple-Health-Workouts, Strava, Komoot). Besuche und Aktivitäten nur mit Start/Ende haben keinen Weg und werden übersprungen
+- Ehrlich statt geraten: Punkte über 25 m Ungenauigkeit und Sprünge über 50 m/s fallen weg; Wege werden bei 10 min Pause oder 300 m Sprung geteilt. Beim Abgleich dürfen importierte Punkte zeitlich weiter auseinander liegen, wenn sie höchstens 60 m entfernt sind (`maxGapM`), sonst wird nichts verbunden. Vorschau zeigt Punktdichte (gut/mittel/grob)
+- Nur Punkte in und um gebaute Regionen werden übernommen. Gespeichert auf dem Gerät (IndexedDB, Status „importiert“, Kennung je Weg, erneuter Import verdoppelt nichts), nicht hochgeladen. Schalter je Quelle im Profil („Einrechnen“), Löschen je Quelle
+- Fortschritt rechnet jetzt je Weg nur gegen dessen eigene Kacheln und merkt sich das Ergebnis je Weg (`gesehenVon`), damit Hunderte importierte Wege die App nicht bremsen
+- Logbuch zeigt importierte Wege als Sammelzeile, sie zählen aber für „neu entdeckt“ der eigenen Runden mit
+
 ## 20.11.2026: Gelb nur für das, was zählt
 - Michi: „Nicht jede Hofeinfahrt soll zählen, nur Straßen.“ Befund (Kachel Weiden): Einfahrten, Parkplatzgassen und Zufahrten (`highway=service`) zählten schon nie. Gelb gezeichnet wurden aber alle gegangenen Fuß- und Feldwege (`footway`, `path`; in Weiden rund 140 kurze Stücke unter 60 m, oft in Höfe), obwohl sie ohne den Schalter „Fuß- und Radwege mitzählen“ nicht in die Prozente eingehen
 - Jetzt gilt überall: gelb wird nur, was zählt (Straßen; Wege nur mit Schalter). Gilt für Karte, Nebel, Zeichen-Moment, Zähler unterwegs und Logbuch

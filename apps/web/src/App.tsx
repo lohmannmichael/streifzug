@@ -2,12 +2,13 @@ import { milestoneReached, type LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
-import { gebietAn, useFortschritt, type Fortschritt } from "./daten/fortschritt";
+import { gebietAn, useFortschritt, type Fortschritt, type Spur } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { useWeisserFleck, type Fleck } from "./daten/fleck";
+import { Importieren } from "./seiten/Importieren";
 import { LogbuchSeite } from "./seiten/Logbuch";
 import { Stempel } from "./ui/Stempel";
 import { Karte } from "./karte/Karte";
@@ -39,8 +40,16 @@ export function App() {
   const aufzeichnung = useAufzeichnung();
   const streifzuege = useStreifzuege();
   // Car rides count only with the switch on (docs/PLAN.md, section 2).
-  const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
-  const spuren = [...zaehlende.map((s) => s.fixes), ...(aufzeichnung.aktiv ? [aufzeichnung.fixes] : [])];
+  // Imported histories count only with their switch on (the data stays either way).
+  const zaehlende = streifzuege.filter(
+    (s) =>
+      (s.mode !== "car" || einstellungen.autoZaehlen) &&
+      (s.quelle === "google" ? einstellungen.googleZaehlen : s.quelle === "gpx" ? einstellungen.gpxZaehlen : true),
+  );
+  const spuren: Spur[] = [
+    ...zaehlende.map((s) => ({ id: s.id, fixes: s.fixes, locker: s.quelle !== undefined && s.quelle !== "aufnahme" })),
+    ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, fixes: aufzeichnung.fixes }] : []),
+  ];
   const fortschritt = useFortschritt(spuren, daten);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
@@ -103,7 +112,7 @@ export function App() {
   }, [daten]);
 
   if (profilOffen)
-    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} schliessen={() => setProfilOffen(false)} />;
+    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} schliessen={() => setProfilOffen(false)} />;
 
   return (
     <div className="app">
@@ -368,6 +377,8 @@ function Profil(props: {
   sitzung: Sitzung;
   werte: Einstellungen;
   aendern: (teil: Partial<Einstellungen>) => void;
+  daten: Regionen | null;
+  streifzuege: Streifzug[];
   schliessen: () => void;
 }) {
   const { werte, aendern } = props;
@@ -390,6 +401,8 @@ function Profil(props: {
         <div className="gruppe">
           <Schalter label={t.ich.nebel} hinweis={t.ich.nebelHinweis} an={werte.nebel} onChange={(an) => aendern({ nebel: an })} />
         </div>
+        <h2>{t.import.titel}</h2>
+        <Importieren daten={props.daten} streifzuege={props.streifzuege} werte={werte} aendern={aendern} />
         <h2>{t.ich.konto}</h2>
         <div className="gruppe">
           <p className="zeile-text">{kontoText}</p>

@@ -4,6 +4,7 @@ Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. B
 
 | Datum | Idee | Details | Vorschlag Zeitpunkt |
 |---|---|---|---|
+| 20.11.2026 | Google-Zeitachse einrechnen, mit Schalter | Michi: Google-Daten mit einrechnen, an/aus schaltbar | erledigt 20.11.2026 (Import per Datei, Profil) |
 | 20.11.2026 | Design: Nächstes Ziel im Blatt | „Noch 300 m bis 1 %“ unter dem Balken, Schwellen 1/5/10/25/50/75/100 % (Leitsatz „immer ein nächstes Ziel“) | verworfen 20.11.2026 (Michi: brauchen wir nicht) |
 | 20.11.2026 | Design: Meilenstein-Stempel | bei 1/5/10/25 % ein Stempel im Blatt („Weiden 10 %“), gleichzeitig Teilen-Motiv | erledigt 20.11.2026 (Design-Paket 3) |
 | 20.11.2026 | Design: Straßenname beim Zeichen-Moment | „Neu: Aachener Straße“ statt nur „+25 m“ (Namen aus der Kachel-Ebene transportation_name) | erledigt 20.11.2026 (Design-Paket 3) |

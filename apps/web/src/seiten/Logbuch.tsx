@@ -12,8 +12,16 @@ const monat = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" 
 
 /** Streifzüge as a logbook: newest first, grouped by month, each with a small street plan. */
 export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void }) {
-  const logbuch = useLogbuch(props.liste, props.daten, props.einstellungen.wegeZaehlen, props.einstellungen.autoZaehlen);
-  if (props.liste.length === 0)
+  const e = props.einstellungen;
+  const importiert = (s: Streifzug) => s.quelle !== undefined && s.quelle !== "aufnahme";
+  const zaehltQuelle = (s: Streifzug) => (s.quelle === "google" ? e.googleZaehlen : s.quelle === "gpx" ? e.gpxZaehlen : true);
+  // Imports switched on take part in "what was new", but only own outings are shown one by one.
+  const logbuch = useLogbuch(props.liste.filter(zaehltQuelle), props.daten, e.wegeZaehlen, e.autoZaehlen);
+  const eigene = props.liste.filter((s) => !importiert(s));
+  const importe = (["google", "gpx"] as const)
+    .map((q) => ({ q, wege: props.liste.filter((s) => s.quelle === q) }))
+    .filter((x) => x.wege.length > 0);
+  if (eigene.length === 0 && importe.length === 0)
     return (
       <section className="seite" aria-labelledby="streifzuege-titel">
         <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
@@ -22,7 +30,7 @@ export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null
     );
 
   const gruppen: { titel: string; eintraege: Streifzug[] }[] = [];
-  for (const s of props.liste) {
+  for (const s of eigene) {
     const titel = monat.format(s.startedAt);
     if (gruppen.at(-1)?.titel !== titel) gruppen.push({ titel, eintraege: [] });
     gruppen.at(-1)!.eintraege.push(s);
@@ -31,6 +39,16 @@ export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null
   return (
     <section className="seite" aria-labelledby="streifzuege-titel">
       <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
+      {importe.length > 0 && (
+        <div className="gruppe import-info">
+          {importe.map(({ q, wege }) => (
+            <p key={q} className="zeile-text">
+              {t.import.logbuchKarte(t.import[q].titel.split(" (")[0]!, wege.length, alsStrecke(wege.reduce((m, s) => m + s.distanceM, 0)), q === "google" ? e.googleZaehlen : e.gpxZaehlen)}
+            </p>
+          ))}
+          <p className="zeile-text schalter-hinweis">{t.import.logbuchHinweis}</p>
+        </div>
+      )}
       {gruppen.map((g) => (
         <div key={g.titel}>
           <h2>{g.titel}</h2>

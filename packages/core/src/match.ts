@@ -11,9 +11,14 @@ export interface MatchOptions {
   maxGapS: number;
   /** The track must run roughly along the street (degrees), so crossing a side street does not count. */
   maxAngleDeg: number;
+  /**
+   * Imported histories are often sparser in time: points further apart than maxGapS are still
+   * connected if they are at most this far apart (m). 0 = off (live recording).
+   */
+  maxGapM: number;
 }
 
-export const MATCH_DEFAULTS: MatchOptions = { radiusM: 20, minShare: 0.6, maxGapS: 60, maxAngleDeg: 45 };
+export const MATCH_DEFAULTS: MatchOptions = { radiusM: 20, minShare: 0.6, maxGapS: 60, maxAngleDeg: 45, maxGapM: 0 };
 
 const M_PER_DEG_LAT = 111_195;
 const SAMPLE_M = 5;
@@ -47,10 +52,10 @@ export function seenPieceIds(pieces: readonly Piece[], fixes: readonly Fix[], op
   for (let i = 1; i < fixes.length; i++) {
     const p = fixes[i - 1]!;
     const q = fixes[i]!;
-    if ((q.t - p.t) / 1000 > o.maxGapS) continue;
     const a = xy([p.lon, p.lat]);
     const b = xy([q.lon, q.lat]);
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if ((q.t - p.t) / 1000 > o.maxGapS && len > o.maxGapM) continue;
     if (len < 0.5) continue;
     const s: Seg = { a, b, angle: Math.atan2(b[1] - a[1], b[0] - a[0]) };
     // Register the part in every cell along it.

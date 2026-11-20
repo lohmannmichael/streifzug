@@ -1,6 +1,6 @@
 import { milestoneReached, newPerOuting, seenPieceIds, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
 import { useEffect, useState } from "react";
-import { kachelnFuer, meterJeGebiet } from "./fortschritt";
+import { gesehenVon, kachelnFuer, meterJeGebiet } from "./fortschritt";
 import { prozent, zaehlendeMeter, type Regionen, type Summe } from "./regionen";
 import type { Streifzug } from "./speicher";
 import { stueckeDerKachel, strassenName } from "./strassen";
@@ -56,6 +56,13 @@ export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege:
   const zaehlt = (s: Streifzug) => s.mode !== "car" || auto;
   const roh = new Map<string, { umgebung: Piece[]; gesehen: Set<string>; nachId: Map<string, Piece> }>();
   for (const s of chronologisch) {
+    const importiert = s.quelle !== undefined && s.quelle !== "aufnahme";
+    if (importiert) {
+      // Imported outings are not shown one by one, but count for what is "new" afterwards.
+      const nachId = await gesehenVon({ id: s.id, fixes: s.fixes, locker: true });
+      roh.set(s.id, { umgebung: [], gesehen: new Set([...nachId.values()].filter((p) => p.kind === "street" || wege).map((p) => p.id)), nachId });
+      continue;
+    }
     const umgebung = (await Promise.all(kachelnMitRand(s.fixes).map((k) => stueckeDerKachel({ z: TILE_ZOOM, ...k })))).flat();
     const nachId = new Map(umgebung.map((p) => [p.id, p]));
     // Only what counts (streets; paths with the switch) is "seen" and yellow in the logbook.
@@ -94,9 +101,9 @@ export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege:
       if (stufe) meilensteine.push({ gebietId: id, prozent: stufe });
     }
 
-    // Street names: longest new streets first, each name once.
+    // Street names: longest new streets first, each name once (not needed for imports).
     const jeName = new Map<string, number>();
-    for (const p of neueStuecke) {
+    for (const p of s.quelle && s.quelle !== "aufnahme" ? [] : neueStuecke) {
       const name = await strassenName(p);
       if (name) jeName.set(name, (jeName.get(name) ?? 0) + p.lengthM * p.weight);
     }

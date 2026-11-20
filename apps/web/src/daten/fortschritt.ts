@@ -54,13 +54,37 @@ export function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
  * What you have seen: matches all outings against the street pieces around them (on the device),
  * then adds the seen meters to every area (all levels) that contains a piece.
  */
-export async function berechne(spuren: Fix[][], daten: Regionen): Promise<Fortschritt> {
+/** One track to match: an outing (own or imported) or the one being recorded. */
+export interface Spur {
+  id: string;
+  fixes: Fix[];
+  /** Imported histories are sparser: connect points up to 60 m apart even if over a minute lies between them. */
+  locker?: boolean;
+}
+
+// Finished outings never change: their seen pieces are worked out once per session.
+const gesehenCache = new Map<string, { n: number; stuecke: Promise<Map<string, Piece>> }>();
+
+/** Pieces one track has covered (all kinds; the caller decides what counts). */
+export function gesehenVon(spur: Spur): Promise<Map<string, Piece>> {
+  const alt = gesehenCache.get(spur.id);
+  if (alt && alt.n === spur.fixes.length) return alt.stuecke;
+  const stuecke = (async () => {
+    const gesehen = new Map<string, Piece>();
+    for (const k of kachelnFuer([spur.fixes])) {
+      const teile = await stueckeDerKachel({ z: TILE_ZOOM, ...k });
+      const nachId = new Map(teile.map((p) => [p.id, p]));
+      for (const id of seenPieceIds(teile, spur.fixes, spur.locker ? { maxGapM: 60 } : {})) gesehen.set(id, nachId.get(id)!);
+    }
+    return gesehen;
+  })();
+  gesehenCache.set(spur.id, { n: spur.fixes.length, stuecke });
+  return stuecke;
+}
+
+export async function berechne(spuren: Spur[], daten: Regionen): Promise<Fortschritt> {
   const gesehen = new Map<string, Piece>();
-  for (const k of kachelnFuer(spuren)) {
-    const stuecke = await stueckeDerKachel({ z: TILE_ZOOM, ...k });
-    const nachId = new Map(stuecke.map((s) => [s.id, s]));
-    for (const spur of spuren) for (const id of seenPieceIds(stuecke, spur)) gesehen.set(id, nachId.get(id)!);
-  }
+  for (const teil of await Promise.all(spuren.map(gesehenVon))) for (const [id, p] of teil) gesehen.set(id, p);
   const proGebiet = await meterJeGebiet(gesehen.values(), daten);
   return { stuecke: [...gesehen.values()], proGebiet };
 }
@@ -86,10 +110,11 @@ export async function meterJeGebiet(stuecke: Iterable<Piece>, daten: Regionen): 
 }
 
 /** Keeps the progress up to date while outings are added and while recording (every 10 new fixes). */
-export function useFortschritt(spuren: Fix[][], daten: Regionen | null): Fortschritt | null {
+export function useFortschritt(spuren: Spur[], daten: Regionen | null): Fortschritt | null {
   const [fortschritt, setFortschritt] = useState<Fortschritt | null>(null);
-  const anzahl = spuren.reduce((n, s) => n + s.length, 0);
-  const schluessel = `${spuren.length}:${Math.floor(anzahl / 10)}`;
+  const anzahl = spuren.reduce((n, s) => n + s.fixes.length, 0);
+  // Which outings take part (switches can change that) and, every 10 fixes, the live track.
+  const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}`;
   const nr = useRef(0);
   useEffect(() => {
     if (!daten) return;

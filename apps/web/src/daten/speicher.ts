@@ -1,5 +1,7 @@
 import type { Fix, Mode } from "@streifzug/core";
 
+export type Quelle = "aufnahme" | "google" | "gpx";
+
 /** A recorded outing as kept on the device. */
 export interface Streifzug {
   id: string;
@@ -8,8 +10,10 @@ export interface Streifzug {
   fixes: Fix[];
   distanceM: number;
   mode: Mode;
-  /** aktiv: recording; lokal: only on this device; gesichert: uploaded. */
-  status: "aktiv" | "lokal" | "gesichert";
+  /** aktiv: recording; lokal: only on this device; gesichert: uploaded; importiert: from another app, stays on the device. */
+  status: "aktiv" | "lokal" | "gesichert" | "importiert";
+  /** Where it comes from; missing means recorded in Streifzug. */
+  quelle?: Quelle;
 }
 
 const DB = "streifzug";
@@ -38,6 +42,7 @@ async function auftrag<T>(modus: IDBTransactionMode, fn: (s: IDBObjectStore) => 
 
 export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s)).then(() => undefined);
 export const alleLaden = () => auftrag<Streifzug[]>("readonly", (st) => st.getAll());
+export const loeschen = (id: string) => auftrag("readwrite", (st) => st.delete(id)).then(() => undefined);
 
 /** Lets other parts of the app (list, map) know that something changed. */
 export const AENDERUNG = "streifzug-aenderung";
