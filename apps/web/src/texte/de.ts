@@ -28,6 +28,7 @@ export const de = {
     profil: "Profil und Einstellungen",
     blattAuf: "Details einblenden",
     blattZu: "Details ausblenden, mehr Karte",
+    rechnet: (prozent: number) => `Wege werden eingerechnet … ${prozent} %. Die App bleibt dabei bedienbar.`,
     zaehlerNeu: "neu",
     zaehlerStrassen: (n: number) => (n === 1 ? "1 Straße" : `${n} Straßen`),
     zaehlerNichts: "Unterwegs, noch nichts Neues",

@@ -14,6 +14,9 @@ export interface Streifzug {
   status: "aktiv" | "lokal" | "gesichert" | "importiert";
   /** Where it comes from; missing means recorded in Streifzug. */
   quelle?: Quelle;
+  /** Stored matching result: ids of the street pieces this outing covered, valid for `stueckIdsGueltig`. */
+  stueckIds?: string[];
+  stueckIdsGueltig?: string;
 }
 
 const DB = "streifzug";
@@ -47,3 +50,9 @@ export const loeschen = (id: string) => auftrag("readwrite", (st) => st.delete(i
 /** Lets other parts of the app (list, map) know that something changed. */
 export const AENDERUNG = "streifzug-aenderung";
 export const melden = () => window.dispatchEvent(new Event(AENDERUNG));
+
+/** Keeps a matching result with the outing (does not notify: nothing visible changes). */
+export async function ergebnisMerken(id: string, ids: string[], gueltig: string): Promise<void> {
+  const s = await auftrag<Streifzug | undefined>("readonly", (st) => st.get(id) as IDBRequest<Streifzug | undefined>);
+  if (s) await speichern({ ...s, stueckIds: ids, stueckIdsGueltig: gueltig });
+}

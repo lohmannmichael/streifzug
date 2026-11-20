@@ -1,0 +1,97 @@
+import { pointInGeometry, seenPieceIds, tileFor, TILE_ZOOM, type Fix, type Piece, type PolygonGeometry } from "@streifzug/core";
+import type { Region, Summe } from "./regionen";
+import { stueckeDerKachel } from "./strassen";
+
+/**
+ * The heavy part of the progress, without React, so it can run in the background worker
+ * (abgleich.worker.ts) as well as on the page.
+ */
+
+/** Bump when the matching rules change: stored results of older versions are worked out again. */
+export const ABGLEICH_VERSION = 1;
+
+interface Flaeche {
+  id: string;
+  geometry: PolygonGeometry;
+  bbox: [number, number, number, number];
+}
+
+const flaechen = new Map<string, Promise<Flaeche[]>>();
+
+export function ladeFlaechen(regionId: string): Promise<Flaeche[]> {
+  let p = flaechen.get(regionId);
+  if (!p) {
+    p = fetch(`/regionen/${regionId}/gebiete.geojson`)
+      .then((r) => r.json() as Promise<{ features: { properties: { id: string }; geometry: PolygonGeometry }[] }>)
+      .then((d) =>
+        d.features.map((f) => {
+          const rings = f.geometry.type === "Polygon" ? f.geometry.coordinates : f.geometry.coordinates.flat();
+          const pts = rings.flat();
+          const xs = pts.map((q) => q[0]);
+          const ys = pts.map((q) => q[1]);
+          return { id: String(f.properties.id), geometry: f.geometry, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] as [number, number, number, number] };
+        }),
+      );
+    flaechen.set(regionId, p);
+  }
+  return p;
+}
+
+/** Tiles around a track: the tile of each fix plus neighbours within about 30 m. */
+export function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
+  const d = 0.0004;
+  const set = new Map<string, { x: number; y: number }>();
+  for (const spur of spuren)
+    for (const f of spur)
+      for (const [dx, dy] of [[0, 0], [d, 0], [-d, 0], [0, d], [0, -d]] as const) {
+        const t = tileFor([f.lon + dx * 1.6, f.lat + dy], TILE_ZOOM);
+        set.set(`${t.x}/${t.y}`, { x: t.x, y: t.y });
+      }
+  return [...set.values()];
+}
+
+/** Ids of the pieces one track has covered (all kinds; the caller decides what counts). */
+export async function abgleichen(fixes: Fix[], locker: boolean): Promise<Piece[]> {
+  const gesehen: Piece[] = [];
+  for (const k of kachelnFuer([fixes])) {
+    const teile = await stueckeDerKachel({ z: TILE_ZOOM, ...k });
+    const ids = seenPieceIds(teile, fixes, locker ? { maxGapM: 60 } : {});
+    for (const p of teile) if (ids.has(p.id)) gesehen.push(p);
+  }
+  return gesehen;
+}
+
+/** Pieces for stored ids ("<z>/<x>/<y>:<line>:<piece>"), loading each tile once. */
+export async function stueckeFuerIds(ids: Iterable<string>): Promise<Piece[]> {
+  const jeKachel = new Map<string, Set<string>>();
+  for (const id of ids) {
+    const k = id.split(":")[0]!;
+    (jeKachel.get(k) ?? jeKachel.set(k, new Set()).get(k)!).add(id);
+  }
+  const out: Piece[] = [];
+  for (const [k, gesucht] of jeKachel) {
+    const [z, x, y] = k.split("/").map(Number) as [number, number, number];
+    for (const p of await stueckeDerKachel({ z, x, y })) if (gesucht.has(p.id)) out.push(p);
+  }
+  return out;
+}
+
+/** Seen meters per area id (all levels): every piece counts for each area its middle lies in. */
+export async function meterJeGebiet(stuecke: Iterable<Piece>, liste: Region[]): Promise<Map<string, Summe>> {
+  const proGebiet = new Map<string, Summe>();
+  const regionen = await Promise.all(liste.map(async (r) => ({ r, f: await ladeFlaechen(r.id) })));
+  for (const piece of stuecke) {
+    const [x, y] = piece.mid;
+    for (const { r, f } of regionen) {
+      if (x < r.bbox[0] || x > r.bbox[2] || y < r.bbox[1] || y > r.bbox[3]) continue;
+      for (const g of f) {
+        if (x < g.bbox[0] || x > g.bbox[2] || y < g.bbox[1] || y > g.bbox[3] || !pointInGeometry(piece.mid, g.geometry)) continue;
+        const s = proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 };
+        if (piece.kind === "street") s.strasse_m += piece.lengthM * piece.weight;
+        else s.weg_m += piece.lengthM * piece.weight;
+        proGebiet.set(g.id, s);
+      }
+    }
+  }
+  return proGebiet;
+}

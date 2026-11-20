@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 20.11.2026: App fror nach großem Import ein (Fix)
+- Michi: „Grad geht gar nichts mehr“ nach dem Import. Nachgestellt mit 1.668 importierten Wegen bei 4-fach gedrosselter CPU (etwa iPhone): bis 9,5 s am Stück blockiert, 127 s Blockade insgesamt, bei jedem Start erneut
+- Ursachen: Abgleich aller Wege bei jedem Start auf dem Oberflächen-Strang; Nebel zeichnete bei jedem Bild der Kartenbewegung alle Linien neu; Logbuch rechnete jeden Import einzeln
+- Lösung: Abgleich und Summen je Gebiet im Hintergrund-Worker (`daten/abgleich.worker.ts`, reine Logik in `daten/rechnen.ts`), Hinweis „Wege werden eingerechnet … %“; Ergebnis je Weg auf dem Gerät gespeichert (`stueckIds`, gültig für `ABGLEICH_VERSION` und Punktzahl), beim nächsten Start kein Abgleich mehr. Nebel wird beim Verschieben nur mitbewegt (CSS-Transform, Rand 35 %, Auflösung max. 1,5) und am Ende neu gezeichnet. Logbuch holt Importe zwischen zwei eigenen Runden gebündelt vom Worker
+- Ergebnis im selben Test: längste Blockade 0,45 s, insgesamt 2,4 s; nach Neustart 0,38 s. Ändern sich die Abgleich-Regeln, `ABGLEICH_VERSION` hochzählen
+
 ## 20.11.2026: Import Google-Zeitachse und GPX (Phase 2 vorgezogen)
 - Kein Abruf per Google-Anmeldung: Google speichert die Zeitachse seit 2024/25 nur noch auf dem Handy, es gibt keine öffentliche Schnittstelle (die Data Portability API braucht eine aufwendige App-Prüfung, Zeitachse dort nicht bestätigt). Stattdessen Import der Exportdatei
 - Leser in `packages/core/src/import.ts` mit Tests: iPhone-Export (`location-history.json`, `geo:`-Punkte mit Minuten-Versatz), Android-Export (`semanticSegments`/`timelinePath`, `rawSignals`), alte Takeout `Records.json` und alte Monatsdateien (`simplifiedRawPath`); GPX (Apple-Health-Workouts, Strava, Komoot). Besuche und Aktivitäten nur mit Start/Ende haben keinen Weg und werden übersprungen

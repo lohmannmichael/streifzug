@@ -21,6 +21,10 @@ interface Linie {
 // Zoom range in which the fog fades in; below it the area colors take over.
 const AB_ZOOM = 11.8;
 const VOLL_ZOOM = 13.2;
+// Extra canvas around the screen (share of width/height on each side), so moving the map
+// shows no gaps before the fog is drawn again; and a pixel ratio cap (the fog is soft anyway).
+const RAND = 0.35;
+const MAX_DPR = 1.5;
 // Half width of a clear corridor around a seen street, in meters (at least a few pixels).
 const KORRIDOR_M = 28;
 
@@ -49,34 +53,59 @@ export function nebelAnlegen(karte: MapLibreMap): Nebel {
   let sichtbar = true;
   let istDunkel = false;
   let geplant = 0;
+  // Where the drawn picture was anchored: the screen's top-left corner and the zoom at drawing time.
+  let anker: { lngLat: [number, number]; zoom: number } | null = null;
+
+  /** While the map moves, the last picture is only shifted and scaled (cheap); it is redrawn when it stops. */
+  const mitbewegen = () => {
+    if (!anker) return;
+    const p = karte.project(anker.lngLat);
+    const s = 2 ** (karte.getZoom() - anker.zoom);
+    leinwand.style.transform = `translate(${p.x}px, ${p.y}px) scale(${s})`;
+  };
 
   const zeichnen = () => {
     geplant = 0;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(MAX_DPR, window.devicePixelRatio || 1);
     const w = container.clientWidth;
     const h = container.clientHeight;
-    if (leinwand.width !== Math.round(w * dpr) || leinwand.height !== Math.round(h * dpr)) {
-      leinwand.width = Math.round(w * dpr);
-      leinwand.height = Math.round(h * dpr);
+    const mx = Math.round(w * RAND);
+    const my = Math.round(h * RAND);
+    const gw = w + 2 * mx;
+    const gh = h + 2 * my;
+    if (leinwand.width !== Math.round(gw * dpr) || leinwand.height !== Math.round(gh * dpr)) {
+      leinwand.width = Math.round(gw * dpr);
+      leinwand.height = Math.round(gh * dpr);
+      leinwand.style.width = `${gw}px`;
+      leinwand.style.height = `${gh}px`;
+      leinwand.style.left = `${-mx}px`;
+      leinwand.style.top = `${-my}px`;
+      leinwand.style.transformOrigin = `${mx}px ${my}px`;
     }
+    const tl = karte.unproject([0, 0]);
+    anker = { lngLat: [tl.lng, tl.lat], zoom: karte.getZoom() };
+    leinwand.style.transform = "none";
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, leinwand.width, leinwand.height);
     const zoom = karte.getZoom();
     const staerke = Math.min(1, Math.max(0, (zoom - AB_ZOOM) / (VOLL_ZOOM - AB_ZOOM)));
     if (!sichtbar || staerke === 0) return;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Draw in screen coordinates; the margin lies at negative/overflowing positions.
+    ctx.setTransform(dpr, 0, 0, dpr, mx * dpr, my * dpr);
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = istDunkel ? `rgba(6, 8, 12, ${0.38 * staerke})` : `rgba(120, 130, 148, ${0.24 * staerke})`;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(-mx, -my, gw, gh);
 
     // Cut clear corridors: a soft wide pass, then a fully clear narrow one.
     const lat = karte.getCenter().lat;
     const meterProPixel = (40075016.686 * Math.cos((lat * Math.PI) / 180)) / (512 * 2 ** zoom);
     const breite = Math.max(8, (2 * KORRIDOR_M) / meterProPixel);
-    const grenzen = karte.getBounds();
+    // Visible area plus the margin.
+    const nw = karte.unproject([-mx, -my]);
+    const so = karte.unproject([w + mx, h + my]);
     const rand = (breite * meterProPixel) / 111_000;
-    const west = grenzen.getWest() - rand, sued = grenzen.getSouth() - rand, ost = grenzen.getEast() + rand, nord = grenzen.getNorth() + rand;
+    const west = nw.lng - rand, nord = nw.lat + rand, ost = so.lng + rand, sued = so.lat - rand;
 
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
@@ -109,9 +138,10 @@ export function nebelAnlegen(karte: MapLibreMap): Nebel {
   const planen = () => {
     if (!geplant) geplant = requestAnimationFrame(zeichnen);
   };
-  // "render" runs every frame while the map moves; draw right away so the fog never lags behind.
-  karte.on("render", zeichnen);
+  karte.on("move", mitbewegen);
+  karte.on("moveend", planen);
   karte.on("resize", planen);
+  karte.on("load", planen);
 
   return {
     setzen(neu, p) {
@@ -128,8 +158,10 @@ export function nebelAnlegen(karte: MapLibreMap): Nebel {
       planen();
     },
     entfernen() {
-      karte.off("render", zeichnen);
+      karte.off("move", mitbewegen);
+      karte.off("moveend", planen);
       karte.off("resize", planen);
+      karte.off("load", planen);
       if (geplant) cancelAnimationFrame(geplant);
       leinwand.remove();
     },

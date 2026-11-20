@@ -11,12 +11,12 @@ const tag = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric",
 const monat = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
 
 /** Streifzüge as a logbook: newest first, grouped by month, each with a small street plan. */
-export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void; importieren: () => void }) {
+export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void; importieren: () => void; bereit: boolean }) {
   const e = props.einstellungen;
   const importiert = (s: Streifzug) => s.quelle !== undefined && s.quelle !== "aufnahme";
   const zaehltQuelle = (s: Streifzug) => (s.quelle === "google" ? e.googleZaehlen : s.quelle === "gpx" ? e.gpxZaehlen : true);
   // Imports switched on take part in "what was new", but only own outings are shown one by one.
-  const logbuch = useLogbuch(props.liste.filter(zaehltQuelle), props.daten, e.wegeZaehlen, e.autoZaehlen);
+  const logbuch = useLogbuch(props.liste.filter(zaehltQuelle), props.daten, e.wegeZaehlen, e.autoZaehlen, props.bereit);
   const eigene = props.liste.filter((s) => !importiert(s));
   const importe = (["google", "gpx"] as const)
     .map((q) => ({ q, wege: props.liste.filter((s) => s.quelle === q) }))

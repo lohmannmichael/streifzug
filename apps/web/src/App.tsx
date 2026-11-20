@@ -2,7 +2,7 @@ import { milestoneReached, type LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
-import { gebietAn, useFortschritt, type Fortschritt, type Spur } from "./daten/fortschritt";
+import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
@@ -49,10 +49,16 @@ export function App() {
       (s.quelle === "google" ? einstellungen.googleZaehlen : s.quelle === "gpx" ? einstellungen.gpxZaehlen : true),
   );
   const spuren: Spur[] = [
-    ...zaehlende.map((s) => ({ id: s.id, fixes: s.fixes, locker: s.quelle !== undefined && s.quelle !== "aufnahme" })),
+    ...zaehlende.map((s) => ({
+      id: s.id,
+      fixes: s.fixes,
+      locker: s.quelle !== undefined && s.quelle !== "aufnahme",
+      // Matched in an earlier session: no need to match again.
+      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds } : {}),
+    })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, fixes: aufzeichnung.fixes }] : []),
   ];
-  const fortschritt = useFortschritt(spuren, daten);
+  const { fortschritt, rechnet } = useFortschritt(spuren, daten);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
@@ -168,6 +174,7 @@ export function App() {
             fleck={fleck}
             fleckVomStandort={position !== null}
             fleckZeigen={(f) => setMarkiert((m) => ({ fleck: f, nr: (m?.nr ?? 0) + 1 }))}
+            rechnet={rechnet}
           />
         </div>
         {reiter === "gebiete" && (
@@ -191,6 +198,7 @@ export function App() {
               waehlen(id);
               setReiter("karte");
             }}
+            bereit={fortschritt !== null && rechnet === null}
             importieren={() => {
               setImportZeigen(true);
               setProfilOffen(true);
@@ -237,6 +245,7 @@ function KartenBlatt(props: {
   fleck: Fleck | null;
   fleckVomStandort: boolean;
   fleckZeigen: (f: Fleck) => void;
+  rechnet: { fertig: number; gesamt: number } | null;
 }) {
   const { gebiet, daten, aufzeichnung: a } = props;
   const wege = props.einstellungen.wegeZaehlen;
@@ -295,7 +304,13 @@ function KartenBlatt(props: {
       <button type="button" className={a.aktiv ? "haupt zweit" : "haupt"} onClick={a.aktiv ? a.beenden : a.starten}>
         {a.aktiv ? t.karte.beenden : t.karte.losziehen}
       </button>
-      <p className="hinweis" aria-live="polite">{props.standortFehler ? t.karte.standortFehler : a.aktiv ? t.karte.hinweisOffen : ""}</p>
+      <p className="hinweis" aria-live="polite">{props.standortFehler
+          ? t.karte.standortFehler
+          : a.aktiv
+            ? t.karte.hinweisOffen
+            : props.rechnet
+              ? t.karte.rechnet(Math.round((100 * props.rechnet.fertig) / props.rechnet.gesamt))
+              : ""}</p>
     </section>
   );
 }
