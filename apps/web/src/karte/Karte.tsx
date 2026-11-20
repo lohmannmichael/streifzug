@@ -15,6 +15,7 @@ import { alsStrecke, type Regionen } from "../daten/regionen";
 import { strassenName } from "../daten/strassen";
 import { t } from "../texte/de";
 import { nebelAnlegen, type Nebel } from "./nebel";
+import { stadtplan, STIL_ADRESSE } from "./stil";
 
 setWorkerUrl(workerUrl);
 
@@ -28,9 +29,6 @@ const ZEICHNEN_MS = 700;
 const GLANZ_MS = 1400;
 const SCHRIFT = ["Noto Sans Regular"];
 
-function stilAdresse(dunkel: boolean) {
-  return `https://tiles.openfreemap.org/styles/${dunkel ? "dark" : "positron"}`;
-}
 
 type FeatureSammlung = { type: "FeatureCollection"; features: { properties: Record<string, unknown>; geometry: { coordinates: unknown } }[] };
 
@@ -76,9 +74,10 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
         paint: {
           // Areas with progress glow yellow (also when chosen); a chosen area without progress gets a light ink tint.
           "fill-color": ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], "#ffe14a", linie],
+          // On the dark plan the yellow glow is toned down, otherwise it turns muddy.
           "fill-opacity": [
             "interpolate", ["linear"], ["zoom"],
-            11, ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], ["min", 0.65, ["+", 0.15, ["*", 0.005, ["coalesce", ["feature-state", "prozent"], 0]]]], ["boolean", ["feature-state", "gewaehlt"], false], 0.08, 0],
+            11, ["*", dunkel ? 0.55 : 1, ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], ["min", 0.65, ["+", 0.15, ["*", 0.005, ["coalesce", ["feature-state", "prozent"], 0]]]], ["boolean", ["feature-state", "gewaehlt"], false], 0.08, 0]],
             15, ["case", ["boolean", ["feature-state", "gewaehlt"], false], 0.06, 0],
           ],
         },
@@ -243,7 +242,9 @@ export function Karte(props: KartenProps) {
     dunkelRef.current = dunkel.matches;
     const karte = new MapLibreMap({
       container: box.current,
-      style: stilAdresse(dunkel.matches),
+      style: STIL_ADRESSE,
+      // Our own "Stadtplan" colors, light or dark (also used for every later setStyle).
+      transformStyle: (_vorher, neu) => stadtplan(neu, dunkelRef.current),
       center: START,
       zoom: 13.2,
       minZoom: 4,
@@ -280,7 +281,8 @@ export function Karte(props: KartenProps) {
     const wechsel = (e: MediaQueryListEvent) => {
       dunkelRef.current = e.matches;
       nebel.dunkel(e.matches);
-      karte.setStyle(stilAdresse(e.matches));
+      // Same base style, recolored: reload fully so our own layers are added again.
+      karte.setStyle(STIL_ADRESSE, { diff: false });
     };
     dunkel.addEventListener("change", wechsel);
     return () => {

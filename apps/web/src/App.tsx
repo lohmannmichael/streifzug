@@ -1,5 +1,6 @@
 import { distanceM, milestoneReached, type LonLat } from "@streifzug/core";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
 import { useFortschritt, type Fortschritt } from "./daten/fortschritt";
 import type { Streifzug } from "./daten/speicher";
@@ -43,6 +44,11 @@ export function App() {
   const warAktiv = useRef(false);
   if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], proGebiet: new Map() };
   warAktiv.current = aufzeichnung.aktiv;
+  // While out and about: what this outing has discovered so far (for the counter at the top).
+  const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
+  const neuUnterwegs = aufzeichnung.aktiv && fortschritt ? fortschritt.stuecke.filter((p) => !vorherIds.has(p.id)) : [];
+  const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + (p.kind === "street" || einstellungen.wegeZaehlen ? p.lengthM * p.weight : 0), 0);
+  const neueStrassen = useNeueStrassen(neuUnterwegs);
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);
@@ -89,6 +95,18 @@ export function App() {
             zentrieren={zentrieren}
             markiert={markiert ? { linien: markiert.fleck.linien, nr: markiert.nr } : null}
           />
+          {aufzeichnung.aktiv && (
+            <p className="unterwegs-zaehler" aria-live="polite">
+              {neuUnterwegsM >= 1 ? (
+                <>
+                  <span className="marker">+{alsStrecke(neuUnterwegsM)}</span> {t.karte.zaehlerNeu}
+                  {neueStrassen > 0 && <span className="leise"> · {t.karte.zaehlerStrassen(neueStrassen)}</span>}
+                </>
+              ) : (
+                t.karte.zaehlerNichts
+              )}
+            </p>
+          )}
           <div className="karten-knoepfe">
             <button type="button" className="rund-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
               <IconIch />
@@ -183,6 +201,8 @@ function KartenBlatt(props: {
   const p = prozent(gesehen, gesamt);
   // The sheet can be pulled down (or the handle tapped) to free the map, and pulled up again.
   const [klein, setKlein] = useState(false);
+  // Unterwegs-Modus: small sheet and a big map while recording; back to full size for the reward.
+  useEffect(() => setKlein(a.aktiv), [a.aktiv]);
   const zug = useRef<number | null>(null);
   const kmText = gebiet ? t.karte.kmZeile(alsKm(gesehen), alsKm(gesamt)) : t.karte.kmLaedt;
   return (

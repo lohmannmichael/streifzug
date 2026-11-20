@@ -503,3 +503,24 @@ button { font: inherit; color: inherit; }
 .log-strassen { font-size: var(--t-klein); color: var(--text-leise); }
 .log-fuss { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
 .blatt.klein .fleck { display: none; }
+
+/* Unterwegs-Modus: counter at the top of the map while recording. */
+.unterwegs-zaehler {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: calc(100% - 150px);
+  padding: 8px 14px;
+  border-radius: 22px;
+  background: var(--flaeche);
+  box-shadow: 0 2px 10px rgb(30 42 74 / 0.18);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.unterwegs-zaehler .marker { font-family: var(--schrift-zahl); font-size: 1.2rem; padding: 0 0.1em; }
+.unterwegs-zaehler .leise { font-weight: 400; }
+@media (prefers-color-scheme: dark) { .unterwegs-zaehler .marker { color: #1e2a4a; } }

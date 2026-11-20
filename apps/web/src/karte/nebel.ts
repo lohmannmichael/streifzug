@@ -67,7 +67,7 @@ export function nebelAnlegen(karte: MapLibreMap): Nebel {
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = istDunkel ? `rgba(6, 8, 12, ${0.5 * staerke})` : `rgba(120, 130, 148, ${0.24 * staerke})`;
+    ctx.fillStyle = istDunkel ? `rgba(6, 8, 12, ${0.38 * staerke})` : `rgba(120, 130, 148, ${0.24 * staerke})`;
     ctx.fillRect(0, 0, w, h);
 
     // Cut clear corridors: a soft wide pass, then a fully clear narrow one.

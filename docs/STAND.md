@@ -12,7 +12,15 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 ## Offen in Phase 1
 - Design-Paket 1 erledigt 20.11.2026 (Kartenquellen eingeklappt, Prozent mit Kommastelle unter 10 %, feinere Grenzlinien, Blatt herunterziehbar)
 - Design-Paket 2 erledigt 20.11.2026: Gebiete-Liste mit Mini-Balken und Sortierung (Nähe, Am meisten entdeckt, A–Z), Nebel über Unentdecktem (Schalter im Profil), Zeichen-Moment beim Aufzeichnen (Textmarker-Strich, „+N m“). Dazu Fix: gelbe Straßen gingen verloren, wenn die Karte langsamer lud als der Fortschritt (Michis Kita-Fahrt). Live auf main seit 20.11.2026
-- Design-Paket 3 erledigt 20.11.2026: Logbuch im Reiter Streifzüge (Mini-Stadtplan je Runde, neu entdeckte Meter, Prozent-Sprung, neue Straßennamen, nach Monaten), Weißer Fleck im Blatt mit „Zeigen“, Meilenstein-Stempel (1/5/10/25/50/75/100 %) im Blatt und im Logbuch, Straßenname im Zeichen-Moment. Nächstes: Design-Paket 4 (Unterwegs-Modus, eigener Kartenstil „Stadtplan“), dann Test draußen
+- Design-Paket 3 erledigt 20.11.2026: Logbuch im Reiter Streifzüge (Mini-Stadtplan je Runde, neu entdeckte Meter, Prozent-Sprung, neue Straßennamen, nach Monaten), Weißer Fleck im Blatt mit „Zeigen“, Meilenstein-Stempel (1/5/10/25/50/75/100 %) im Blatt und im Logbuch, Straßenname im Zeichen-Moment. 
+- Design-Paket 4 erledigt 20.11.2026: Unterwegs-Modus (Blatt klappt beim Losziehen ein, Zähler „+240 m neu · 3 Straßen“ oben), eigener Kartenstil „Stadtplan“ (Positron-Daten, eigene Farben hell und dunkel, ohne Straßenschilder)
+
+## Reihenfolge ab 20.11.2026 (Michi: erst für ihn selbst richtig nutzbar, Freund:innen-Test später)
+1. Michi nutzt die App draußen, Feedback einarbeiten
+2. Phase 3 vorziehen: iPhone-App mit Hintergrund-Aufzeichnung (ohne „Losziehen“, App muss nicht offen sein)
+3. Phase 2: Import alter Strecken (GPX, Apple Health)
+4. Sehenswürdigkeiten-Checkliste (Urlaub)
+5. Später, vor dem Freund:innen-Test: erster Start mit 3 Bildschirmen, App-Icon und Startbildschirm, Teilen-Bild mit Privatzone
 - Test draußen durch Michi (Weiden), Feedback einarbeiten
 - Nebel-Karte: Gebiete leuchten herausgezoomt gelb nach Prozent, reingezoomt Nebel über Unentdecktem (beides erledigt 20.11.2026)
 - Teilen-Bild mit Privatzone

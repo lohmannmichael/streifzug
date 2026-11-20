@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 20.11.2026: Design-Paket 4 und neue Reihenfolge
+- Michi will die App erst selbst richtig nutzen; Freund:innen-Test (erster Start, Icon, Teilen-Bild) kommt später. Phase 3 (Hintergrund-Aufzeichnung) wird vor Phase 2 (Import) gezogen, weil eine App, die man jedes Mal starten muss, im Alltag kaum genutzt wird
+- Kartenstil „Stadtplan“ (`apps/web/src/karte/stil.ts`): Grundlage ist OpenFreeMap Positron für hell und dunkel (gleiche Ebenen, nur andere Farben, per `transformStyle` beim Laden umgefärbt). Weiße Straßen auf Nebelgrau, Schrift in Tinte, keine Straßenschilder. Vorteil: Ebenen-Reihenfolge und Namen sind in beiden Modi gleich (vorher lag im dunklen Stil das Viertel-Leuchten über den gelben Straßen). Im Dunkeln Nebel und Viertel-Leuchten schwächer
+- Unterwegs-Modus: Blatt klappt beim Losziehen ein und nach „Beenden“ wieder auf (Belohnung, Stempel). Zähler oben zählt neu entdeckte Meter dieser Runde (alle Gebiete) und verschiedene Straßennamen
+
 ## 20.11.2026: Design-Paket 3 (Logbuch, Weißer Fleck, Stempel, Straßennamen)
 - Logik in `packages/core/src/ziele.ts` mit Tests: `milestoneReached` (Stufen 1, 5, 10, 25, 50, 75, 100 %), `nearestUnseen` (nächste ungesehene Straße bis 1,5 km, Wege nur mit Schalter), `nameNear` (Straßenname bis 15 m), `newPerOuting` (jedes Stück zählt für die erste Runde, die es gesehen hat)
 - Straßennamen aus der Kachel-Ebene `transportation_name` (OpenMapTiles; die Ebene `transportation` hat keine Namen). Kachel wird einmal geladen und für Stücke und Namen genutzt
