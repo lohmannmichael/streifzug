@@ -1,9 +1,15 @@
 import { VectorTile } from "@mapbox/vector-tile";
-import { piecesFromTile, TILE_ZOOM, type LonLat, type OmtTransportation, type Piece, type Tile, type TileFeature } from "@streifzug/core";
+import { nameNear, piecesFromTile, tileFor, TILE_ZOOM, type LonLat, type NamedLine, type OmtTransportation, type Piece, type Tile, type TileFeature } from "@streifzug/core";
 import { PbfReader } from "pbf";
 
 let vorlage: Promise<string> | null = null;
-const kacheln = new Map<string, Promise<Piece[]>>();
+interface Kachel {
+  stuecke: Piece[];
+  /** Named street lines (OpenMapTiles layer "transportation_name"), for street names. */
+  namen: NamedLine[];
+}
+
+const kacheln = new Map<string, Promise<Kachel>>();
 
 function tileUrl(): Promise<string> {
   vorlage ??= fetch("https://tiles.openfreemap.org/planet")
@@ -22,30 +28,62 @@ async function bytes(antwort: Response): Promise<Uint8Array> {
   return roh;
 }
 
-/** Counted street pieces of one zoom-14 tile, from the same map data and rules as the region totals. */
-export function stueckeDerKachel(tile: Tile): Promise<Piece[]> {
+function linienVon(geo: { type: string; coordinates?: unknown }): LonLat[][] {
+  return geo.type === "LineString" ? [geo.coordinates as LonLat[]] : geo.type === "MultiLineString" ? (geo.coordinates as LonLat[][]) : [];
+}
+
+/** One zoom-14 tile, loaded and decoded once: counted pieces and named lines. */
+function ladeKachel(tile: Tile): Promise<Kachel> {
   const key = `${tile.x}/${tile.y}`;
   let p = kacheln.get(key);
   if (!p) {
     p = (async () => {
       const url = (await tileUrl()).replace("{z}", String(TILE_ZOOM)).replace("{x}", String(tile.x)).replace("{y}", String(tile.y));
       const antwort = await fetch(url);
-      if (!antwort.ok) return [];
-      const ebene = new VectorTile(new PbfReader(await bytes(antwort))).layers.transportation;
+      if (!antwort.ok) return { stuecke: [], namen: [] };
+      const vt = new VectorTile(new PbfReader(await bytes(antwort)));
+      const ebene = vt.layers.transportation;
       const features: TileFeature[] = [];
       for (let i = 0; ebene && i < ebene.length; i++) {
         const f = ebene.feature(i);
-        const geo = f.toGeoJSON(tile.x, tile.y, TILE_ZOOM).geometry;
-        const lines: LonLat[][] =
-          geo.type === "LineString" ? [geo.coordinates as unknown as LonLat[]] : geo.type === "MultiLineString" ? (geo.coordinates as unknown as LonLat[][]) : [];
-        features.push({ props: f.properties as OmtTransportation, lines });
+        features.push({ props: f.properties as OmtTransportation, lines: linienVon(f.toGeoJSON(tile.x, tile.y, TILE_ZOOM).geometry) });
       }
-      return piecesFromTile(tile, features);
+      const namen: NamedLine[] = [];
+      const namenEbene = vt.layers.transportation_name;
+      for (let i = 0; namenEbene && i < namenEbene.length; i++) {
+        const f = namenEbene.feature(i);
+        const props = f.properties as Record<string, unknown>;
+        const name = String(props["name:de"] ?? props.name_de ?? props.name ?? "").trim();
+        if (!name) continue;
+        for (const coords of linienVon(f.toGeoJSON(tile.x, tile.y, TILE_ZOOM).geometry)) namen.push({ name, coords });
+      }
+      return { stuecke: piecesFromTile(tile, features), namen };
     })().catch(() => {
       kacheln.delete(key);
-      return [];
+      return { stuecke: [], namen: [] };
     });
     kacheln.set(key, p);
   }
   return p;
+}
+
+/** Counted street pieces of one zoom-14 tile, from the same map data and rules as the region totals. */
+export async function stueckeDerKachel(tile: Tile): Promise<Piece[]> {
+  return (await ladeKachel(tile)).stuecke;
+}
+
+/** Street name of a piece ("Aachener Straße"), or null for unnamed ways. */
+export async function strassenName(piece: Piece): Promise<string | null> {
+  const [z, x, y] = piece.id.split(":")[0]!.split("/").map(Number);
+  if (z === undefined || x === undefined || y === undefined) return null;
+  return nameNear(piece.mid, (await ladeKachel({ z, x, y })).namen);
+}
+
+/** Pieces of the tile around a point and its eight neighbours (about 4 km square). */
+export async function stueckeUm(punkt: LonLat): Promise<Piece[]> {
+  const mitte = tileFor(punkt, TILE_ZOOM);
+  const teile = await Promise.all(
+    [-1, 0, 1].flatMap((dx) => [-1, 0, 1].map((dy) => stueckeDerKachel({ z: TILE_ZOOM, x: mitte.x + dx, y: mitte.y + dy }))),
+  );
+  return teile.flat();
 }

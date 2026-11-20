@@ -1,4 +1,4 @@
-import { distanceM } from "@streifzug/core";
+import { distanceM, milestoneReached, type LonLat } from "@streifzug/core";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
 import { useFortschritt, type Fortschritt } from "./daten/fortschritt";
@@ -6,8 +6,12 @@ import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
+import { useWeisserFleck, type Fleck } from "./daten/fleck";
+import { LogbuchSeite } from "./seiten/Logbuch";
+import { Stempel } from "./ui/Stempel";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
+import { dauerText } from "./ui/format";
 import { IconGebiete, IconIch, IconKarte, IconStandort, IconStreifzuege, IconZurueck } from "./ui/Icons";
 
 type Reiter = "karte" | "gebiete" | "streifzuege";
@@ -42,6 +46,14 @@ export function App() {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);
+  // "Weißer Fleck": from the own position, otherwise from the middle of the chosen area.
+  const punkte = useMittelpunkte(daten);
+  const fleckBezug: LonLat | null = position ?? (gebiet ? (punkte?.get(gebiet.id) ?? null) : null);
+  const fleck = useWeisserFleck(aufzeichnung.aktiv ? null : fleckBezug, fortschritt, einstellungen.wegeZaehlen);
+  const [markiert, setMarkiert] = useState<{ fleck: Fleck; nr: number } | null>(null);
+  useEffect(() => {
+    if (aufzeichnung.aktiv) setMarkiert(null);
+  }, [aufzeichnung.aktiv]);
   const zumStandort = () => {
     setStandortFehler(false);
     navigator.geolocation.getCurrentPosition(
@@ -75,6 +87,7 @@ export function App() {
             nebel={einstellungen.nebel}
             position={position}
             zentrieren={zentrieren}
+            markiert={markiert ? { linien: markiert.fleck.linien, nr: markiert.nr } : null}
           />
           <div className="karten-knoepfe">
             <button type="button" className="rund-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
@@ -92,6 +105,9 @@ export function App() {
             standortFehler={standortFehler}
             fortschritt={fortschritt}
             vorher={vorher.current}
+            fleck={fleck}
+            fleckVomStandort={position !== null}
+            fleckZeigen={(f) => setMarkiert((m) => ({ fleck: f, nr: (m?.nr ?? 0) + 1 }))}
           />
         </div>
         {reiter === "gebiete" && (
@@ -108,7 +124,17 @@ export function App() {
             }}
           />
         )}
-        {reiter === "streifzuege" && <StreifzuegeSeite liste={streifzuege} />}
+        {reiter === "streifzuege" && (
+          <LogbuchSeite
+            liste={streifzuege}
+            daten={daten}
+            einstellungen={einstellungen}
+            zeigen={(id) => {
+              waehlen(id);
+              setReiter("karte");
+            }}
+          />
+        )}
       </main>
       <nav className="leiste" aria-label="Hauptnavigation">
         <ReiterKnopf aktiv={reiter === "karte"} onClick={() => setReiter("karte")} icon={<IconKarte />} label={t.tabs.karte} />
@@ -146,6 +172,9 @@ function KartenBlatt(props: {
   standortFehler: boolean;
   fortschritt: Fortschritt | null;
   vorher: Fortschritt | null;
+  fleck: Fleck | null;
+  fleckVomStandort: boolean;
+  fleckZeigen: (f: Fleck) => void;
 }) {
   const { gebiet, daten, aufzeichnung: a } = props;
   const wege = props.einstellungen.wegeZaehlen;
@@ -184,7 +213,13 @@ function KartenBlatt(props: {
         <div className="balken" aria-hidden="true"><i style={{ width: `${p}%` }} /></div>
         <p className="km">{kmText}</p>
       </div>
-      {a.aktiv ? <Unterwegs a={a} /> : <Ruhe a={a} schonGelb={gesehen > 0} />}
+      {a.aktiv ? (
+        <Unterwegs a={a} />
+      ) : !a.letzter && props.fleck && gebiet ? (
+        <FleckZeile fleck={props.fleck} gebietName={gebiet.name} vomStandort={props.fleckVomStandort} zeigen={props.fleckZeigen} />
+      ) : (
+        <Ruhe a={a} schonGelb={gesehen > 0} />
+      )}
       {!a.aktiv && a.letzter && gebiet && props.vorher && (
         <Belohnung
           name={gebiet.name}
@@ -201,16 +236,35 @@ function KartenBlatt(props: {
   );
 }
 
-/** What the last outing added in the shown area. */
+/** Nearest undiscovered street, with a button that shows it on the map. */
+function FleckZeile(props: { fleck: Fleck; gebietName: string; vomStandort: boolean; zeigen: (f: Fleck) => void }) {
+  const name = props.fleck.name ?? t.karte.fleckOhneName;
+  return (
+    <div className="fleck">
+      <span className="fleck-punkt" aria-hidden="true" />
+      <p>
+        <b>{t.karte.fleckTitel}</b>
+        <span className="leise">{props.vomStandort ? t.karte.fleckNah(name, alsStrecke(props.fleck.distanceM)) : t.karte.fleckIn(name, props.gebietName)}</span>
+      </p>
+      <button type="button" className="text-knopf" onClick={() => props.zeigen(props.fleck)}>{t.karte.fleckZeigen}</button>
+    </div>
+  );
+}
+
+/** What the last outing added in the shown area, with a stamp when it reached a milestone. */
 function Belohnung(props: { name: string; vorherM: number; jetztM: number; gesamtM: number }) {
   const neu = props.jetztM - props.vorherM;
   if (neu < 1) return null;
-  const von = prozentText(prozent(props.vorherM, props.gesamtM));
-  const auf = prozentText(prozent(props.jetztM, props.gesamtM));
+  const vorherP = prozent(props.vorherM, props.gesamtM);
+  const jetztP = prozent(props.jetztM, props.gesamtM);
+  const stufe = milestoneReached(vorherP, jetztP);
   return (
-    <p className="belohnung" role="status">
-      <span className="marker">+{alsStrecke(neu)}</span> {t.karte.belohnung(props.name, von, auf)}
-    </p>
+    <div className="belohnung-zeile">
+      <p className="belohnung" role="status">
+        <span className="marker">+{alsStrecke(neu)}</span> {t.karte.belohnung(props.name, prozentText(vorherP), prozentText(jetztP))}
+      </p>
+      {stufe && <Stempel name={props.name} prozent={stufe} datum={Date.now()} neu />}
+    </div>
   );
 }
 
@@ -251,37 +305,6 @@ function StatusText({ s }: { s: Streifzug }) {
   return <>{aktuell.status === "gesichert" ? t.karte.gesichert : t.karte.wirdGesichert}</>;
 }
 
-function dauerText(sekunden: number, uhr = false): string {
-  const h = Math.floor(sekunden / 3600);
-  const m = Math.floor((sekunden % 3600) / 60);
-  const s = sekunden % 60;
-  if (uhr) return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
-  return h ? `${h} Std. ${m} Min.` : `${Math.max(1, m)} Min.`;
-}
-
-const datum = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-
-function StreifzuegeSeite({ liste }: { liste: Streifzug[] }) {
-  if (liste.length === 0) return <LeereSeite titel={t.streifzuege.titel} text={t.streifzuege.leer} />;
-  return (
-    <section className="seite" aria-labelledby="streifzuege-titel">
-      <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
-      <ul className="gruppe liste streifzug-liste">
-        {liste.map((s) => (
-          <li key={s.id} className="streifzug-zeile">
-            <div>
-              <p className="streifzug-datum">{datum.format(s.startedAt)}</p>
-              <p className="leise">
-                {alsStrecke(s.distanceM)}, {dauerText(Math.round(((s.endedAt ?? s.startedAt) - s.startedAt) / 1000))}, {t.streifzuege.art[s.mode]}
-              </p>
-            </div>
-            <span className={`status status-${s.status}`}>{s.status === "gesichert" ? t.streifzuege.status.gesichert : t.streifzuege.status.lokal}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 function LeereSeite(props: { titel: string; text: string }) {
   return (

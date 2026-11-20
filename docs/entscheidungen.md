@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 20.11.2026: Design-Paket 3 (Logbuch, Weißer Fleck, Stempel, Straßennamen)
+- Logik in `packages/core/src/ziele.ts` mit Tests: `milestoneReached` (Stufen 1, 5, 10, 25, 50, 75, 100 %), `nearestUnseen` (nächste ungesehene Straße bis 1,5 km, Wege nur mit Schalter), `nameNear` (Straßenname bis 15 m), `newPerOuting` (jedes Stück zählt für die erste Runde, die es gesehen hat)
+- Straßennamen aus der Kachel-Ebene `transportation_name` (OpenMapTiles; die Ebene `transportation` hat keine Namen). Kachel wird einmal geladen und für Stücke und Namen genutzt
+- Logbuch (`daten/logbuch.ts`) rechnet alle Runden von der ältesten an durch, mit derselben Gebietszuordnung wie die Prozente (`meterJeGebiet`). Mini-Stadtplan als SVG ohne Kartenkacheln (graue Straßen, Gelb, Spur in Tinte): leicht, viele Karten gleichzeitig möglich, passt zum Textmarker-Look
+- Weißer Fleck: vom Standort (wenn bekannt), sonst von der Mitte des gewählten Gebiets; „Zeigen“ markiert den ganzen ungesehenen Straßenzug gestrichelt in Tinte. Erscheint im Blatt statt des Leertexts, nicht direkt nach einer Runde (dann steht dort die Belohnung)
+- Stempel: im Blatt nach einer Runde (mit Stempel-Bewegung, ruhig bei „Bewegung reduzieren“) und im Logbuch oben rechts auf dem Mini-Plan
+- „Nächstes Ziel im Blatt“ verworfen (Michi)
+
 ## 20.11.2026: Design-Paket 2 und Fix „gelbe Straßen fehlen“
 - Fehler (gemeldet von Michi nach der Kita-Fahrt): Prozent stimmte, Straßen waren nicht gelb. Ursache: War der Fortschritt fertig, bevor der Kartenstil geladen war, gingen die gelben Straßen (und die Flächenfarben) verloren. Jetzt merkt sich die Karte den letzten Stand und zeichnet ihn bei jedem Laden des Stils neu (auch beim Wechsel hell/dunkel). Nachgestellt mit absichtlich verzögertem Kartenstil, danach behoben
 - Flächen der Gebiete liegen immer unter den gelben Straßen (im dunklen Stil lagen sie darüber)

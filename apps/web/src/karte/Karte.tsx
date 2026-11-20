@@ -9,9 +9,10 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import type { Fix, LonLat, Piece } from "@streifzug/core";
+import { distanceM, type Fix, type LonLat, type Piece } from "@streifzug/core";
 import { useEffect, useRef } from "react";
 import { alsStrecke, type Regionen } from "../daten/regionen";
+import { strassenName } from "../daten/strassen";
 import { t } from "../texte/de";
 import { nebelAnlegen, type Nebel } from "./nebel";
 
@@ -170,6 +171,8 @@ export interface KartenProps {
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
   zentrieren: number;
+  /** "Weißer Fleck" to show: drawn as an ink outline, the map moves there each time `nr` changes. */
+  markiert: { linien: readonly (readonly LonLat[])[]; nr: number } | null;
 }
 
 const LEER = { type: "FeatureCollection" as const, features: [] };
@@ -183,6 +186,10 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
   karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
   karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE as never, "line-opacity": 0.9, "line-gradient": strich(0) } });
+  // The white spot to explore: a white casing with an ink dashed line, like a pen mark on the plan.
+  karte.addSource("fleck", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "fleck-rand", type: "line", source: "fleck", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 7, 17, 16] } });
+  karte.addLayer({ id: "fleck", type: "line", source: "fleck", paint: { "line-color": TINTE, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 3, 17, 7], "line-dasharray": [1.2, 0.8] } });
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
   // The live track is a thin ink line; what it unlocks turns yellow underneath.
@@ -221,6 +228,8 @@ export function Karte(props: KartenProps) {
   // Latest seen streets and shares, so they can be drawn again whenever the map style (re)loads.
   const entdecktRef = useRef(props.entdeckt);
   entdecktRef.current = props.entdeckt;
+  const markiertRef = useRef(props.markiert);
+  markiertRef.current = props.markiert;
   const prozenteRef = useRef(props.prozente);
   prozenteRef.current = props.prozente;
   const dunkelRef = useRef(false);
@@ -257,6 +266,7 @@ export function Karte(props: KartenProps) {
       animation.current?.ende();
       eigenesZeichnen(karte);
       setzeDaten(karte, "entdeckt", linienSammlung(entdecktRef.current));
+      fleckSetzen(karte, markiertRef.current?.linien ?? null);
       if (datenRef.current)
         void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
     });
@@ -362,6 +372,22 @@ export function Karte(props: KartenProps) {
     if (karte) prozenteSetzen(karte, props.daten, props.prozente);
   }, [props.prozente, props.daten]);
 
+  // White spot: draw it and bring it into view above the sheet.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (!karte) return;
+    fleckSetzen(karte, props.markiert?.linien ?? null);
+    if (!props.markiert) return;
+    const c = props.markiert.linien.flat();
+    const lons = c.map((p) => p[0]);
+    const lats = c.map((p) => p[1]);
+    const hoehe = karte.getContainer().clientHeight;
+    karte.fitBounds(
+      [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+      { padding: { top: 80, bottom: hoehe * 0.45 + 40, left: 60, right: 60 }, maxZoom: 17, duration: ruhig() ? 0 : 700 },
+    );
+  }, [props.markiert?.nr]);
+
   // Location button: move to the own position.
   useEffect(() => {
     const karte = karteRef.current;
@@ -372,6 +398,10 @@ export function Karte(props: KartenProps) {
   }, [props.zentrieren]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />;
+}
+
+function fleckSetzen(karte: MapLibreMap, linien: readonly (readonly LonLat[])[] | null) {
+  setzeDaten(karte, "fleck", linien ? { type: "Feature", properties: {}, geometry: { type: "MultiLineString", coordinates: linien } } : LEER);
 }
 
 function prozenteSetzen(karte: MapLibreMap, daten: Regionen | null, prozente: Map<string, number>) {
@@ -412,6 +442,16 @@ function zeichenMoment(
     el.setAttribute("aria-label", t.karte.neuEntdeckt(alsStrecke(meter)));
     const ort = hier ?? neu.at(-1)!.mid;
     marke = new Marker({ element: el, anchor: "bottom", offset: [0, -18] }).setLngLat(ort as [number, number]).addTo(karte);
+    // The street name follows a moment later (the tile is already loaded, so this is quick).
+    const naechstes = hier ? [...neu].sort((a, b) => distanceM(a.mid, hier) - distanceM(b.mid, hier))[0]! : neu.at(-1)!;
+    void strassenName(naechstes).then((name) => {
+      if (!name || !plakette.isConnected) return;
+      const zeile = document.createElement("small");
+      zeile.className = "plus-name";
+      zeile.textContent = name;
+      plakette.prepend(zeile);
+      el.setAttribute("aria-label", t.karte.neuEntdecktIn(alsStrecke(meter), name));
+    });
     el.addEventListener("animationend", () => marke?.remove());
     window.setTimeout(() => marke?.remove(), 2500);
   }

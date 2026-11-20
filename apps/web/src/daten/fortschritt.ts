@@ -38,7 +38,7 @@ function ladeFlaechen(regionId: string): Promise<Flaeche[]> {
 }
 
 /** Tiles around a track: the tile of each fix plus neighbours within about 30 m. */
-function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
+export function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
   const d = 0.0004;
   const set = new Map<string, { x: number; y: number }>();
   for (const spur of spuren)
@@ -61,9 +61,15 @@ export async function berechne(spuren: Fix[][], daten: Regionen): Promise<Fortsc
     const nachId = new Map(stuecke.map((s) => [s.id, s]));
     for (const spur of spuren) for (const id of seenPieceIds(stuecke, spur)) gesehen.set(id, nachId.get(id)!);
   }
+  const proGebiet = await meterJeGebiet(gesehen.values(), daten);
+  return { stuecke: [...gesehen.values()], proGebiet };
+}
+
+/** Seen meters per area id (all levels): every piece counts for each area its middle lies in. */
+export async function meterJeGebiet(stuecke: Iterable<Piece>, daten: Regionen): Promise<Map<string, Summe>> {
   const proGebiet = new Map<string, Summe>();
   const regionen = await Promise.all(daten.liste.map(async (r) => ({ r, f: await ladeFlaechen(r.id) })));
-  for (const piece of gesehen.values()) {
+  for (const piece of stuecke) {
     const [x, y] = piece.mid;
     for (const { r, f } of regionen) {
       if (x < r.bbox[0] || x > r.bbox[2] || y < r.bbox[1] || y > r.bbox[3]) continue;
@@ -76,7 +82,7 @@ export async function berechne(spuren: Fix[][], daten: Regionen): Promise<Fortsc
       }
     }
   }
-  return { stuecke: [...gesehen.values()], proGebiet };
+  return proGebiet;
 }
 
 /** Keeps the progress up to date while outings are added and while recording (every 10 new fixes). */
