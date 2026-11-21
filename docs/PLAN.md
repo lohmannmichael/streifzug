@@ -1,6 +1,6 @@
-# Streifzug: Produkt- und Umsetzungsplan
+# Unterwegs: Produkt- und Umsetzungsplan
 
-Arbeitstitel: **Streifzug**. Name wird vor dem App-Store-Start geprüft (Marke, App Store, Domain).
+Name: **Unterwegs** (seit 21.11.2026, vorher Arbeitstitel „Streifzug“). Vor dem App-Store-Start Name mit Zusatz oder Untertitel prüfen (Marke, App Store, Domain), siehe docs/entscheidungen.md.
 Stand: 19.11.2026 · Eigentümer: Michi
 
 ---

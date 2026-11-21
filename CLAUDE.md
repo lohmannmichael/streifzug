@@ -1,8 +1,11 @@
-# CLAUDE.md: Streifzug
+# CLAUDE.md: Unterwegs (früher Streifzug)
 
 Claude Code liest diese Datei bei jedem Start.
 
 ## Was wir bauen
+
+Name der App: **Unterwegs** (seit 21.11.2026). Technische Namen bleiben „streifzug“ (Repo, Cloudflare-Projekt und Adresse streifzug.pages.dev, Supabase-Tabellen, IndexedDB `streifzug`, localStorage `streifzug.*`), damit keine Daten verloren gehen.
+
 
 Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freischaltet und zeigt, wie viel Prozent einer Stadt, eines Bezirks und eines Stadtteils schon gesehen sind. Erst für Michi allein, von Anfang an so gebaut, dass daraus ein Produkt im App Store werden kann.
 

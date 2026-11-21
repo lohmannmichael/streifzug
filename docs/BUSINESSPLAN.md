@@ -1,4 +1,4 @@
-# Streifzug: Businessplan (Skizze)
+# Unterwegs: Businessplan (Skizze)
 
 Stand: 19.11.2026 · Grundsatz: **Erst für Michi, Geld ist eine Option, kein Muss.**
 Alle Zahlen sind Annahmen zum Weiterrechnen und nach jeder Phase zu prüfen.

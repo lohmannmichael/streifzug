@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icons/apple-touch-icon.png", "icons/icon.svg"],
       manifest: {
-        name: "Streifzug",
-        short_name: "Streifzug",
+        name: "Unterwegs",
+        short_name: "Unterwegs",
         description: "Entdecke deine Stadt Straße für Straße.",
         lang: "de",
         start_url: "/",

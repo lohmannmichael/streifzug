@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 21.11.2026: Neuer Name „Unterwegs“
+- Michi hat sich für „Unterwegs“ entschieden. Sichtbar umbenannt: App-Titel, Homescreen-Name (PWA-Manifest, `apple-mobile-web-app-title`), Texte, Doku-Überschriften
+- Technische Namen bleiben „streifzug“ (Repo, Cloudflare-Projekt/Adresse, Supabase, IndexedDB, localStorage), sonst gingen Daten auf dem Gerät verloren. Der Reiter „Streifzüge“ (= die Runden) bleibt als Begriff
+- Hinweis aus der Prüfung (21.11.2026): „Unterwegs“ allein ist als Marke kaum schützbar (beschreibend), im App Store gibt es u. a. ASFINAG „UNTERWEGS“ (AT, Verkehr) und „Mein HALLE Unterwegs“. Vor einem App-Store-Start mit unterscheidendem Zusatz oder Untertitel arbeiten
+
 ## 21.11.2026: Rückblick beim Öffnen
 - Michi: Beim Öffnen soll die App einmal nachfahren, was dazugekommen ist. Umsetzung: Nach dem Abholen der Overland-Punkte (beim Öffnen und beim Zurückkehren, nicht beim 5-Minuten-Takt) sucht die App Wege, die seit dem letzten Besuch endeten (`localStorage` `streifzug.rueckblick-bis`; beim allerersten Mal die letzten 12 Stunden). Eigene Runden, die live verfolgt wurden, zählen als gesehen
 - Karte: Ausschnitt auf alle neuen Wege, dann läuft ein Tinten-Punkt mit Textmarker-Spur und Glanz die Wege der Reihe nach ab (3–8 s je nach Länge), blendet aus. Banner „Seit deinem letzten Besuch: 2 Wege · 3,6 km“ mit „Überspringen“; Antippen der Karte überspringt auch. Bei „Bewegung reduzieren“ nur Ausschnitt und Spur ohne Fahrt

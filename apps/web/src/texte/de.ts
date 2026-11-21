@@ -1,6 +1,6 @@
 /** All visible texts in one place, so English can follow later. */
 export const de = {
-  app: { name: "Streifzug" },
+  app: { name: "Unterwegs" },
   tabs: { karte: "Karte", gebiete: "Gebiete", streifzuege: "Streifzüge" },
   karte: {
     prozentLabel: "der Straßen entdeckt",
@@ -88,12 +88,12 @@ export const de = {
       ueberschrift: "Automatisch aufzeichnen",
       abkuerzung: "Automatisch aufzeichnen (ohne Losziehen)",
       kurz: "Overland (automatisch)",
-      erklaerung: "Die kostenlose App Overland zeichnet im Hintergrund auf, ohne dass du etwas starten musst, und schickt die Punkte an Streifzug. Hier werden sie automatisch abgeholt und eingerechnet.",
+      erklaerung: "Die kostenlose App Overland zeichnet im Hintergrund auf, ohne dass du etwas starten musst, und schickt die Punkte an Unterwegs. Hier werden sie automatisch abgeholt und eingerechnet.",
       schritte: [
         "Overland aus dem App Store installieren.",
         "Hier „Mit Overland verbinden“ tippen, dann „Adresse kopieren“ und in Overland unter Settings → Server URL einfügen.",
         "In Overland den Standort auf „Immer“ erlauben und oben die Aufzeichnung einschalten.",
-        "Fertig. Streifzug holt neue Wege beim Öffnen und alle 5 Minuten ab.",
+        "Fertig. Unterwegs holt neue Wege beim Öffnen und alle 5 Minuten ab.",
       ],
       installieren: "Overland im App Store",
       verbinden: "Mit Overland verbinden",
@@ -159,7 +159,7 @@ export const de = {
     auto: "Autofahrten mitzählen",
     autoHinweis: "Erscheinen als eigener Wert, getrennt von Fuß und Rad.",
     konto: "Konto",
-    kontoAnonym: "Du nutzt Streifzug ohne Konto. Deine Einstellungen werden schon gesichert. Ein Konto, mit dem du alles auf andere Geräte mitnimmst, kommt bald.",
+    kontoAnonym: "Du nutzt Unterwegs ohne Konto. Deine Einstellungen werden schon gesichert. Ein Konto, mit dem du alles auf andere Geräte mitnimmst, kommt bald.",
     kontoOffline: "Gerade offline. Alles wird gespeichert und später abgeglichen.",
     kontoLaedt: "Verbinde …",
     daten: "Deine Daten",
