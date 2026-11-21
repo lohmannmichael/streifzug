@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 21.11.2026: Start nicht mehr blockieren
+- Michi konnte in der App nichts drücken. Wahrscheinliche Ursache: Die App wartete beim Start auf das Löschen der Google-Importe (bei großer Zeitachse auf dem iPhone langsam; beim Schließen bricht es ab und beginnt neu). Jetzt startet die App sofort, gelöscht wird im Hintergrund; der Worker lädt Google-Importe gar nicht mehr. Test: 2.000 Google-Wege à 500 Punkte, CPU 4-fach gedrosselt, bedienbar nach 0,5 s
+
 ## 21.11.2026: Automatisch im Hintergrund über Overland; Importe nur noch im Worker
 - Michi will nicht für jede Runde „Losziehen“ drücken. Bis zur eigenen iPhone-App (Phase 3) übernimmt die kostenlose App **Overland** (quelloffen, App Store) die Hintergrund-Aufzeichnung und schickt Punkte an unsere Empfangsstelle
 - Supabase: Tabellen `receive_tokens` (nur SHA-256 des Schlüssels) und `received_points` (Punkte je Nutzer:in, doppelte Zeit wird ignoriert), Zeilenschutz: lesen und löschen nur eigene, einfügen nur über die Edge Function `overland` (`supabase/functions/overland`, `verify_jwt=false`, Schlüssel per Bearer oder `?token=`; Antwort `{"result":"ok"}`). Deploy über die Verwaltungs-API (`POST /v1/projects/<ref>/functions/deploy?slug=overland`)

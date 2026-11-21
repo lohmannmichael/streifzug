@@ -58,7 +58,8 @@ export type Antwort =
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);
 const gueltig = (n: number) => `${ABGLEICH_VERSION}:${n}`;
-const QUELLEN: ImportQuelle[] = ["google", "gpx", "overland"];
+// Google imports are paused and being removed (they made the app hang); the worker leaves them alone.
+const QUELLEN: ImportQuelle[] = ["gpx", "overland"];
 
 // Matching results per outing (own and others) and the pieces behind them.
 const jeSpur = new Map<string, { n: number; ids: string[] }>();
