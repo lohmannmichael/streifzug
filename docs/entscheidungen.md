@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 21.11.2026: Konto ging verloren, wiederhergestellt und abgesichert
+- Am 21.11. um 17:26 Uhr hat Michis iPhone die gespeicherten Daten der App verloren; die App legte ein neues anonymes Konto an (`50e0c8bc…`). Overland schickte weiter an das alte Konto (`a268989b…`), die App war leer
+- Wiederhergestellt auf dem Server: `received_points`, `receive_tokens`, `user_settings`, `tracks` auf das neue Konto umgehängt; die 7 Dateien in `spuren` kopiert (Originale im alten Ordner bleiben als Sicherung, das alte Konto wurde nicht gelöscht)
+- Abgesichert in der App: ein neues Konto nur, wenn der Server sagt, dass das alte nicht mehr existiert (`kontoWeg`), nicht bei anderen Fehlern; Overland gilt als verbunden, wenn der Server einen Schlüssel kennt (auch wenn das Gerät es vergessen hat); eigene Wege, die nur auf dem Server liegen, werden zurückgeholt (`zurueckholen`); `navigator.storage.persist()` bittet das iPhone, die Daten zu behalten
+- Offen: ein richtiges Konto (Mail/Apple), damit so ein Verlust gar nicht mehr passieren kann
+
 ## 21.11.2026: Rückblick nach Empfangszeit, Abholen wartet auf die Anmeldung
 - Overland schickt mit Verspätung. Der Rückblick nimmt jetzt Wege, deren Punkte seit dem letzten Besuch **angekommen** sind (`empfangenAm` je Weg), nicht die seitdem **aufgezeichnet** wurden. Neu sind Straßen, die auf einem dieser Wege zuerst gegangen wurden
 - Beim Öffnen wartet das Abholen bis zu 10 s auf die Anmeldung, statt still auszufallen (dann kam erst nach 5 Minuten etwas)

@@ -75,6 +75,15 @@ export async function overlandTrennen(userId: string): Promise<void> {
 }
 
 export const overlandVerbunden = () => localStorage.getItem(OVERLAND_AN) === "1";
+
+/** The flag lives on the device; if it got lost, the server knows whether Overland is set up. */
+async function verbindungPruefen(): Promise<boolean> {
+  if (overlandVerbunden()) return true;
+  const { count, error } = await supabase.from("receive_tokens").select("token_hash", { count: "exact", head: true });
+  if (error || !count) return false;
+  localStorage.setItem(OVERLAND_AN, "1");
+  return true;
+}
 export const overlandZuletzt = () => Number(localStorage.getItem(OVERLAND_ZULETZT) ?? 0) || null;
 /** Time of the newest point received from Overland (null if none yet). */
 export const overlandLetzterPunkt = () => {
@@ -101,11 +110,11 @@ async function sitzungAbwarten(): Promise<string | null> {
 
 /** Fetches new points from the receiver (in the background worker). Returns how many came in. */
 export async function overlandAbholen(daten: Regionen): Promise<number> {
-  if (holt || !overlandVerbunden() || !navigator.onLine) return 0;
+  if (holt || !navigator.onLine) return 0;
   holt = true;
   try {
     const jwt = await sitzungAbwarten();
-    if (!jwt) return 0;
+    if (!jwt || !(await verbindungPruefen())) return 0;
     const a = await fragen<"abgeholt">({
       typ: "overlandAbholen",
       url: SUPABASE_URL,

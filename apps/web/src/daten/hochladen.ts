@@ -1,6 +1,6 @@
-import { encodeTrack } from "@streifzug/core";
-import { alleLaden, melden, speichern, type Streifzug } from "./speicher";
-import { supabase } from "./supabase";
+import { decodeTrack, encodeTrack, type EncodedTrack } from "@streifzug/core";
+import { alleLaden, einenLaden, melden, speichern, type Streifzug } from "./speicher";
+import { kontoWeg, supabase } from "./supabase";
 
 const MODUS = { foot: "foot", bike: "bike", car: "car" } as const;
 
@@ -28,7 +28,7 @@ export async function hochladen(): Promise<void> {
       if (await einen(s, user.id)) continue;
       // The account may no longer exist on the server: start a fresh one and try once more.
       const pruefung = await supabase.auth.getUser();
-      if (!pruefung.error) continue;
+      if (!kontoWeg(pruefung.error)) continue;
       await supabase.auth.signOut({ scope: "local" });
       const neu = await supabase.auth.signInAnonymously();
       if (neu.data.user) await einen(s, neu.data.user.id);
@@ -60,9 +60,42 @@ async function einen(s: Streifzug, userId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * The other way round: own outings that are on the server but not on this device (new phone, or
+ * the phone cleared the app's storage) are fetched back.
+ */
+export async function zurueckholen(): Promise<number> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session || !navigator.onLine) return 0;
+  const { data: zeilen, error } = await supabase.from("tracks").select("id, started_at, ended_at, mode, distance_m, file_key");
+  if (error || !zeilen) return 0;
+  let geholt = 0;
+  for (const z of zeilen as { id: string; started_at: string; ended_at: string; mode: Streifzug["mode"]; distance_m: number; file_key: string }[]) {
+    if (await einenLaden(z.id)) continue;
+    const datei = await supabase.storage.from("spuren").download(z.file_key);
+    if (datei.error || !datei.data) continue;
+    const roh = new Blob([await datei.data.arrayBuffer()]);
+    let text: string;
+    try {
+      text = await new Response(roh.stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    } catch {
+      text = await roh.text();
+    }
+    const fixes = decodeTrack(JSON.parse(text) as EncodedTrack);
+    await speichern({ id: z.id, startedAt: Date.parse(z.started_at), endedAt: Date.parse(z.ended_at), fixes, distanceM: z.distance_m, mode: z.mode, status: "gesichert" });
+    geholt++;
+  }
+  if (geholt > 0) melden();
+  return geholt;
+}
+
 /** Upload when the app starts and whenever the network comes back. */
 export function hochladenEinrichten() {
+  // Ask the phone to keep the app's storage (it may otherwise clear it when space runs low).
+  void navigator.storage?.persist?.();
   void hochladen();
+  // A little later (the sign-in may still be running): fetch back what is missing here.
+  window.setTimeout(() => void zurueckholen(), 4000);
   window.addEventListener("online", () => void hochladen());
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void hochladen();
