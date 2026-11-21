@@ -1,5 +1,14 @@
 # Entscheidungen
 
+## 21.11.2026: Phase 2 „Neues Aussehen“ umgesetzt
+- Ein Bildschirm: Plan mit einem Knopf (Standort) und Blatt in drei Höhen. Ziehen am Kopf oder Griff wechselt die Höhe, Antippen des Kopfs öffnet Höhe 2. Einstellungen hinter „…“ in der Sammlung (Stifte, Overland, Zuhause-Zone, GPX)
+- Statuszeile im Blatt statt Bannern: „rechnet N Wege ein …“, „Seit Dienstag · 2 Wege · 3,6 km“ (mit „Überspringen“), unterwegs „+274 m · 3 Straßen“
+- „Zuletzt“ zeigt Datum und Strecke je Weg (noch nicht „+947 m neu“), Antippen spielt den Weg ab. „Noch offen“: benannte Straßen im Veedel mit offenen Metern, nächste zuerst (vom Standort, sonst Veedel-Mitte), Antippen zeigt sie gestrichelt
+- Stempel werden aus dem Fortschritt berechnet (`stamps.ts`) und mit fester Lage und Drehung auf dem Gerät gemerkt, nie wieder entfernt. Tinte per SVG-Filter
+- Etikett erst ab Zoom 14 (sonst wählt ein Tipp das Veedel). „Hier komme ich nicht hin“ gilt je Straßenstück, nimmt es aus Zähler und Gesamtlänge und aus dem Gelb; „Zählt doch wieder“ nimmt es zurück
+- Herausgezoomt (unter Zoom 12,5) Schraffur in der aktuellen Markerfarbe, Prozent unter dem Veedel-Namen. Mit „Jedes Jahr eine Farbe“ trägt jedes Stück die Farbe des Jahres, in dem es zuerst aktiv gesehen wurde (2026 gelb, 2027 grün …, frühere Jahre rückwärts)
+- Ortsnamen der Grundkarte auf Deutsch (`name:de`)
+
 ## 21.11.2026: Phase 1 „Aufzeichnung, die läuft“ umgesetzt (Teil 1)
 - `packages/core/src/legs.ts` (mit Tests): Säubern (über 50 m Ungenauigkeit, Sprünge über 50 m/s), Tempo über ±5 s geglättet, Trennen bei Halt (unter 1 m/s für 30 s), Lücke über 60 s und dauerhaftem `motion`-Wechsel (20 s); Einstufen mit `motion` (automotive ≥ 50 % gefahren, aktiv ≥ 60 %), sonst 90-%-Tempo (über 38 km/h gefahren, 30–38 km/h gefahren „unsicher“); kurze Abschnitte zwischen zwei gleichen Nachbarn übernehmen deren Art. `seenByLegs`: aktiv nur Straßen mit Punkten bis 25 m, gefahren Straßen und Autobahnen mit 30 m seitlich
 - Autobahnen und Kraftfahrstraßen sind als Art „drive“ in den Stücken (nur auf dem Gerät, nicht in den Gebiets-Summen) und werden gefahren rot gezeichnet

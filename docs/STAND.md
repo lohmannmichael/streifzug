@@ -1,6 +1,8 @@
 # Stand für die nächste Sitzung (21.11.2026)
 
-**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Aktuelle Phase: **Phase 1 „Aufzeichnung, die läuft“**. Erledigt (21.11.): Overland liefert, Empfang und Abholen mit `motion`/`speed`, `legs.ts` mit Tests, Zustände aktiv/gefahren mit roter Kuli-Linie (auch Autobahn), Zähl-Schalter/Nebel/Weißer Fleck entfernt, „Letzter Punkt“ und 48-Stunden-Hinweis, Zuhause-Zone. Offen: Definition of Done prüfen (7 Tage Wege ohne App-Öffnen, Vergleich mit Apple Health; echter Weg Fuß–Bahn–Fuß auf dem iPhone). Für Phase 2 fehlen noch die Bilder „Plan“, „Viertel“, „Stempelpass“ von der Design-Leinwand.
+**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Phase 1 gebaut (Definition of Done wartet auf Michi: 7 Tage Wege ohne App-Öffnen, echter Weg Fuß–Bahn–Fuß). **Phase 2 „Neues Aussehen“ gebaut (21.11.2026, live):** Plan-Stil, Archivo, App-Symbol; Blatt mit drei Höhen (Veedel und Prozent · Stempelkarte, Zuletzt, Noch offen · Sammlung mit Veedel-Baum und Stempelpass, „…“ → Einstellungen); Reiterleiste, Profil-Knopf und Logbuch entfernt; `stamps.ts` mit Tests, Stempel in vier Formen mit Tinten-Filter (fällige liegen sofort im Pass, Selbst-Stempeln kommt in Phase 3); Straßen-Etikett mit „Hier komme ich nicht hin“; herausgezoomt schraffierte Veedel; Stiftfarben und „Jedes Jahr eine Farbe“; Startbild.
+
+Offen in Phase 2: Michis iPhone-Test der sechs Gesten; Abgleich mit den Bildern „Plan“, „Viertel“, „Stempelpass“ (noch nicht da, gebaut nach Text). Bewusst noch nicht: „14 von 96 Straßen komplett“ (braucht das eigene Netz, Phase 4), Weg-Ansicht mit umstellbaren Abschnitten, Papierkörnung, Ton, Export/Löschen, iOS-Startbilder je Gerätegröße. Stempel und Ausnahmen liegen bisher nur auf dem Gerät (`streifzug.stempel`, `streifzug.ausnahmen`).
 
 Ältere Notizen (bis 20.11.2026):
 
