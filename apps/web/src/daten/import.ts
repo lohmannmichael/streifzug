@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "../konfig";
-import type { ImportVorschau, QuellenInfo } from "./abgleich.worker";
+import type { ImportVorschau, KurzWeg, QuellenInfo } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, andereGeaendert, fragen } from "./arbeiter";
 import type { Regionen } from "./regionen";
 import type { ImportQuelle } from "./speicher";
 import { supabase } from "./supabase";
 
-export type { ImportVorschau, QuellenInfo } from "./abgleich.worker";
+export type { ImportVorschau, KurzWeg, QuellenInfo } from "./abgleich.worker";
 
 /** Reads files in the background and returns a preview (nothing is saved yet). Throws with a German message. */
 export async function lesen(dateien: File[], daten: Regionen): Promise<ImportVorschau> {
@@ -106,18 +106,30 @@ export async function overlandAbholen(daten: Regionen): Promise<number> {
 }
 
 /** Fetches Overland points when the app starts, comes back to the front, and every 5 minutes while open. */
-export function useOverlandAbholen(daten: Regionen | null) {
+export function useOverlandAbholen(daten: Regionen | null, danach?: () => void) {
+  const danachRef = useRef(danach);
+  danachRef.current = danach;
   useEffect(() => {
     if (!daten) return;
-    const los = () => {
-      if (document.visibilityState === "visible") void overlandAbholen(daten);
+    // After each fetch on opening or coming back, the replay looks for new outings.
+    const los = (geoeffnet: boolean) => {
+      if (document.visibilityState !== "visible") return;
+      void overlandAbholen(daten).finally(() => {
+        if (geoeffnet) danachRef.current?.();
+      });
     };
-    los();
-    const takt = window.setInterval(los, 5 * 60_000);
-    document.addEventListener("visibilitychange", los);
+    const zurueck = () => los(true);
+    los(true);
+    const takt = window.setInterval(() => los(false), 5 * 60_000);
+    document.addEventListener("visibilitychange", zurueck);
     return () => {
       window.clearInterval(takt);
-      document.removeEventListener("visibilitychange", los);
+      document.removeEventListener("visibilitychange", zurueck);
     };
   }, [daten]);
+}
+
+/** Other outings that ended after a point in time, shortened for the replay (from the worker). */
+export async function wegeSeit(seit: number): Promise<KurzWeg[]> {
+  return (await fragen<"wege">({ typ: "wegeSeit", seit }).antwort).wege;
 }

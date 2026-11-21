@@ -550,3 +550,24 @@ button.datei-knopf:disabled { opacity: 0.6; }
 .mehr-knopf.zweit { margin-top: 8px; background: none; box-shadow: inset 0 0 0 1px var(--linie); }
 textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-height: 1.35; }
 .schritte-klein { margin: 4px 0 0; padding-left: 20px; font-size: var(--t-klein); color: var(--text-leise); display: grid; gap: 3px; }
+
+/* Replay banner on opening: card at the top, left of the round buttons. */
+.rueckblick {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  left: 44px;
+  right: 70px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 14px;
+  background: var(--flaeche);
+  box-shadow: 0 2px 10px rgb(30 42 74 / 0.18);
+}
+.rueckblick > span { display: grid; min-width: 0; }
+.rueckblick small { font-size: var(--t-klein); color: var(--text-leise); }
+.rueckblick b { font-weight: 600; white-space: nowrap; }
+.rueckblick .text-knopf { min-height: 40px; }

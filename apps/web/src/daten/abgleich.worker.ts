@@ -45,7 +45,8 @@ export type Anfrage =
   | { typ: "importUebernehmen"; nr: number }
   | { typ: "quelleLoeschen"; nr: number; quelle: ImportQuelle }
   | { typ: "info"; nr: number }
-  | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] };
+  | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] }
+  | { typ: "wegeSeit"; nr: number; seit: number };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
@@ -54,7 +55,26 @@ export type Antwort =
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
-  | { typ: "ok"; nr: number };
+  | { typ: "ok"; nr: number }
+  | { typ: "wege"; nr: number; wege: KurzWeg[] };
+
+/** An outing reduced for the replay on opening the app (at most ~400 points). */
+export interface KurzWeg {
+  id: string;
+  startedAt: number;
+  endedAt: number;
+  distanceM: number;
+  coords: [number, number][];
+}
+
+export function kuerzen(fixes: Fix[]): [number, number][] {
+  const schritt = Math.max(1, Math.ceil(fixes.length / 400));
+  const out: [number, number][] = [];
+  for (let i = 0; i < fixes.length; i += schritt) out.push([fixes[i]!.lon, fixes[i]!.lat]);
+  const letzter = fixes.at(-1);
+  if (letzter && (fixes.length - 1) % schritt !== 0) out.push([letzter.lon, letzter.lat]);
+  return out;
+}
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);
 const gueltig = (n: number) => `${ABGLEICH_VERSION}:${n}`;
@@ -249,5 +269,15 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
     }
     case "overlandAbholen":
       return void overlandAbholen(a.nr, a.url, a.schluessel, a.jwt, a.seit, a.liste);
+    case "wegeSeit": {
+      // Other outings (Overland, GPX) that ended after a point in time, for the replay.
+      const wege: KurzWeg[] = [];
+      for (const k of (await andereLaden()).values()) {
+        if ((k.endedAt ?? k.startedAt) <= a.seit) continue;
+        const fixes = k.fixes ?? (await einenLaden(k.id))?.fixes ?? [];
+        if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
+      }
+      return senden({ typ: "wege", nr: a.nr, wege });
+    }
   }
 };

@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 21.11.2026: Rückblick beim Öffnen
+- Michi: Beim Öffnen soll die App einmal nachfahren, was dazugekommen ist. Umsetzung: Nach dem Abholen der Overland-Punkte (beim Öffnen und beim Zurückkehren, nicht beim 5-Minuten-Takt) sucht die App Wege, die seit dem letzten Besuch endeten (`localStorage` `streifzug.rueckblick-bis`; beim allerersten Mal die letzten 12 Stunden). Eigene Runden, die live verfolgt wurden, zählen als gesehen
+- Karte: Ausschnitt auf alle neuen Wege, dann läuft ein Tinten-Punkt mit Textmarker-Spur und Glanz die Wege der Reihe nach ab (3–8 s je nach Länge), blendet aus. Banner „Seit deinem letzten Besuch: 2 Wege · 3,6 km“ mit „Überspringen“; Antippen der Karte überspringt auch. Bei „Bewegung reduzieren“ nur Ausschnitt und Spur ohne Fahrt
+- Worker liefert die Wege dafür gekürzt (höchstens ~400 Punkte je Weg)
+
 ## 21.11.2026: Google-Import ausgebaut, Overland oben im Profil
 - Auf Michis Wunsch ist der Google-Import ganz entfernt (Leser in `packages/core`, Worker, Oberfläche, Schalter). Bleibt: einmaliges Löschen alter Google-Einträge beim Start (`main.tsx`) und `?notfall`
 - Overland war zu versteckt (unten im Profil unter „Importieren“). Jetzt ganz oben im Profil unter „Automatisch aufzeichnen“; im Reiter Streifzüge zwei Knöpfe: „Automatisch aufzeichnen (ohne Losziehen)“ und „Alte Wege importieren (Apple Health, GPX)“

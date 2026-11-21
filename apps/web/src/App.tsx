@@ -4,6 +4,7 @@ import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
 import { useOverlandAbholen } from "./daten/import";
+import { alsGesehenMerken, useRueckblick } from "./daten/rueckblick";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
@@ -41,6 +42,14 @@ export function App() {
     localStorage.setItem(MERKEN, id);
   };
   const aufzeichnung = useAufzeichnung();
+  const warAktivFuerRueckblick = useRef(false);
+  const aufnahmeAktiv = useRef(false);
+  // An outing watched live counts as seen (no replay of it on the next opening).
+  useEffect(() => {
+    if (!aufzeichnung.aktiv && warAktivFuerRueckblick.current) alsGesehenMerken();
+    warAktivFuerRueckblick.current = aufzeichnung.aktiv;
+    aufnahmeAktiv.current = aufzeichnung.aktiv;
+  }, [aufzeichnung.aktiv]);
   const streifzuege = useStreifzuege();
   // Car rides count only with the switch on (docs/PLAN.md, section 2). The page holds only own
   // outings; imports and Overland are loaded by the background worker, each with its switch.
@@ -49,7 +58,11 @@ export function App() {
     () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, auto: einstellungen.autoZaehlen }),
     [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, einstellungen.autoZaehlen],
   );
-  useOverlandAbholen(daten);
+  // Replay on opening: after fetching Overland points, run along what came in since the last visit.
+  const { rueckblick, pruefen: rueckblickPruefen, beenden: rueckblickBeenden } = useRueckblick();
+  useOverlandAbholen(daten, () => {
+    if (!aufnahmeAktiv.current) void rueckblickPruefen();
+  });
   const spuren: Spur[] = [
     ...zaehlende.map((s) => ({
       id: s.id,
@@ -143,7 +156,18 @@ export function App() {
             position={position}
             zentrieren={zentrieren}
             markiert={markiert ? { linien: markiert.fleck.linien, nr: markiert.nr } : null}
+            rueckblick={rueckblick && !aufzeichnung.aktiv ? { linien: rueckblick.wege.map((w) => w.coords), nr: rueckblick.nr } : null}
+            onRueckblickEnde={rueckblickBeenden}
           />
+          {rueckblick && !aufzeichnung.aktiv && (
+            <div className="rueckblick" role="status">
+              <span>
+                <small>{t.karte.rueckblickTitel}</small>
+                <b>{t.karte.rueckblick(rueckblick.wege.length, alsStrecke(rueckblick.km * 1000))}</b>
+              </span>
+              <button type="button" className="text-knopf" onClick={rueckblickBeenden}>{t.karte.rueckblickUeberspringen}</button>
+            </div>
+          )}
           {aufzeichnung.aktiv && (
             <p className="unterwegs-zaehler" aria-live="polite">
               {neuUnterwegsM >= 1 ? (

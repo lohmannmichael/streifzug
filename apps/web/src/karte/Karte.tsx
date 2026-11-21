@@ -9,7 +9,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { distanceM, type Fix, type LonLat, type Piece } from "@streifzug/core";
+import { distanceM, lineLengthM, sliceLine, type Fix, type LonLat, type Piece } from "@streifzug/core";
 import { useEffect, useRef } from "react";
 import { alsStrecke, type Regionen } from "../daten/regionen";
 import { strassenName } from "../daten/strassen";
@@ -174,6 +174,9 @@ export interface KartenProps {
   zentrieren: number;
   /** "Weißer Fleck" to show: drawn as an ink outline, the map moves there each time `nr` changes. */
   markiert: { linien: readonly (readonly LonLat[])[]; nr: number } | null;
+  /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
+  rueckblick: { linien: LonLat[][]; nr: number } | null;
+  onRueckblickEnde: () => void;
 }
 
 const LEER = { type: "FeatureCollection" as const, features: [] };
@@ -187,6 +190,12 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
   karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
   karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE as never, "line-opacity": 0.9, "line-gradient": strich(0) } });
+  // Replay on opening: a highlighter trail with a glow and an ink dot at its head.
+  karte.addSource("rb", { type: "geojson", data: LEER });
+  karte.addSource("rb-kopf", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "rb-glanz", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 16, 24], "line-blur": 7, "line-opacity": 0.45 } });
+  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 1 } });
+  karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
   // The white spot to explore: a white casing with an ink dashed line, like a pen mark on the plan.
   karte.addSource("fleck", { type: "geojson", data: LEER });
   karte.addLayer({ id: "fleck-rand", type: "line", source: "fleck", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 7, 17, 16] } });
@@ -377,6 +386,16 @@ export function Karte(props: KartenProps) {
     if (karte) prozenteSetzen(karte, props.daten, props.prozente);
   }, [props.prozente, props.daten]);
 
+  // Replay on opening: fit all new outings into view, then run along them once.
+  const rbEnde = useRef(props.onRueckblickEnde);
+  rbEnde.current = props.onRueckblickEnde;
+  useEffect(() => {
+    const karte = karteRef.current;
+    const rb = props.rueckblick;
+    if (!karte || !rb || rb.linien.length === 0) return;
+    return rueckblickAbspielen(karte, rb.linien, () => rbEnde.current());
+  }, [props.rueckblick?.nr]);
+
   // White spot: draw it and bring it into view above the sheet.
   useEffect(() => {
     const karte = karteRef.current;
@@ -403,6 +422,115 @@ export function Karte(props: KartenProps) {
   }, [props.zentrieren]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />;
+}
+
+/**
+ * Replay: shows all lines, then draws them one after another as a growing highlighter trail
+ * (3–8 s depending on length), fades out and calls `fertig`. Returns a stop function.
+ * With "reduce motion" only the view is shown, without the run.
+ */
+function rueckblickAbspielen(karte: MapLibreMap, linien: LonLat[][], fertig: () => void): () => void {
+  let aus = false;
+  let bild = 0;
+  const zeiten: number[] = [];
+  const leeren = () => {
+    if (!karte.getSource("rb")) return;
+    setzeDaten(karte, "rb", LEER);
+    setzeDaten(karte, "rb-kopf", LEER);
+    karte.setPaintProperty("rb", "line-opacity", 1);
+    karte.setPaintProperty("rb-glanz", "line-opacity", 0.45);
+  };
+  const stopp = () => {
+    if (aus) return;
+    aus = true;
+    cancelAnimationFrame(bild);
+    zeiten.forEach((z) => window.clearTimeout(z));
+    leeren();
+  };
+  const ende = () => {
+    if (aus) return;
+    stopp();
+    fertig();
+  };
+
+  let [w, s, o, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const l of linien)
+    for (const [x, y] of l) {
+      w = Math.min(w, x);
+      o = Math.max(o, x);
+      s = Math.min(s, y);
+      n = Math.max(n, y);
+    }
+  const hoehe = karte.getContainer().clientHeight;
+  karte.fitBounds([[w, s], [o, n]], { padding: { top: 90, bottom: hoehe * 0.4 + 30, left: 40, right: 40 }, maxZoom: 16, duration: ruhig() ? 0 : 900 });
+  // Tapping or dragging the map skips the replay.
+  karte.once("mousedown", ende);
+  karte.once("touchstart", ende);
+
+  const laengen = linien.map((l) => lineLengthM(l));
+  const gesamt = laengen.reduce((a, b) => a + b, 0);
+  if (ruhig() || gesamt === 0) {
+    setzeDaten(karte, "rb", { type: "MultiLineString", coordinates: linien });
+    zeiten.push(window.setTimeout(ende, 2500));
+    return stopp;
+  }
+  const dauer = Math.min(8000, Math.max(3000, (gesamt / 1000) * 1500));
+  let gestartet = false;
+  const laufen = () => {
+    if (gestartet || aus) return;
+    gestartet = true;
+    const start = performance.now();
+    const schritt = (jetzt: number) => {
+      if (aus) return;
+      const p = Math.min(1, Math.max(0, (jetzt - start) / dauer));
+      let rest = gesamt * (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
+      const teile: LonLat[][] = [];
+      let kopf: LonLat | null = null;
+      for (let i = 0; i < linien.length && rest > 0; i++) {
+        const l = linien[i]!;
+        if (rest >= laengen[i]!) {
+          teile.push(l);
+          kopf = l.at(-1)!;
+        } else {
+          const stueck = sliceLine(l, 0, rest);
+          if (stueck.length > 1) teile.push(stueck);
+          kopf = stueck.at(-1) ?? l[0]!;
+        }
+        rest -= laengen[i]!;
+      }
+      setzeDaten(karte, "rb", { type: "MultiLineString", coordinates: teile });
+      setzeDaten(karte, "rb-kopf", kopf ? { type: "Point", coordinates: kopf } : LEER);
+      if (p < 1) bild = requestAnimationFrame(schritt);
+      else {
+        // Hold a moment, then let the trail fade into the yellow streets underneath.
+        zeiten.push(
+          window.setTimeout(() => {
+            setzeDaten(karte, "rb-kopf", LEER);
+            const fadeStart = performance.now();
+            const fade = (t: number) => {
+              if (aus) return;
+              const q = Math.min(1, Math.max(0, (t - fadeStart) / 600));
+              karte.setPaintProperty("rb", "line-opacity", 1 - q);
+              karte.setPaintProperty("rb-glanz", "line-opacity", 0.45 * (1 - q));
+              if (q < 1) bild = requestAnimationFrame(fade);
+              else ende();
+            };
+            bild = requestAnimationFrame(fade);
+          }, 700),
+        );
+      }
+    };
+    bild = requestAnimationFrame(schritt);
+  };
+  karte.once("moveend", laufen);
+  // If the map was already in place, moveend may not come.
+  zeiten.push(window.setTimeout(laufen, 1200));
+  return () => {
+    karte.off("mousedown", ende);
+    karte.off("touchstart", ende);
+    karte.off("moveend", laufen);
+    stopp();
+  };
 }
 
 function fleckSetzen(karte: MapLibreMap, linien: readonly (readonly LonLat[])[] | null) {
