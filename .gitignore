@@ -7,3 +7,5 @@ dist/
 .cache/
 __pycache__/
 .region-cache/
+docs/export/anhang/
+docs/export/*.zip
