@@ -74,8 +74,9 @@ export function App() {
   const ausnahmen = useAusnahmen();
   const benutzer = sitzung.status === "bereit" ? sitzung.session.user.id : null;
   const zaehlen: Zaehlen = useMemo(
-    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, ausnahmen }),
-    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, ausnahmen],
+    // Everything counts (Bauplan: no counting switches); per leg it is decided what is aktiv.
+    () => ({ quellen: { gpx: true, overland: true }, ausnahmen }),
+    [ausnahmen],
   );
   // The pen colours live in CSS too (marker swipe behind the percentage).
   const marker = markerJetzt(einstellungen);
@@ -183,7 +184,25 @@ export function App() {
   }, [daten]);
 
   if (profilOffen)
-    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(null); }} />;
+    return (
+      <Profil
+        sitzung={sitzung}
+        werte={einstellungen}
+        aendern={aendern}
+        daten={daten}
+        zumImport={importZeigen}
+        schliessen={() => {
+          setProfilOffen(false);
+          setImportZeigen(null);
+        }}
+        zustand={[
+          [t.zustand.version, new Date(__BAUSTAND__).toLocaleString("de-DE")],
+          [t.zustand.eigene, String(streifzuege.length)],
+          [t.zustand.stuecke, fortschritt ? t.zustand.stueckeWert(fortschritt.stuecke.filter((p) => p.kind === "street").length, fortschritt.gefahren.length) : t.zustand.nochNicht],
+          [t.zustand.rechnet, rechenFehler ?? (rechnet ? `${rechnet.fertig} / ${rechnet.gesamt}` : t.zustand.fertig)],
+        ]}
+      />
+    );
 
   // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
   const abspielen =
@@ -323,6 +342,8 @@ function Profil(props: {
   daten: Regionen | null;
   zumImport: "overland" | "gpx" | null;
   schliessen: () => void;
+  /** A few numbers to find problems from a screenshot. */
+  zustand: [string, string][];
 }) {
   const userId = props.sitzung.status === "bereit" ? props.sitzung.session.user.id : null;
   const importRef = useRef<HTMLHeadingElement>(null);
@@ -357,6 +378,15 @@ function Profil(props: {
         <h2>{t.ich.daten}</h2>
         <div className="gruppe">
           <p className="zeile-text">{t.ich.datenHinweis}</p>
+        </div>
+        <h2>{t.zustand.titel}</h2>
+        <div className="gruppe">
+          {props.zustand.map(([k, v]) => (
+            <p key={k} className="zeile-text zustand-zeile">
+              <span>{k}</span>
+              <span>{v}</span>
+            </p>
+          ))}
         </div>
         <p className="quelle">{t.ich.quelle}</p>
       </section>

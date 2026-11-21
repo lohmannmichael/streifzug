@@ -469,3 +469,4 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .menue-zeile + .menue-zeile { border-top: 1px solid var(--linie); }
 .menue-zeile:active { background: var(--nebel); }
 .karten-knoepfe { z-index: 5; }
+.zustand-zeile { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }

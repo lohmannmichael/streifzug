@@ -39,22 +39,11 @@ export function GpxImport(props: QuellenProps) {
   return <Gpx {...props} info={useQuellenInfo()} />;
 }
 
-/** Count, km and the "count it" switch for a source that already has outings. */
-function Bestand(props: { info: QuellenInfo[keyof QuellenInfo]; an: boolean; setzen: (an: boolean) => void; empfangen?: boolean }) {
+/** Count and km of a source that already has outings (everything counts, there is no switch). */
+function Bestand(props: { info: QuellenInfo[keyof QuellenInfo]; empfangen?: boolean }) {
   if (!props.info) return null;
   const text = props.empfangen ? t.import.empfangen : t.import.vorhanden;
-  return (
-    <>
-      <p className="zeile-text">{text(props.info.wege, alsKm(props.info.km * 1000))}</p>
-      <label className="schalter-zeile">
-        <span>
-          <span className="schalter-label">{t.import.einrechnen}</span>
-          <span className="schalter-hinweis">{t.import.einrechnenHinweis}</span>
-        </span>
-        <input type="checkbox" role="switch" className="schalter" checked={props.an} onChange={(e) => props.setzen(e.target.checked)} />
-      </label>
-    </>
-  );
+  return <p className="zeile-text">{text(props.info.wege, alsKm(props.info.km * 1000))}</p>;
 }
 
 function Loeschen(props: { text: string; tun: () => void }) {
@@ -115,7 +104,7 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
             {tx.verbunden} {letzterPunkt ? tx.letzterPunkt(zeitpunkt.format(letzterPunkt)) : tx.nochKeinPunkt}{" "}
             {zuletzt ? tx.zuletzt(zeitpunkt.format(zuletzt)) : tx.nochNie}
           </p>
-          <Bestand empfangen info={props.info.overland} an={props.werte.overlandZaehlen} setzen={(an) => props.aendern({ overlandZaehlen: an })} />
+          <Bestand empfangen info={props.info.overland} />
         </>
       )}
 
@@ -235,7 +224,7 @@ function Gpx(props: { daten: Regionen | null; werte: Einstellungen; aendern: (te
         </details>
       </div>
 
-      <Bestand info={vorhanden} an={props.werte.gpxZaehlen} setzen={(an) => props.aendern({ gpxZaehlen: an })} />
+      <Bestand info={vorhanden} />
 
       {vorschau ? (
         <Vorschau
@@ -247,7 +236,6 @@ function Gpx(props: { daten: Regionen | null; werte: Einstellungen; aendern: (te
             await uebernehmen();
             setZustand("ruhe");
             setVorschau(null);
-            props.aendern({ gpxZaehlen: true });
           }}
         />
       ) : (

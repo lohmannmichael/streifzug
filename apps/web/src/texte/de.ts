@@ -184,6 +184,16 @@ export const de = {
     unterwegs: (strecke: string, strassen: number) => (strassen > 0 ? `+${strecke} · ${strassen === 1 ? "1 Straße" : `${strassen} Straßen`}` : `+${strecke}`),
     belohnung: (strecke: string, von: string, auf: string) => (von === auf ? `Letzter Weg: +${strecke} neu` : `Letzter Weg: +${strecke} neu, von ${von} auf ${auf} %`),
   },
+  zustand: {
+    titel: "Zustand (für Claude)",
+    version: "Version vom",
+    eigene: "Eigene Wege auf dem Gerät",
+    stuecke: "Eingerechnet",
+    stueckeWert: (gelb: number, rot: number) => `${gelb} gelbe, ${rot} rote Stücke`,
+    nochNicht: "noch nichts",
+    rechnet: "Rechnen",
+    fertig: "fertig",
+  },
   menue: {
     titel: "Menü",
     staedte: "Deine Städte und Veedel",

@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // Build time, shown under Einstellungen → "Zustand", to see which version runs on the phone.
+  define: { __BAUSTAND__: JSON.stringify(new Date().toISOString()) },
   plugins: [
     react(),
     VitePWA({
