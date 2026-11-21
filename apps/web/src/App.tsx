@@ -240,7 +240,6 @@ export function App() {
                 [
                   [t.menue.staedte, () => { setTeil("veedel"); setHoehe(3); }],
                   [t.menue.stempelpass, () => { setTeil("pass"); setHoehe(3); }],
-                  [t.menue.aufzeichnung, () => { setImportZeigen("overland"); setProfilOffen(true); }],
                   [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
                 ] as const
               ).map(([text, tun]) => (

@@ -187,7 +187,6 @@ export const de = {
     titel: "Menü",
     staedte: "Deine Städte und Veedel",
     stempelpass: "Stempelpass",
-    aufzeichnung: "Automatisch aufzeichnen",
     einstellungen: "Einstellungen",
   },
   stifte: {

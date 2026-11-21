@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 21.11.2026: Menü oben rechts (Abweichung vom Bauplan, Wunsch Michi)
+- Runder „…“-Knopf über dem Standort-Knopf, klappt ein Menü auf: „Deine Städte und Veedel“, „Stempelpass“, „Einstellungen“. Zusätzlich die Zeile „Deine Städte und Veedel“ im Veedel-Blatt. „Automatisch aufzeichnen“ steht bewusst nicht im Menü (läuft ohnehin), Overland bleibt in den Einstellungen
+
 ## 21.11.2026: Rückblick ohne Stift, Lücken bei Overland geschlossen
 - Michi: beim Öffnen kein Stift, nur das Gelb. Der Plan zeigt alle neuen Wege auf einmal, die neuen Straßen werden in Gehreihenfolge gelb (3–7 s), danach Zoom aufs Veedel und Hochzählen. Antippen überspringt
 - Overland schickt nur etwa alle 31 s einen Punkt. Das Tempo wurde aus ±5 s berechnet, ein einzelner Punkt galt dann als Stillstand. Jetzt reicht das Fenster immer bis zu den Nachbarpunkten; Halt erst unter 0,4 m/s (langsam gehen mit Kindern zählt); aufeinanderfolgende aktive Abschnitte werden mit den Punkten der Pause dazwischen gemeinsam abgeglichen. Mit Michis Weg vom 21.11. (Lövenich): 1,30 → 1,50 km erkannte Straßen. `ABGLEICH_VERSION` 3 (alles wird einmal neu gerechnet)
