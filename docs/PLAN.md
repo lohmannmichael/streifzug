@@ -102,6 +102,14 @@ Eine App, die im Hintergrund aufzeichnet, wo du zu Fuß und mit dem Rad unterweg
 - Name und Marke, Datenschutzerklärung, Impressum, Kontolöschung in der App, Anmeldung mit Apple
 - Store-Auftritt (Screenshots, Texte, Stichworte), Begründung der Hintergrund-Ortung für Apples Prüfung
 - Abo über RevenueCat, Android über Expo
+- **Merkzettel Namen und Umzug (21.11.2026)**
+  - Reihenfolge: erst Markenname festlegen und prüfen (DPMA, EUIPO, App Store), dann Domain sichern, dann umziehen. „Unterwegs“ allein ist kaum schützbar und im App Store belegt (u. a. ASFINAG „UNTERWEGS“), also mit Zusatz oder Untertitel
+  - App-Store-Name (max. 30 Zeichen) und Untertitel sind bei jedem Update änderbar
+  - **Bundle-ID** (entsteht in Phase 3 mit der iPhone-App) ist nach der Veröffentlichung **nicht mehr änderbar**: neutral wählen, z. B. `de.lohmann.app`, nicht an den Markennamen koppeln
+  - Eigene Domain für Website, Datenschutzerklärung und Impressum (Apple verlangt eine Datenschutz-Seite)
+  - Web-Adresse von `streifzug.pages.dev` auf die eigene Domain erst zusammen mit der echten Anmeldung (Apple/Mail) umziehen: Daten wandern dann über das Konto mit, nicht über den Browser-Speicher. Bis dahin hängen eigene Runden, Einstellungen und die Overland-Verbindung an der Adresse
+  - Interne Namen („streifzug“ in Repo, Cloudflare-Projekt, Supabase-Tabellen, IndexedDB, localStorage) sind für den App Store egal; Repo und Doku jederzeit umbenennbar, Tabellen und Speicher-Schlüssel nicht anfassen
+  - Supabase für ein Produkt auf den Pro-Tarif (Gratisprojekte pausieren nach 7 Tagen ohne Nutzung)
 
 ---
 
