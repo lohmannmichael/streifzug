@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 21.11.2026: Bauplan Fassung 2 (aus der Zweitmeinung mit Claude Fable) gilt
+- `docs/PLAN.md` ist jetzt der Bauplan Fassung 2; der alte Plan liegt in `docs/archiv/PLAN-fassung-1.md`. Logo und App-Symbol in `docs/design/`
+- Entscheidungen aus dem Sparring (Bauplan Abschnitt 0): kein Apple-Entwicklerkonto, Unterwegs bleibt Web-App auf dem Homescreen; Overland bleibt die Brücke; Michi öffnet abends, der **Rückblick** („Stift von oben“, höchstens 20 s, ein Tipp überspringt) ist der wichtigste Moment; neue Stempel **selbst stempeln** (Tipp, „Tock“, abschaltbar); Mitteilungen nur bei neuem Stempel, erst Phase 6; Stempel je Veedel (betreten, 10, 25, 50, 75, 100 %) und „Erkunden“; „Noch offen“-Liste statt Weißer Fleck; kein Familien-Pass, kein Teilen; herausgezoomt Veedel als gelb schraffierte Flächen; Straße antippen → Etikett mit „Hier komme ich nicht hin“; Gefahrenes immer sichtbar, rot unter dem Gelb; keine Logbuch-Seite, letzte fünf Wege im Veedel-Blatt; knappe Sprache, in Köln „Veedel“; Stiftfarben als feste Auswahl plus „Jedes Jahr eine Farbe“; Logo: U-förmige Straße mit Textmarker, Wortmarke Unter**weg**s; zuerst die Aufzeichnung
+- Gestrichen: Nebel, Weißer Fleck, Zähl-Schalter, Logbuch-Seite, Meilensteine 1 % und 5 %, native App
+- Zwei Klassen: **aktiv** (zu Fuß, Rad; Textmarker, zählt) und **gefahren** (Auto, Bus, Bahn; Kuli-Linie, zählt nie), eingestuft pro Abschnitt zwischen zwei Halten, mit iOS-Bewegungsart von Overland
+- Datenbasis ab Phase 4: eigene Aufbereitung aus OSM-Rohdaten (Geofabrik) zu `netz.pmtiles` auf R2, Gebiete aus OSM-Verwaltungsgrenzen, Hofweg-Regel für namenlose Stiche
+- Stand bei Übernahme: Overland liefert seit 21.11.2026, 11 Uhr (727 Punkte bis 13:25). Die Empfangsstelle speichert seit 21.11. auch `motion` und `speed` (Migration `20261121130000_received_points_motion.sql`) und antwortet exakt `{"result":"ok"}`
+
 ## 21.11.2026: Neuer Name „Unterwegs“
 - Michi hat sich für „Unterwegs“ entschieden. Sichtbar umbenannt: App-Titel, Homescreen-Name (PWA-Manifest, `apple-mobile-web-app-title`), Texte, Doku-Überschriften
 - Technische Namen bleiben „streifzug“ (Repo, Cloudflare-Projekt/Adresse, Supabase, IndexedDB, localStorage), sonst gingen Daten auf dem Gerät verloren. Der Reiter „Streifzüge“ (= die Runden) bleibt als Begriff

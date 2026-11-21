@@ -9,7 +9,7 @@ Name der App: **Unterwegs** (seit 21.11.2026). Technische Namen bleiben „strei
 
 Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freischaltet und zeigt, wie viel Prozent einer Stadt, eines Bezirks und eines Stadtteils schon gesehen sind. Erst für Michi allein, von Anfang an so gebaut, dass daraus ein Produkt im App Store werden kann.
 
-- Plan und Regeln: `docs/PLAN.md` (Phasen mit Definition of Done, Zählregeln, Technik, Design)
+- Plan und Regeln: `docs/PLAN.md` = **Bauplan Fassung 2** (Phasen 1–6 mit Definition of Done, Regeln, Design-System, Animationen, Datenbasis). Eine Phase zur Zeit, jede endet mit einem Test auf Michis iPhone. Alter Plan: `docs/archiv/PLAN-fassung-1.md`. Logo und App-Symbol: `docs/design/`
 - Geschäftsseite: `docs/BUSINESSPLAN.md`
 - Entscheidungen: `docs/entscheidungen.md` (neue Einträge oben, mit Datum)
 - Aktueller Stand und nächste Schritte: `docs/STAND.md` (zu Beginn jeder Sitzung lesen, am Ende aktualisieren); Lizenzen: `docs/lizenzen.md`
@@ -49,5 +49,5 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 - Abgleich Weg → Straße läuft auf dem Gerät; Rohdaten komprimiert als Datei, nicht als Tabellenzeilen
 - Daten exportierbar und löschbar halten (DSGVO, App Store)
 - Oberfläche: Deutsch, Du-Form, keine Emojis, kurze Texte, gendern mit Doppelpunkt (Nutzer:innen). Alle Texte in einer Sprachdatei (später Englisch)
-- Design laut `docs/PLAN.md` Abschnitt 6; bei Oberflächen-Arbeit die Skills `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `accessibility-engineering` (Web) bzw. `expo-native-ui` (iPhone) nutzen
+- Design laut `docs/PLAN.md` Abschnitt 4 (Design-System, Verbotsliste gegen den „KI-Look“) und 5 (Animationen); bei Oberflächen-Arbeit die Skills `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `accessibility-engineering` (Web) bzw. `expo-native-ui` (iPhone) nutzen
 - Vor neuen Bibliotheken: offizielle Doku prüfen (Skill `source-driven-development`)

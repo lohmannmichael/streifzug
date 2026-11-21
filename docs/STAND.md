@@ -1,4 +1,8 @@
-# Stand für die nächste Sitzung (20.11.2026)
+# Stand für die nächste Sitzung (21.11.2026)
+
+**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Aktuelle Phase: **Phase 1 „Aufzeichnung, die läuft“**. Erledigt daraus: Overland liefert (seit 21.11., 11 Uhr), Empfang speichert `motion` und `speed`. Offen in Phase 1: `motion`/`speed` mit abholen, `legs.ts` (Abschnitte aktiv/gefahren) mit Tests, Stück-Zustände 0/1/2 mit roter Kuli-Linie (auch Autobahn), Zähl-Schalter, Nebel und Weißer Fleck entfernen, „Letzter Punkt“ und 48-Stunden-Hinweis. Für Phase 2 fehlen noch die Bilder „Plan“, „Viertel“, „Stempelpass“ von der Design-Leinwand.
+
+Ältere Notizen (bis 20.11.2026):
 
 Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung: „Michis Apps“ (Supabase- und Cloudflare-Token hinterlegt)
 

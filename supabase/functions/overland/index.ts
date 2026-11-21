@@ -17,7 +17,7 @@ async function sha256(text: string): Promise<string> {
 
 interface Feature {
   geometry?: { type?: string; coordinates?: unknown };
-  properties?: { timestamp?: string; horizontal_accuracy?: number };
+  properties?: { timestamp?: string; horizontal_accuracy?: number; speed?: number; motion?: unknown };
 }
 
 Deno.serve(async (req) => {
@@ -42,7 +42,18 @@ Deno.serve(async (req) => {
     if (!c || typeof c[0] !== "number" || typeof c[1] !== "number" || Number.isNaN(t)) return [];
     if (Math.abs(c[0]) > 180 || Math.abs(c[1]) > 90) return [];
     const acc = f.properties?.horizontal_accuracy;
-    return [{ user_id: besitzer.user_id, t: new Date(t).toISOString(), lon: c[0], lat: c[1], acc: typeof acc === "number" && acc >= 0 ? acc : null }];
+    // iOS motion activity ("walking", "cycling", "automotive", …) and speed in m/s, if Overland sends them.
+    const motion = Array.isArray(f.properties?.motion) ? f.properties.motion.filter((m): m is string => typeof m === "string").slice(0, 8) : null;
+    const speed = f.properties?.speed;
+    return [{
+      user_id: besitzer.user_id,
+      t: new Date(t).toISOString(),
+      lon: c[0],
+      lat: c[1],
+      acc: typeof acc === "number" && acc >= 0 ? acc : null,
+      motion,
+      speed: typeof speed === "number" && speed >= 0 ? speed : null,
+    }];
   });
 
   if (punkte.length > 0) {
@@ -51,5 +62,6 @@ Deno.serve(async (req) => {
     if (error) return antwort({ error: "could not store" }, 500);
   }
   await admin.from("receive_tokens").update({ last_used_at: new Date().toISOString() }).eq("token_hash", hash);
-  return antwort({ result: "ok", saved: punkte.length });
+  // Exactly {"result":"ok"}: only then does Overland drop the batch on the phone.
+  return antwort({ result: "ok" });
 });
