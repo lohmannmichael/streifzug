@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
 import { abgleichen, ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
-import { stueckeDerKachel, strassenName } from "./strassen";
+import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
 import { einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
 
@@ -54,11 +54,12 @@ export type Anfrage =
   | { typ: "wegeSeit"; nr: number; seit: number }
   | { typ: "letzteWege"; nr: number; anzahl: number }
   | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null }
-  | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number };
+  | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number }
+  | { typ: "ortsName"; nr: number; punkt: [number, number] };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; jahre: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; jahre: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
@@ -66,7 +67,22 @@ export type Antwort =
   | { typ: "ok"; nr: number }
   | { typ: "wege"; nr: number; wege: KurzWeg[] }
   | { typ: "offen"; nr: number; strassen: OffeneStrasse[] }
-  | { typ: "etikett"; nr: number; etikett: Etikett | null };
+  | { typ: "etikett"; nr: number; etikett: Etikett | null }
+  | { typ: "ortsName"; nr: number; name: string | null };
+
+/** Walked streets outside all regions, per cell of about 5 km (a place that is not prepared yet). */
+export interface Draussen {
+  zelle: string;
+  punkt: [number, number];
+  /** Meters walked or cycled there. */
+  m: number;
+  /** First time walked there. */
+  seit: number;
+}
+
+const ZELLE = 0.05;
+const ausserhalb = (p: [number, number], liste: Region[]) =>
+  !liste.some((r) => p[0] >= r.bbox[0] && p[0] <= r.bbox[2] && p[1] >= r.bbox[1] && p[1] <= r.bbox[3]);
 
 /** What the tapped street is (Bauplan 3.2, "Etikett einer Straße"). */
 export interface Etikett {
@@ -276,13 +292,18 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   const abzug = ausnahmen.size ? await meterJeGebiet(await stueckeFuerIds([...ausnahmen]), liste) : new Map<string, Summe>();
   const stuecke = [...gesehen.values()];
   const jahre = stuecke.map((p) => new Date(aktivAb.get(p.id) ?? Date.now()).getFullYear());
-  senden({ typ: "ergebnis", nr, stuecke, jahre, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug] });
-}
-
-/** Only points in or near a built region are kept (the server keeps everything). */
-function inRegionen(fixes: Fix[], liste: Region[]): Fix[] {
-  const rand = 0.01;
-  return fixes.filter((f) => liste.some((r) => f.lon >= r.bbox[0] - rand && f.lon <= r.bbox[2] + rand && f.lat >= r.bbox[1] - rand && f.lat <= r.bbox[3] + rand));
+  // Places without a region: kept and drawn, counted once the region is there.
+  const zellen = new Map<string, Draussen>();
+  for (const p of stuecke) {
+    if (!ausserhalb(p.mid as [number, number], liste)) continue;
+    const zelle = `${Math.round(p.mid[0] / ZELLE)},${Math.round(p.mid[1] / ZELLE)}`;
+    const e = zellen.get(zelle) ?? { zelle, punkt: [p.mid[0], p.mid[1]] as [number, number], m: 0, seit: Infinity };
+    e.m += p.lengthM * p.weight;
+    e.seit = Math.min(e.seit, aktivAb.get(p.id) ?? Date.now());
+    zellen.set(zelle, e);
+  }
+  const draussen = [...zellen.values()].filter((e) => e.m >= 200);
+  senden({ typ: "ergebnis", nr, stuecke, jahre, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen });
 }
 
 function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {
@@ -302,7 +323,8 @@ async function importLesen(nr: number, dateien: File[], liste: Region[]) {
     for (const d of dateien) for (const f of parseGpx(await d.text())) fixes.push(f);
     if (fixes.length === 0) throw new Error("In den Dateien stehen keine Wege mit Zeitangaben.");
     fixes.sort((a, b) => a.t - b.t);
-    const wege = wegeAus("gpx", inRegionen(fixes, liste));
+    // Everything is kept, also outside the regions: it counts once the place is prepared.
+    const wege = wegeAus("gpx", fixes);
     wartend = wege;
     const km = { fuss: 0, rad: 0, auto: 0 };
     for (const w of wege) km[w.mode === "foot" ? "fuss" : w.mode === "bike" ? "rad" : "auto"] += w.distanceM / 1000;
@@ -344,7 +366,8 @@ async function overlandAbholen(nr: number, url: string, schluessel: string, jwt:
       ab = seite.at(-1)!.t;
     }
     const bis = neu.length ? new Date(neu.reduce((m, f) => Math.max(m, f.t), 0)).toISOString() : seit;
-    const imGebiet = inRegionen(neu, liste);
+    // All points are kept, also in places without a region yet (counted once it is prepared).
+    const imGebiet = neu;
     if (imGebiet.length > 0) {
       // Continue the last outing if the new points follow on within its pause limit.
       const alle = await andereLaden();
@@ -424,6 +447,8 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
       }
       return senden({ typ: "wege", nr: a.nr, wege });
     }
+    case "ortsName":
+      return senden({ typ: "ortsName", nr: a.nr, name: await ortsName(a.punkt) });
     case "etikett":
       return senden({ typ: "etikett", nr: a.nr, etikett: await etikettAn(a.punkt, a.radiusM) });
     case "offen":

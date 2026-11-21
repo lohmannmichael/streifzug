@@ -87,3 +87,37 @@ export async function stueckeUm(punkt: LonLat): Promise<Piece[]> {
   );
   return teile.flat();
 }
+
+/**
+ * Name of the town or city at a point (OpenMapTiles layer "place", zoom-10 tile), in German
+ * where the map has it. For places that have no region yet ("Lissabon wird vorbereitet").
+ */
+export async function ortsName(punkt: LonLat): Promise<string | null> {
+  const z = 10;
+  const tile = tileFor(punkt, z);
+  try {
+    const url = (await tileUrl()).replace("{z}", String(z)).replace("{x}", String(tile.x)).replace("{y}", String(tile.y));
+    const antwort = await fetch(url);
+    if (!antwort.ok) return null;
+    const ebene = new VectorTile(new PbfReader(await bytes(antwort))).layers.place;
+    const rang: Record<string, number> = { city: 0, town: 1, village: 2 };
+    let best: { name: string; wert: number } | null = null;
+    for (let i = 0; ebene && i < ebene.length; i++) {
+      const f = ebene.feature(i);
+      const props = f.properties as Record<string, unknown>;
+      const r = rang[String(props.class)];
+      if (r === undefined) continue;
+      const geo = f.toGeoJSON(tile.x, tile.y, z).geometry as unknown as { type: string; coordinates: LonLat };
+      if (geo.type !== "Point") continue;
+      const dx = (geo.coordinates[0] - punkt[0]) * Math.cos((punkt[1] * Math.PI) / 180);
+      const dy = geo.coordinates[1] - punkt[1];
+      // Nearest place, larger places count as a little nearer (a village next to a city loses).
+      const wert = Math.hypot(dx, dy) * (1 + r * 0.6);
+      const name = String(props["name:de"] ?? props.name_de ?? props.name ?? "").trim();
+      if (name && (!best || wert < best.wert)) best = { name, wert };
+    }
+    return best?.name ?? null;
+  } catch {
+    return null;
+  }
+}

@@ -4,6 +4,7 @@ import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
 import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
+import type { FremderOrt } from "../daten/orte";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useLetzteWege, useOffeneStrassen, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
@@ -47,6 +48,8 @@ export interface BlattProps {
   offen: string | null;
   offenZeigen: (s: OffeneStrasse | null) => void;
   waehlen: (id: string) => void;
+  /** Walked places without a region yet ("wird vorbereitet"). */
+  fremdeOrte: FremderOrt[];
 }
 
 /**
@@ -177,6 +180,12 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
         </p>
       )}
       {props.standortFehler && <p className="zeile-text">{t.karte.standortFehler}</p>}
+      {props.fremdeOrte
+        .filter((o) => Date.now() - o.seit < 7 * 86400_000)
+        .slice(0, 2)
+        .map((o) => (
+          <p key={o.name} className="zeile-text">{t.blatt.vorbereitet(o.name)}</p>
+        ))}
       {a.aktiv && <p className="zeile-text leise">{t.karte.hinweisOffen}</p>}
 
       {erstesMal && (
@@ -302,7 +311,21 @@ function VeedelBaum(props: BlattProps & { daten: Regionen }) {
   const offen = new Set<string>();
   for (let g = props.gebiet; g; g = g.eltern ? (daten.gebiete.get(g.eltern) ?? null) : null) offen.add(g.id);
   const staedte = daten.liste.map((r) => daten.gebiete.get(r.wurzel)!).filter(betreten).sort((x, y) => gesehenM(f, y) - gesehenM(f, x));
-  if (staedte.length === 0) return <p className="zeile-text leise">{t.sammlung.nochNichts}</p>;
+  const vorbereitet = props.fremdeOrte.length > 0 && (
+    <>
+      <h2 className="abschnitt-titel">{t.sammlung.vorbereitet}</h2>
+      <ul className="zeilen">
+        {props.fremdeOrte.map((o) => (
+          <li key={o.name} className="zeile">
+            <span>{o.name}</span>
+            <span className="wert">{t.sammlung.gegangen(alsKm(o.m))}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="zeile-text leise klein">{t.sammlung.vorbereitetHinweis}</p>
+    </>
+  );
+  if (staedte.length === 0) return vorbereitet || <p className="zeile-text leise">{t.sammlung.nochNichts}</p>;
 
   const inhalt = (g: GebietDaten) => {
     const p = anteil(g);
@@ -340,7 +363,12 @@ function VeedelBaum(props: BlattProps & { daten: Regionen }) {
       </ul>
     </details>
   );
-  return <div className="baum">{staedte.map((g) => ordner(g, 0))}</div>;
+  return (
+    <>
+      <div className="baum">{staedte.map((g) => ordner(g, 0))}</div>
+      {vorbereitet}
+    </>
+  );
 }
 
 /** All stamps like on a passport page, set freely and slightly tilted; below, the next two. */

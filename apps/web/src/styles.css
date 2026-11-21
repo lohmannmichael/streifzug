@@ -440,3 +440,4 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .startbild img:last-child { mix-blend-mode: multiply; }
 .farbwahl legend { float: left; width: 100%; padding: 0; }
 .farbwahl .farben { clear: both; padding-top: 4px; }
+.zeile-text.klein { font-size: var(--t-klein); padding-top: 8px; }

@@ -9,6 +9,7 @@ import { useSitzung, type Sitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
 import type { OffeneStrasse } from "./daten/veedel";
 import { useAusnahmen } from "./daten/ausnahmen";
+import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, type Hoehe } from "./seiten/Blatt";
@@ -69,6 +70,7 @@ export function App() {
   // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
   const zaehlende = streifzuege;
   const ausnahmen = useAusnahmen();
+  const benutzer = sitzung.status === "bereit" ? sitzung.session.user.id : null;
   const zaehlen: Zaehlen = useMemo(
     () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, ausnahmen }),
     [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, ausnahmen],
@@ -95,7 +97,7 @@ export function App() {
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
-  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], jahre: [], gefahren: [], proGebiet: new Map(), abzug: new Map() };
+  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], jahre: [], gefahren: [], proGebiet: new Map(), abzug: new Map(), draussen: [] };
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
@@ -104,6 +106,7 @@ export function App() {
     () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street"),
     [fortschritt],
   );
+  const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
   const jahre = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.jahre[i] ?? new Date().getFullYear()])), [fortschritt]);
   const stifte = useMemo(
     () => ({ marker: einstellungen.marker, kuli: einstellungen.kuli, jahresFarben: einstellungen.jahresFarben }),
@@ -217,6 +220,7 @@ export function App() {
           offen={offen?.name ?? null}
           offenZeigen={setOffen}
           waehlen={(id) => waehlen(id)}
+          fremdeOrte={fremdeOrte}
         />
       </main>
     </div>

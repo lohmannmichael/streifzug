@@ -1,7 +1,7 @@
 import type { Fix, Piece } from "@streifzug/core";
 import { pointInGeometry } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
-import type { SpurDaten, Zaehlen } from "./abgleich.worker";
+import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, aufStandHoeren, fragen } from "./arbeiter";
 import { ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
 import type { Regionen, Summe } from "./regionen";
@@ -20,6 +20,8 @@ export interface Fortschritt {
   jahre: number[];
   /** Meters per area taken out of the total ("Hier komme ich nicht hin"). */
   abzug: Map<string, Summe>;
+  /** Walked places that have no region yet. */
+  draussen: Draussen[];
 }
 
 /** One track to match: an outing (own or imported) or the one being recorded. */
@@ -89,7 +91,7 @@ export function useFortschritt(
       for (const sd of eigene) if (!sd.id.startsWith("live:")) imWorker.set(sd.id, sd.n);
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
-      setFortschritt({ stuecke: a.stuecke, jahre: a.jahre, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug) });
+      setFortschritt({ stuecke: a.stuecke, jahre: a.jahre, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen });
     });
     return weg;
     // Recalculate only when the set of outings changes or the live track grows.

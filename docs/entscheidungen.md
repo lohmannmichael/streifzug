@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 21.11.2026: Orte ohne Region werden behalten (Option C)
+- Overland- und GPX-Punkte werden nicht mehr außerhalb der Regionen verworfen. Der Abgleich hängt nicht von den Regionen ab: Wege dort sind sofort gelb (bzw. rot), Prozente und Stempel kommen automatisch, sobald die Region aufgenommen ist (kein Neurechnen nötig)
+- Orte mit mindestens 200 m aktiv außerhalb aller Regionen (Raster ca. 5 km) bekommen einen Namen aus der Grundkarte (Ebene „place“, Stadt vor Ort vor Dorf) und stehen in der Sammlung unter „Wird vorbereitet“; neue (letzte 7 Tage) auch als Zeile im Blatt
+- Jeder Ort wird als Wunsch in `region_wishes` gemeldet (Migration `20261121160000_region_wishes.sql`, RLS nur eigene Zeilen). Claude liest die Wünsche über die Verwaltungs-API und nimmt die Orte mit `npm run region` auf
+
 ## 21.11.2026: Phase 2 „Neues Aussehen“ umgesetzt
 - Ein Bildschirm: Plan mit einem Knopf (Standort) und Blatt in drei Höhen. Ziehen am Kopf oder Griff wechselt die Höhe, Antippen des Kopfs öffnet Höhe 2. Einstellungen hinter „…“ in der Sammlung (Stifte, Overland, Zuhause-Zone, GPX)
 - Statuszeile im Blatt statt Bannern: „rechnet N Wege ein …“, „Seit Dienstag · 2 Wege · 3,6 km“ (mit „Überspringen“), unterwegs „+274 m · 3 Straßen“
