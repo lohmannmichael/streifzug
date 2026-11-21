@@ -23,7 +23,7 @@ export interface Leg {
 const MAX_ACC_M = 50;
 const MAX_SPEED_MS = 50;
 const SMOOTH_MS = 5_000;
-const HALT_SPEED_MS = 1;
+const HALT_SPEED_MS = 0.4;
 const HALT_MS = 30_000;
 const GAP_MS = 60_000;
 const MOTION_SWITCH_MS = 20_000;
@@ -69,8 +69,12 @@ function glatteTempi(f: Fix[]): number[] {
   for (let i = 0; i < f.length; i++) {
     while (f[a]!.t < f[i]!.t - SMOOTH_MS) a++;
     while (b + 1 < f.length && f[b + 1]!.t <= f[i]!.t + SMOOTH_MS) b++;
-    const dt = (f[b]!.t - f[a]!.t) / 1000;
-    out.push(dt > 0 ? (kum[b]! - kum[a]!) / dt : (f[i]!.speed ?? 0));
+    // Sparse points (Overland sends about one every 30 s): the window always reaches the neighbours,
+    // otherwise a lone point would count as standing still.
+    const von = a === i && i > 0 ? i - 1 : a;
+    const bis = b === i && i + 1 < f.length ? i + 1 : b;
+    const dt = (f[bis]!.t - f[von]!.t) / 1000;
+    out.push(dt > 0 ? (kum[bis]! - kum[von]!) / dt : (f[i]!.speed ?? 0));
   }
   return out;
 }
@@ -168,11 +172,23 @@ export function seenByLegs(pieces: readonly Piece[], fixes: readonly Fix[], opti
   const fahrbar = pieces.filter((p) => p.kind === "street" || p.kind === "drive");
   const aktiv = new Set<string>();
   const gefahren = new Set<string>();
-  for (const leg of splitLegs(fixes)) {
-    if (leg.art === "aktiv") {
-      const genau = leg.fixes.filter((x) => x.acc <= MAX_ACCURACY_M);
-      for (const id of seenPieceIds(strassen, genau, options)) aktiv.add(id);
-    } else for (const id of seenPieceIds(fahrbar, leg.fixes, { ...options, radiusM: 30 })) gefahren.add(id);
+  // Aktiv legs one after another (only a halt between them, nothing driven) are matched as one
+  // walk, with the points of the halt: otherwise the street where you slowed down stays white.
+  const legs = splitLegs(fixes);
+  const sortiert = [...fixes].sort((x, y) => x.t - y.t);
+  for (let i = 0; i < legs.length; i++) {
+    const leg = legs[i]!;
+    if (leg.art !== "aktiv") {
+      for (const id of seenPieceIds(fahrbar, leg.fixes, { ...options, radiusM: 30 })) gefahren.add(id);
+      continue;
+    }
+    let j = i;
+    while (j + 1 < legs.length && legs[j + 1]!.art === "aktiv") j++;
+    const von = leg.von;
+    const bis = legs[j]!.bis;
+    const genau = sortiert.filter((x) => x.t >= von && x.t <= bis && x.acc <= MAX_ACCURACY_M);
+    for (const id of seenPieceIds(strassen, genau, options)) aktiv.add(id);
+    i = j;
   }
   return { aktiv, gefahren };
 }

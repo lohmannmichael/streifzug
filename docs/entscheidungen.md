@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 21.11.2026: Rückblick ohne Stift, Lücken bei Overland geschlossen
+- Michi: beim Öffnen kein Stift, nur das Gelb. Der Plan zeigt alle neuen Wege auf einmal, die neuen Straßen werden in Gehreihenfolge gelb (3–7 s), danach Zoom aufs Veedel und Hochzählen. Antippen überspringt
+- Overland schickt nur etwa alle 31 s einen Punkt. Das Tempo wurde aus ±5 s berechnet, ein einzelner Punkt galt dann als Stillstand. Jetzt reicht das Fenster immer bis zu den Nachbarpunkten; Halt erst unter 0,4 m/s (langsam gehen mit Kindern zählt); aufeinanderfolgende aktive Abschnitte werden mit den Punkten der Pause dazwischen gemeinsam abgeglichen. Mit Michis Weg vom 21.11. (Lövenich): 1,30 → 1,50 km erkannte Straßen. `ABGLEICH_VERSION` 3 (alles wird einmal neu gerechnet)
+
 ## 21.11.2026: Rückblick „Stift von oben“ beim Öffnen (Bauplan 5.1, vorgezogen aus Phase 3)
 - `packages/core/src/replay.ts` (mit Tests): Abschnitte je Weg als neu / bekannt / gefahren, Tempo 120 / 600 / 1200 m/s, Budget 20 s (erst schneller über Bekanntem, dann Wege ohne Neues weglassen, dann die drei Wege mit dem meisten Neuen, zuletzt alles schneller); `freigabeZeiten`: wann jedes neue Stück gelb wird
 - Ablauf: Schnitt an den Anfang des ältesten neuen Wegs (Zoom 16,5), Markerspitze als HTML-Element, neue Straßen werden gelb, wenn die Spitze vorbeikommt; über Bekanntem hebt sie ab, Gefahrenes als Kuli bei Zoom 14. Antippen überspringt, Halten spult dreifach vor, „Überspringen“ im Blatt. Danach Zoom auf das ganze Veedel (1,2 s) und die Prozentzahl zählt vom alten Stand hoch, der Marker-Wisch wird neu gezogen

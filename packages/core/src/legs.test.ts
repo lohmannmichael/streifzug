@@ -89,4 +89,12 @@ describe("seenByLegs", () => {
     expect([...r.aktiv]).toEqual(["fuss"]);
     expect([...r.gefahren].sort()).toEqual(["autobahn", "bahn"]);
   });
+
+  it("keeps the street between two walks when you slowed down in between (Overland every 31 s)", () => {
+    // Walking at 1.4 m/s, a point every 31 s; in the middle two slow minutes (waiting at a crossing).
+    const pos = [0, 43, 86, 129, 172, 175, 178, 181, 224, 267, 310, 353];
+    const fixes: Fix[] = pos.map((m, i) => ({ t: i * 31_000, lon: 6.83, lat: 50.94 + m * M_LAT, acc: 8 }));
+    const r = seenByLegs([piece("davor", 100, 170), piece("dazwischen", 181, 224), piece("danach", 230, 340)], fixes, { maxGapM: 60 });
+    expect([...r.aktiv].sort()).toEqual(["danach", "davor", "dazwischen"]);
+  });
 });
