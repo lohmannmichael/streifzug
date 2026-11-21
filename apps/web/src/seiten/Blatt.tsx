@@ -1,5 +1,5 @@
 import { fehlendeMeter, type Naechster } from "@streifzug/core";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
@@ -17,7 +17,8 @@ const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
 const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
 /** "Montag" within the last week, otherwise "12. November". */
 export function seitText(zeit: number): string {
-  return Date.now() - zeit < 6 * 86400_000 ? wochentag.format(zeit) : tagMonat.format(zeit);
+  const tage = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(zeit).setHours(0, 0, 0, 0)) / 86400_000);
+  return tage === 0 ? "heute" : tage === 1 ? "gestern" : tage < 6 ? wochentag.format(zeit) : tagMonat.format(zeit);
 }
 
 const LEER = { strasse_m: 0, weg_m: 0 };
@@ -50,6 +51,32 @@ export interface BlattProps {
   waehlen: (id: string) => void;
   /** Walked places without a region yet ("wird vorbereitet"). */
   fremdeOrte: FremderOrt[];
+  /** During the replay the number stays at the share before the new ways. */
+  zahlVorher: number | null;
+  /** After the replay: count up from `von` (Bauplan 5, Nr. 6). */
+  hochzaehlen: { von: number; nr: number } | null;
+}
+
+/** The shown share: counts up in 900 ms when `hochzaehlen` changes; jumps with "reduce motion". */
+function useAngezeigt(p: number, vorher: number | null, hoch: { von: number; nr: number } | null): { wert: number; zieht: boolean } {
+  const [lauf, setLauf] = useState<{ wert: number; zieht: boolean } | null>(null);
+  useEffect(() => {
+    if (!hoch || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const start = performance.now();
+    let bild = 0;
+    const schritt = (jetzt: number) => {
+      const f = Math.min(1, (jetzt - start) / 900);
+      const weich = 1 - (1 - f) ** 3;
+      setLauf({ wert: hoch.von + (p - hoch.von) * weich, zieht: true });
+      if (f < 1) bild = requestAnimationFrame(schritt);
+      else setLauf(null);
+    };
+    bild = requestAnimationFrame(schritt);
+    return () => cancelAnimationFrame(bild);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoch?.nr]);
+  if (lauf) return lauf;
+  return { wert: vorher ?? p, zieht: false };
 }
 
 /**
@@ -62,6 +89,7 @@ export function Blatt(props: BlattProps) {
   const gesamt = gebiet ? gesamtM(gebiet) : 0;
   const gesehen = gebiet ? gesehenM(props.fortschritt, gebiet) : 0;
   const p = prozent(gesehen, gesamt);
+  const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
   const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
   const stempel = useStempel(stand);
 
@@ -131,7 +159,7 @@ export function Blatt(props: BlattProps) {
               </p>
             </div>
             <p className="prozent" aria-label={`${prozentText(p)} Prozent`}>
-              <span className="zahl"><span className="wisch">{prozentText(p)}</span><span className="einheit"> %</span></span>
+              <span className="zahl"><span className={angezeigt.zieht ? "wisch zieht" : "wisch"} key={props.hochzaehlen?.nr ?? 0}>{prozentText(angezeigt.wert)}</span><span className="einheit"> %</span></span>
             </p>
           </div>
         )}

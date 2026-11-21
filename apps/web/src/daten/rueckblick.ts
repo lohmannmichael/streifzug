@@ -13,6 +13,8 @@ const ERSTES_MAL_MS = 12 * 3600_000;
 
 export interface Rueckblick {
   nr: number;
+  /** Last visit: what was first walked after this is new. */
+  seit: number;
   wege: KurzWeg[];
   km: number;
 }
@@ -43,7 +45,7 @@ export function useRueckblick() {
     ].sort((a, b) => a.startedAt - b.startedAt);
     alsGesehenMerken();
     if (neu.length === 0) return;
-    setRueckblick((alt) => ({ nr: (alt?.nr ?? 0) + 1, wege: neu, km: neu.reduce((m, w) => m + w.distanceM, 0) / 1000 }));
+    setRueckblick((alt) => ({ nr: (alt?.nr ?? 0) + 1, seit, wege: neu, km: neu.reduce((m, w) => m + w.distanceM, 0) / 1000 }));
   }, []);
 
   return { rueckblick, pruefen, beenden: useCallback(() => setRueckblick(null), []) };

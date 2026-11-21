@@ -16,8 +16,8 @@ export interface Fortschritt {
   gefahren: Piece[];
   /** Seen meters per area id (streets and paths separately). */
   proGebiet: Map<string, Summe>;
-  /** Year each piece in `stuecke` was first walked (same order), for "Jedes Jahr eine Farbe". */
-  jahre: number[];
+  /** When each piece in `stuecke` was first walked (same order): year colours and the replay. */
+  erstesMal: number[];
   /** Meters per area taken out of the total ("Hier komme ich nicht hin"). */
   abzug: Map<string, Summe>;
   /** Walked places that have no region yet. */
@@ -91,7 +91,7 @@ export function useFortschritt(
       for (const sd of eigene) if (!sd.id.startsWith("live:")) imWorker.set(sd.id, sd.n);
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
-      setFortschritt({ stuecke: a.stuecke, jahre: a.jahre, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen });
+      setFortschritt({ stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen });
     });
     return weg;
     // Recalculate only when the set of outings changes or the live track grows.

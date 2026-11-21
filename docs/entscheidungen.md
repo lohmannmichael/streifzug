@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 21.11.2026: Rückblick „Stift von oben“ beim Öffnen (Bauplan 5.1, vorgezogen aus Phase 3)
+- `packages/core/src/replay.ts` (mit Tests): Abschnitte je Weg als neu / bekannt / gefahren, Tempo 120 / 600 / 1200 m/s, Budget 20 s (erst schneller über Bekanntem, dann Wege ohne Neues weglassen, dann die drei Wege mit dem meisten Neuen, zuletzt alles schneller); `freigabeZeiten`: wann jedes neue Stück gelb wird
+- Ablauf: Schnitt an den Anfang des ältesten neuen Wegs (Zoom 16,5), Markerspitze als HTML-Element, neue Straßen werden gelb, wenn die Spitze vorbeikommt; über Bekanntem hebt sie ab, Gefahrenes als Kuli bei Zoom 14. Antippen überspringt, Halten spult dreifach vor, „Überspringen“ im Blatt. Danach Zoom auf das ganze Veedel (1,2 s) und die Prozentzahl zählt vom alten Stand hoch, der Marker-Wisch wird neu gezogen
+- „Neu“ = erstmals gegangen nach dem letzten Besuch (der Worker liefert dafür je Stück die erste Zeit). Antippen unter „Zuletzt“ spielt einen Weg genauso ab
+- Noch nicht: Straßen-Schilder während des Rückblicks (Nr. 3), Selbst-Stempeln danach (Nr. 7)
+
 ## 21.11.2026: Orte ohne Region werden behalten (Option C)
 - Overland- und GPX-Punkte werden nicht mehr außerhalb der Regionen verworfen. Der Abgleich hängt nicht von den Regionen ab: Wege dort sind sofort gelb (bzw. rot), Prozente und Stempel kommen automatisch, sobald die Region aufgenommen ist (kein Neurechnen nötig)
 - Orte mit mindestens 200 m aktiv außerhalb aller Regionen (Raster ca. 5 km) bekommen einen Namen aus der Grundkarte (Ebene „place“, Stadt vor Ort vor Dorf) und stehen in der Sammlung unter „Wird vorbereitet“; neue (letzte 7 Tage) auch als Zeile im Blatt

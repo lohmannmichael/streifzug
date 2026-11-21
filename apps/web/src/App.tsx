@@ -2,7 +2,7 @@ import type { LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
-import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
+import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
 import { overlandStill, useOverlandAbholen, type KurzWeg } from "./daten/import";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
@@ -26,7 +26,7 @@ const MERKEN = "streifzug.gebiet";
 export function App() {
   const sitzung = useSitzung();
   const [hoehe, setHoehe] = useState<Hoehe>(1);
-  const [einzeln, setEinzeln] = useState<{ linien: LonLat[][]; nr: number } | null>(null);
+  const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   const [profilOffen, setProfilOffen] = useState(false);
   // Shortcut from the sheet: open the settings at Overland.
@@ -97,7 +97,7 @@ export function App() {
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
-  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], jahre: [], gefahren: [], proGebiet: new Map(), abzug: new Map(), draussen: [] };
+  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], erstesMal: [], gefahren: [], proGebiet: new Map(), abzug: new Map(), draussen: [] };
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
@@ -107,7 +107,32 @@ export function App() {
     [fortschritt],
   );
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
-  const jahre = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.jahre[i] ?? new Date().getFullYear()])), [fortschritt]);
+  const erstesMal = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.erstesMal[i] ?? Date.now()])), [fortschritt]);
+
+  // Replay on opening (Bauplan 5.1): starts once the progress includes the new ways (at most 2.5 s wait).
+  const [rbBereit, setRbBereit] = useState<number | null>(null);
+  useEffect(() => {
+    if (!rueckblick) return setRbBereit(null);
+    if (rbBereit === rueckblick.nr) return;
+    if (!rechnet && fortschritt?.erstesMal.some((t) => t >= rueckblick.seit)) return setRbBereit(rueckblick.nr);
+    const warten = window.setTimeout(() => setRbBereit(rueckblick.nr), 2500);
+    return () => window.clearTimeout(warten);
+  }, [rueckblick, fortschritt, rechnet, rbBereit]);
+  // The share before the new ways: the number stays there during the replay and counts up afterwards (Nr. 6).
+  const [zahlVorher, setZahlVorher] = useState<number | null>(null);
+  const [hochzaehlen, setHochzaehlen] = useState<{ von: number; nr: number } | null>(null);
+  useEffect(() => {
+    if (!rueckblick || rbBereit !== rueckblick.nr || !daten || !gebiet || !fortschritt) return setZahlVorher(null);
+    let lebt = true;
+    const alt = fortschritt.stuecke.filter((p, i) => p.kind === "street" && (fortschritt.erstesMal[i] ?? 0) < rueckblick.seit);
+    void meterJeGebiet(alt, daten).then((m) => {
+      if (lebt) setZahlVorher(prozent(zaehlendeMeter(m.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, false), gesamtMeter(gebiet, fortschritt.abzug)));
+    });
+    return () => {
+      lebt = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rbBereit, gebiet?.id]);
   const stifte = useMemo(
     () => ({ marker: einstellungen.marker, kuli: einstellungen.kuli, jahresFarben: einstellungen.jahresFarben }),
     [einstellungen.marker, einstellungen.kuli, einstellungen.jahresFarben],
@@ -156,7 +181,8 @@ export function App() {
     return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(null); }} />;
 
   // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
-  const abspielen = einzeln ?? (rueckblick && !aufzeichnung.aktiv ? { linien: rueckblick.wege.map((w) => w.coords), nr: rueckblick.nr } : null);
+  const abspielen =
+    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => w.coords), seit: rueckblick.seit, nr: rueckblick.nr } : null);
   return (
     <div className="app">
       <main className="inhalt">
@@ -181,10 +207,12 @@ export function App() {
           rueckblick={abspielen}
           onRueckblickEnde={() => {
             setEinzeln(null);
-            if (!einzeln) rueckblickBeenden();
+            if (einzeln) return;
+            if (zahlVorher !== null) setHochzaehlen((alt) => ({ von: zahlVorher, nr: (alt?.nr ?? 0) + 1 }));
+            rueckblickBeenden();
           }}
           offen={offen?.linien ?? null}
-          jahre={jahre}
+          erstesMal={erstesMal}
           stifte={stifte}
         />
         <div className="karten-knoepfe">
@@ -214,13 +242,15 @@ export function App() {
           eigeneWege={eigeneWege}
           abspielen={(w) => {
             setHoehe(1);
-            setEinzeln((alt) => ({ linien: [w.coords], nr: (alt?.nr ?? 1000) + 1 }));
+            setEinzeln((alt) => ({ wege: [w.coords], seit: w.startedAt, nr: (alt?.nr ?? 1000) + 1 }));
           }}
           position={position}
           offen={offen?.name ?? null}
           offenZeigen={setOffen}
           waehlen={(id) => waehlen(id)}
           fremdeOrte={fremdeOrte}
+          zahlVorher={rueckblick && !aufzeichnung.aktiv ? zahlVorher : null}
+          hochzaehlen={hochzaehlen}
         />
       </main>
     </div>

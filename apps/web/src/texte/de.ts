@@ -165,7 +165,7 @@ export const de = {
     betreten: "betreten",
     noch: (km: string) => `noch ${km}`,
     zuletzt: "Zuletzt",
-    zuletztZeile: (tag: string, strecke: string) => `${tag} · ${strecke}`,
+    zuletztZeile: (tag: string, strecke: string) => `${tag.charAt(0).toUpperCase()}${tag.slice(1)} · ${strecke}`,
     keineWege: "Noch keine Wege.",
     nochOffen: "Noch offen, nächste zuerst",
     nochOffenLeer: "Hier ist nichts mehr offen.",

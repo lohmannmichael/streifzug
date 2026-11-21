@@ -59,7 +59,7 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; jahre: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
@@ -291,7 +291,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   const proGebiet = await meterJeGebiet(gesehen.values(), liste);
   const abzug = ausnahmen.size ? await meterJeGebiet(await stueckeFuerIds([...ausnahmen]), liste) : new Map<string, Summe>();
   const stuecke = [...gesehen.values()];
-  const jahre = stuecke.map((p) => new Date(aktivAb.get(p.id) ?? Date.now()).getFullYear());
+  const erstesMal = stuecke.map((p) => aktivAb.get(p.id) ?? Date.now());
   // Places without a region: kept and drawn, counted once the region is there.
   const zellen = new Map<string, Draussen>();
   for (const p of stuecke) {
@@ -303,7 +303,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     zellen.set(zelle, e);
   }
   const draussen = [...zellen.values()].filter((e) => e.m >= 200);
-  senden({ typ: "ergebnis", nr, stuecke, jahre, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen });
+  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen });
 }
 
 function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {

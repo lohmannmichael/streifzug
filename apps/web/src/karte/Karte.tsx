@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ausnahmeSetzen } from "../daten/ausnahmen";
 import { etikettAn, type Etikett } from "../daten/veedel";
+import { rueckblickAbspielen } from "./rueckblick";
 import { ERSTES_JAHR, jahresFarbe, MARKER_FARBEN } from "../einstellungen";
 import { alsStrecke, prozentText, type Regionen } from "../daten/regionen";
 import { strassenName } from "../daten/strassen";
@@ -201,12 +202,12 @@ export interface KartenProps {
   position: [number, number] | null;
   zentrieren: number;
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
-  rueckblick: { linien: LonLat[][]; nr: number } | null;
+  rueckblick: { wege: LonLat[][]; seit: number; nr: number } | null;
   onRueckblickEnde: () => void;
   /** "Noch offen", tapped: the open pieces of one street, shown as a dashed black line. */
   offen: LonLat[][] | null;
-  /** Year each seen piece was first walked (for "Jedes Jahr eine Farbe"). */
-  jahre: Map<string, number>;
+  /** When each seen piece was first walked (year colours, replay). */
+  erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
 }
 
@@ -292,9 +293,15 @@ function strich(p: number) {
   return ["step", ["line-progress"], MARKER, Math.min(1, Math.max(0.001, p)), "rgba(255, 225, 74, 0)"] as never;
 }
 
-let jahreJetzt = new Map<string, number>();
+let erstesMalJetzt = new Map<string, number>();
 function linienSammlung(stuecke: readonly Piece[]) {
-  return { type: "FeatureCollection", features: stuecke.map((p) => ({ type: "Feature", properties: { jahr: jahreJetzt.get(p.id) ?? null }, geometry: { type: "LineString", coordinates: p.coords } })) };
+  return {
+    type: "FeatureCollection",
+    features: stuecke.map((p) => {
+      const t = erstesMalJetzt.get(p.id);
+      return { type: "Feature", properties: { jahr: t ? new Date(t).getFullYear() : null }, geometry: { type: "LineString", coordinates: p.coords } };
+    }),
+  };
 }
 
 function ruhig() {
@@ -323,7 +330,9 @@ export function Karte(props: KartenProps) {
   prozenteRef.current = props.prozente;
   const stifteRef = useRef(props.stifte);
   stifteRef.current = props.stifte;
-  jahreJetzt = props.jahre;
+  erstesMalJetzt = props.erstesMal;
+  const erstesMalRef = useRef(props.erstesMal);
+  erstesMalRef.current = props.erstesMal;
   // Label of a tapped street: a small white sign at the street, moved with the map.
   const [etikett, setEtikett] = useState<EtikettZustand | null>(null);
   const schild = useRef<{ marker: Marker; el: HTMLDivElement } | null>(null);
@@ -484,8 +493,23 @@ export function Karte(props: KartenProps) {
   useEffect(() => {
     const karte = karteRef.current;
     const rb = props.rueckblick;
-    if (!karte || !rb || rb.linien.length === 0) return;
-    return rueckblickAbspielen(karte, rb.linien, () => rbEnde.current());
+    if (!karte || !rb || rb.wege.length === 0) return;
+    const blatt = document.querySelector(".blatt")?.getBoundingClientRect().height ?? 160;
+    return rueckblickAbspielen(
+      karte,
+      { wege: rb.wege, seit: rb.seit },
+      {
+        entdeckt: entdecktRef.current,
+        erstesMal: erstesMalRef.current,
+        gefahren: gefahrenRef.current,
+        zeichnen: (stuecke) => setzeDaten(karte, "entdeckt", linienSammlung(stuecke)),
+        marker: MARKER,
+        kuli: KULI,
+        untenFrei: Math.min(blatt, karte.getContainer().clientHeight * 0.4),
+        veedel: veedelRahmen(gewaehltRef.current, datenRef.current),
+      },
+      () => rbEnde.current(),
+    );
   }, [props.rueckblick?.nr]);
 
   // Location button: move to the own position.
@@ -580,113 +604,20 @@ function Schild({ z, schliessen }: { z: EtikettZustand; schliessen: () => void }
   );
 }
 
-/**
- * Replay: shows all lines, then draws them one after another as a growing highlighter trail
- * (3–8 s depending on length), fades out and calls `fertig`. Returns a stop function.
- * With "reduce motion" only the view is shown, without the run.
- */
-function rueckblickAbspielen(karte: MapLibreMap, linien: LonLat[][], fertig: () => void): () => void {
-  let aus = false;
-  let bild = 0;
-  const zeiten: number[] = [];
-  const leeren = () => {
-    if (!karte.getSource("rb")) return;
-    setzeDaten(karte, "rb", LEER);
-    setzeDaten(karte, "rb-kopf", LEER);
-    karte.setPaintProperty("rb", "line-opacity", 1);
-    karte.setPaintProperty("rb-glanz", "line-opacity", 0.45);
-  };
-  const stopp = () => {
-    if (aus) return;
-    aus = true;
-    cancelAnimationFrame(bild);
-    zeiten.forEach((z) => window.clearTimeout(z));
-    leeren();
-  };
-  const ende = () => {
-    if (aus) return;
-    stopp();
-    fertig();
-  };
-
+/** Bounds of an area from its loaded boundary. */
+function veedelRahmen(id: string | null, daten: Regionen | null): [[number, number], [number, number]] | null {
+  const regionId = id ? daten?.gebiete.get(id)?.regionId : undefined;
+  const f = regionId ? fertigGeladen.get(regionId)?.gebiete.features.find((x) => String(x.properties.id) === id) : undefined;
+  if (!f) return null;
   let [w, s, o, n] = [Infinity, Infinity, -Infinity, -Infinity];
-  for (const l of linien)
-    for (const [x, y] of l) {
-      w = Math.min(w, x);
-      o = Math.max(o, x);
-      s = Math.min(s, y);
-      n = Math.max(n, y);
-    }
-  const hoehe = karte.getContainer().clientHeight;
-  karte.fitBounds([[w, s], [o, n]], { padding: { top: 90, bottom: hoehe * 0.4 + 30, left: 40, right: 40 }, maxZoom: 16, duration: ruhig() ? 0 : 900 });
-  // Tapping or dragging the map skips the replay.
-  karte.once("mousedown", ende);
-  karte.once("touchstart", ende);
-
-  const laengen = linien.map((l) => lineLengthM(l));
-  const gesamt = laengen.reduce((a, b) => a + b, 0);
-  if (ruhig() || gesamt === 0) {
-    setzeDaten(karte, "rb", { type: "MultiLineString", coordinates: linien });
-    zeiten.push(window.setTimeout(ende, 2500));
-    return stopp;
-  }
-  const dauer = Math.min(8000, Math.max(3000, (gesamt / 1000) * 1500));
-  let gestartet = false;
-  const laufen = () => {
-    if (gestartet || aus) return;
-    gestartet = true;
-    const start = performance.now();
-    const schritt = (jetzt: number) => {
-      if (aus) return;
-      const p = Math.min(1, Math.max(0, (jetzt - start) / dauer));
-      let rest = gesamt * (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
-      const teile: LonLat[][] = [];
-      let kopf: LonLat | null = null;
-      for (let i = 0; i < linien.length && rest > 0; i++) {
-        const l = linien[i]!;
-        if (rest >= laengen[i]!) {
-          teile.push(l);
-          kopf = l.at(-1)!;
-        } else {
-          const stueck = sliceLine(l, 0, rest);
-          if (stueck.length > 1) teile.push(stueck);
-          kopf = stueck.at(-1) ?? l[0]!;
-        }
-        rest -= laengen[i]!;
-      }
-      setzeDaten(karte, "rb", { type: "MultiLineString", coordinates: teile });
-      setzeDaten(karte, "rb-kopf", kopf ? { type: "Point", coordinates: kopf } : LEER);
-      if (p < 1) bild = requestAnimationFrame(schritt);
-      else {
-        // Hold a moment, then let the trail fade into the yellow streets underneath.
-        zeiten.push(
-          window.setTimeout(() => {
-            setzeDaten(karte, "rb-kopf", LEER);
-            const fadeStart = performance.now();
-            const fade = (t: number) => {
-              if (aus) return;
-              const q = Math.min(1, Math.max(0, (t - fadeStart) / 600));
-              karte.setPaintProperty("rb", "line-opacity", 1 - q);
-              karte.setPaintProperty("rb-glanz", "line-opacity", 0.45 * (1 - q));
-              if (q < 1) bild = requestAnimationFrame(fade);
-              else ende();
-            };
-            bild = requestAnimationFrame(fade);
-          }, 700),
-        );
-      }
-    };
-    bild = requestAnimationFrame(schritt);
+  const gehen = (c: unknown): void => {
+    if (Array.isArray(c) && typeof c[0] === "number") {
+      const [x, y] = c as [number, number];
+      [w, s, o, n] = [Math.min(w, x), Math.min(s, y), Math.max(o, x), Math.max(n, y)];
+    } else if (Array.isArray(c)) for (const d of c) gehen(d);
   };
-  karte.once("moveend", laufen);
-  // If the map was already in place, moveend may not come.
-  zeiten.push(window.setTimeout(laufen, 1200));
-  return () => {
-    karte.off("mousedown", ende);
-    karte.off("touchstart", ende);
-    karte.off("moveend", laufen);
-    stopp();
-  };
+  gehen(f.geometry.coordinates);
+  return Number.isFinite(w) ? [[w, s], [o, n]] : null;
 }
 
 /** Shares per area into the area data: hatch density ("stufe") and the percentage under the name. */
