@@ -183,6 +183,13 @@ export const de = {
     unterwegs: (strecke: string, strassen: number) => (strassen > 0 ? `+${strecke} · ${strassen === 1 ? "1 Straße" : `${strassen} Straßen`}` : `+${strecke}`),
     belohnung: (strecke: string, von: string, auf: string) => (von === auf ? `Letzter Weg: +${strecke} neu` : `Letzter Weg: +${strecke} neu, von ${von} auf ${auf} %`),
   },
+  menue: {
+    titel: "Menü",
+    staedte: "Deine Städte und Veedel",
+    stempelpass: "Stempelpass",
+    aufzeichnung: "Automatisch aufzeichnen",
+    einstellungen: "Einstellungen",
+  },
   stifte: {
     titel: "Stifte",
     marker: "Textmarker",

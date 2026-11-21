@@ -12,12 +12,12 @@ import { useAusnahmen } from "./daten/ausnahmen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
-import { Blatt, type Hoehe } from "./seiten/Blatt";
+import { Blatt, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
 import { Stifte } from "./seiten/Stifte";
 import { Zuhause } from "./seiten/Zuhause";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
-import { IconSchliessen, IconStandort } from "./ui/Icons";
+import { IconMehr, IconSchliessen, IconStandort } from "./ui/Icons";
 
 // Until the location is used, the map starts at home; the last chosen area is remembered.
 const START_NAME = "Weiden";
@@ -26,6 +26,8 @@ const MERKEN = "streifzug.gebiet";
 export function App() {
   const sitzung = useSitzung();
   const [hoehe, setHoehe] = useState<Hoehe>(1);
+  const [teil, setTeil] = useState<SammlungTeil>("veedel");
+  const [menueOffen, setMenueOffen] = useState(false);
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   const [profilOffen, setProfilOffen] = useState(false);
@@ -216,10 +218,48 @@ export function App() {
           stifte={stifte}
         />
         <div className="karten-knoepfe">
+          <button
+            type="button"
+            className="rund-knopf"
+            aria-label={t.menue.titel}
+            aria-expanded={menueOffen}
+            aria-haspopup="menu"
+            onClick={() => setMenueOffen(!menueOffen)}
+          >
+            {menueOffen ? <IconSchliessen /> : <IconMehr />}
+          </button>
           <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
             <IconStandort />
           </button>
         </div>
+        {menueOffen && (
+          <>
+            <div className="menue-hintergrund" onClick={() => setMenueOffen(false)} />
+            <nav className="menue" role="menu" aria-label={t.menue.titel}>
+              {(
+                [
+                  [t.menue.staedte, () => { setTeil("veedel"); setHoehe(3); }],
+                  [t.menue.stempelpass, () => { setTeil("pass"); setHoehe(3); }],
+                  [t.menue.aufzeichnung, () => { setImportZeigen("overland"); setProfilOffen(true); }],
+                  [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
+                ] as const
+              ).map(([text, tun]) => (
+                <button
+                  key={text}
+                  type="button"
+                  role="menuitem"
+                  className="menue-zeile"
+                  onClick={() => {
+                    setMenueOffen(false);
+                    tun();
+                  }}
+                >
+                  {text}
+                </button>
+              ))}
+            </nav>
+          </>
+        )}
         <Blatt
           hoehe={hoehe}
           setHoehe={setHoehe}
@@ -251,6 +291,8 @@ export function App() {
           fremdeOrte={fremdeOrte}
           zahlVorher={rueckblick && !aufzeichnung.aktiv ? zahlVorher : null}
           hochzaehlen={hochzaehlen}
+          teil={teil}
+          setTeil={setTeil}
         />
       </main>
     </div>

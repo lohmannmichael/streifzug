@@ -12,6 +12,7 @@ import { IconMehr } from "../ui/Icons";
 import { Stempel } from "../ui/Stempel";
 
 export type Hoehe = 1 | 2 | 3;
+export type SammlungTeil = "veedel" | "pass";
 
 const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
 const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
@@ -53,6 +54,8 @@ export interface BlattProps {
   fremdeOrte: FremderOrt[];
   /** During the replay the number stays at the share before the new ways. */
   zahlVorher: number | null;
+  teil: SammlungTeil;
+  setTeil: (t: SammlungTeil) => void;
   /** After the replay: count up from `von` (Bauplan 5, Nr. 6). */
   hochzaehlen: { von: number; nr: number } | null;
 }
@@ -92,8 +95,8 @@ export function Blatt(props: BlattProps) {
   const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
   const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
   const stempel = useStempel(stand);
-  // Which part of the collection is open (the overview row in height 2 opens "Städte").
-  const [teil, setTeil] = useState<"veedel" | "pass">("veedel");
+  // Which part of the collection is open (set from the overview row and from the menu).
+  const { teil, setTeil } = props;
 
   // Pulling the handle or the head moves one height up or down; tapping the head opens height 2.
   const zug = useRef<number | null>(null);
