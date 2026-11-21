@@ -92,6 +92,8 @@ export function Blatt(props: BlattProps) {
   const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
   const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
   const stempel = useStempel(stand);
+  // Which part of the collection is open (the overview row in height 2 opens "Städte").
+  const [teil, setTeil] = useState<"veedel" | "pass">("veedel");
 
   // Pulling the handle or the head moves one height up or down; tapping the head opens height 2.
   const zug = useRef<number | null>(null);
@@ -174,15 +176,26 @@ export function Blatt(props: BlattProps) {
 
       {hoehe === 2 && gebiet && daten && (
         <div className="blatt-inhalt">
-          <VeedelInhalt {...props} gebiet={gebiet} daten={daten} gesehen={gesehen} gesamt={gesamt} gesetzt={stempel.gesetzt} />
+          <VeedelInhalt
+            {...props}
+            gebiet={gebiet}
+            daten={daten}
+            gesehen={gesehen}
+            gesamt={gesamt}
+            gesetzt={stempel.gesetzt}
+            zurUebersicht={() => {
+              setTeil("veedel");
+              setHoehe(3);
+            }}
+          />
         </div>
       )}
-      {hoehe === 3 && daten && <Sammlung {...props} daten={daten} gesetzt={stempel.gesetzt} naechste={stempel.naechste} />}
+      {hoehe === 3 && daten && <Sammlung {...props} daten={daten} gesetzt={stempel.gesetzt} naechste={stempel.naechste} teil={teil} setTeil={setTeil} />}
     </section>
   );
 }
 
-function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[] }) {
+function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[]; zurUebersicht: () => void }) {
   const { gebiet, daten, aufzeichnung: a } = props;
   const wege = useLetzteWege(props.eigeneWege);
   const istVeedel = gebiet.kinder.length === 0;
@@ -196,6 +209,10 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
       <p className="zahlen-zeile">
         <span className="wert">{t.blatt.kmVon(alsKm(props.gesehen), alsKm(props.gesamt))}</span>
       </p>
+      <button type="button" className="zeile-knopf uebersicht-zeile" onClick={props.zurUebersicht}>
+        <span>{t.blatt.uebersicht}</span>
+        <span className="wert">{uebersichtText(daten, props.fortschritt)} ›</span>
+      </button>
       {neuM >= 1 && vorherM !== null && (
         <p className="zeile-text" role="status">
           {t.blatt.belohnung(alsStrecke(neuM), prozentText(prozent(vorherM, props.gesamt)), prozentText(prozent(props.gesehen, props.gesamt)))}
@@ -311,8 +328,26 @@ function stadtName(daten: Regionen, id: string): string | undefined {
   return g?.name;
 }
 
-function Sammlung(props: BlattProps & { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[] }) {
-  const [teil, setTeil] = useState<"veedel" | "pass">("veedel");
+/** "2 Städte · 5 Veedel": what has been entered so far. */
+function uebersichtText(daten: Regionen, f: Fortschritt | null): string {
+  let staedte = 0;
+  let veedel = 0;
+  for (const r of daten.liste) {
+    const w = daten.gebiete.get(r.wurzel);
+    if (w && gesehenM(f, w) >= 1) staedte++;
+  }
+  for (const g of daten.gebiete.values()) if (g.kinder.length === 0 && gesehenM(f, g) >= 1) veedel++;
+  return t.blatt.uebersichtWert(staedte, veedel);
+}
+
+/** Number of entered Veedel below an area. */
+function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten): number {
+  if (g.kinder.length === 0) return gesehenM(f, g) >= 1 ? 1 : 0;
+  return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
+}
+
+function Sammlung(props: BlattProps & { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[]; teil: "veedel" | "pass"; setTeil: (t: "veedel" | "pass") => void }) {
+  const { teil, setTeil } = props;
   return (
     <div className="blatt-inhalt sammlung">
       <div className="sammlung-kopf">
@@ -336,8 +371,6 @@ function VeedelBaum(props: BlattProps & { daten: Regionen }) {
   const anteil = (g: GebietDaten) => prozent(gesehenM(f, g), gesamtM(g));
   const betreten = (g: GebietDaten) => gesehenM(f, g) >= 1;
   const kinder = (g: GebietDaten) => g.kinder.map((id) => daten.gebiete.get(id)!).filter(betreten).sort((x, y) => anteil(y) - anteil(x));
-  const offen = new Set<string>();
-  for (let g = props.gebiet; g; g = g.eltern ? (daten.gebiete.get(g.eltern) ?? null) : null) offen.add(g.id);
   const staedte = daten.liste.map((r) => daten.gebiete.get(r.wurzel)!).filter(betreten).sort((x, y) => gesehenM(f, y) - gesehenM(f, x));
   const vorbereitet = props.fremdeOrte.length > 0 && (
     <>
@@ -359,14 +392,17 @@ function VeedelBaum(props: BlattProps & { daten: Regionen }) {
     const p = anteil(g);
     return (
       <>
-        <span className="baum-name">{g.name}</span>
+        <span className="baum-name">
+          {g.name}
+          {g.kinder.length > 0 && <small>{t.sammlung.veedelAnzahl(betreteneVeedel(daten, f, g), alsKm(gesehenM(f, g)))}</small>}
+        </span>
         <span className="mini-balken" aria-hidden="true"><i style={{ width: `${p > 0 ? Math.max(p, 2) : 0}%` }} /></span>
         <span className="wert">{prozentText(p)} %</span>
       </>
     );
   };
   const ordner = (g: GebietDaten, tiefe: number) => (
-    <details key={g.id} className="baum-ordner" open={offen.has(g.id) || (tiefe === 0 && staedte.length === 1)}>
+    <details key={g.id} className="baum-ordner">
       <summary className={`baum-zeile tiefe-${tiefe}`}>{inhalt(g)}</summary>
       <ul className="zeilen">
         {kinder(g).map((k) =>
