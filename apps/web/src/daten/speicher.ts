@@ -47,6 +47,11 @@ export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s
 export const alleLaden = () => auftrag<Streifzug[]>("readonly", (st) => st.getAll());
 export const loeschen = (id: string) => auftrag("readwrite", (st) => st.delete(id)).then(() => undefined);
 
+/** Imported outings have ids "google:…" / "gpx:…" (own ones are UUIDs), so a source is one key range. */
+export const importBereich = (quelle: "google" | "gpx") => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
+/** Deletes all imports of a source without loading them (fast, also with huge imports). */
+export const importeEntfernen = (quelle: "google" | "gpx") => auftrag("readwrite", (st) => st.delete(importBereich(quelle))).then(() => undefined);
+
 /** Lets other parts of the app (list, map) know that something changed. */
 export const AENDERUNG = "streifzug-aenderung";
 export const melden = () => window.dispatchEvent(new Event(AENDERUNG));

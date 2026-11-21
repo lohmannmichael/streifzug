@@ -43,7 +43,7 @@ export const de = {
   },
   import: {
     titel: "Importieren",
-    abkuerzung: "Alte Wege importieren (Google, Apple Health)",
+    abkuerzung: "Alte Wege importieren (Apple Health, GPX)",
     soGehts: "So geht's",
     google: {
       titel: "Google-Zeitachse",

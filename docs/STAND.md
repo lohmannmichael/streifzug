@@ -15,7 +15,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 - Design-Paket 3 erledigt 20.11.2026: Logbuch im Reiter Streifzüge (Mini-Stadtplan je Runde, neu entdeckte Meter, Prozent-Sprung, neue Straßennamen, nach Monaten), Weißer Fleck im Blatt mit „Zeigen“, Meilenstein-Stempel (1/5/10/25/50/75/100 %) im Blatt und im Logbuch, Straßenname im Zeichen-Moment. 
 - Design-Paket 4 erledigt 20.11.2026: Unterwegs-Modus (Blatt klappt beim Losziehen ein, Zähler „+240 m neu · 3 Straßen“ oben), eigener Kartenstil „Stadtplan“ (Positron-Daten, eigene Farben hell und dunkel, ohne Straßenschilder)
 - 20.11.2026 nach Michis Wunsch: Verorten zeigt im Blatt das Viertel, in dem man steht (auch automatisch beim Öffnen, wenn der Standort schon erlaubt ist). Gebiete zeigen nur Freigeschaltetes, Städte und Bezirke zum Aufklappen (Sortierung „In deiner Nähe“ entfällt dafür)
-- Import erledigt 20.11.2026 (Phase 2 vorgezogen): Profil → Importieren: Google-Zeitachse (Exportdatei) und GPX (Apple Health, Strava …), Vorschau, Schalter „Einrechnen“ je Quelle, Löschen. Offen: Test mit Michis echter Google-Datei
+- Import erledigt 20.11.2026 (Phase 2 vorgezogen): Profil → Importieren: Google-Zeitachse (Exportdatei) und GPX (Apple Health, Strava …), Vorschau, Schalter „Einrechnen“ je Quelle, Löschen. 21.11.: Google-Importe gelöscht und Google-Import pausiert (App hing); offen: Import komplett in den Hintergrund-Worker, dann Google wieder freischalten
 
 ## Reihenfolge ab 20.11.2026 (Michi: erst für ihn selbst richtig nutzbar, Freund:innen-Test später)
 1. Michi nutzt die App draußen, Feedback einarbeiten

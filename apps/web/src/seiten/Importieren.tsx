@@ -17,7 +17,7 @@ export function Importieren(props: {
 }) {
   return (
     <>
-      <Quelle quelle="google" {...props} an={props.werte.googleZaehlen} setzen={(an) => props.aendern({ googleZaehlen: an })} />
+      {/* Google import is paused until it runs fully in the background (large timelines made the app hang). */}
       <Quelle quelle="gpx" {...props} an={props.werte.gpxZaehlen} setzen={(an) => props.aendern({ gpxZaehlen: an })} />
     </>
   );

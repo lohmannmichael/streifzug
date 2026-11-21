@@ -5,12 +5,35 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { hochladenEinrichten } from "./daten/hochladen";
+import { importeEntfernen } from "./daten/speicher";
 import "./styles.css";
+
+// Large Google imports made the app hang (20.11.2026). They are removed once on start, before
+// anything loads them; "?notfall" removes all imports (Google and GPX) if the app ever hangs again.
+const GOOGLE_ENTFERNT = "streifzug.google-importe-entfernt-1";
+
+async function aufraeumen() {
+  const notfall = new URLSearchParams(location.search).has("notfall");
+  try {
+    if (notfall || !localStorage.getItem(GOOGLE_ENTFERNT)) {
+      await importeEntfernen("google");
+      localStorage.setItem(GOOGLE_ENTFERNT, "1");
+    }
+    if (notfall) {
+      await importeEntfernen("gpx");
+      history.replaceState(null, "", "/");
+    }
+  } catch {
+    // Without storage there is nothing to clean up.
+  }
+}
 
 hochladenEinrichten();
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+void aufraeumen().then(() =>
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  ),
 );

@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 21.11.2026: Google-Importe entfernt, Google-Import pausiert
+- Die App hing bei Michi weiterhin nach dem Google-Import. Auf Michis Wunsch werden alle Google-Importe beim nächsten Start einmal gelöscht (`main.tsx`, vor dem ersten Laden, per Schlüsselbereich „google:…“, ohne die Daten zu laden). Merker `streifzug.google-importe-entfernt-1`
+- Notausgang: `https://streifzug.pages.dev/?notfall` löscht alle Importe (Google und GPX); eigene Runden bleiben
+- Der Google-Import ist ausgeblendet, bis Einlesen, Speichern und Abgleich vollständig im Hintergrund-Worker laufen und die Oberfläche importierte Wege nie lädt (Plan: eigene Runden und Importe getrennt laden, Worker liest Importe selbst aus IndexedDB). GPX bleibt
+
 ## 20.11.2026: App fror nach großem Import ein (Fix)
 - Michi: „Grad geht gar nichts mehr“ nach dem Import. Nachgestellt mit 1.668 importierten Wegen bei 4-fach gedrosselter CPU (etwa iPhone): bis 9,5 s am Stück blockiert, 127 s Blockade insgesamt, bei jedem Start erneut
 - Ursachen: Abgleich aller Wege bei jedem Start auf dem Oberflächen-Strang; Nebel zeichnete bei jedem Bild der Kartenbewegung alle Linien neu; Logbuch rechnete jeden Import einzeln
