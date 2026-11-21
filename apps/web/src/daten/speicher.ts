@@ -1,6 +1,8 @@
 import type { Fix, Mode } from "@streifzug/core";
 
-export type Quelle = "aufnahme" | "google" | "gpx";
+export type Quelle = "aufnahme" | ImportQuelle;
+/** Outings that come from elsewhere: imported files or Overland (automatic background recording). */
+export type ImportQuelle = "google" | "gpx" | "overland";
 
 /** A recorded outing as kept on the device. */
 export interface Streifzug {
@@ -43,21 +45,58 @@ async function auftrag<T>(modus: IDBTransactionMode, fn: (s: IDBObjectStore) => 
   });
 }
 
-export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s)).then(() => undefined);
-export const alleLaden = () => auftrag<Streifzug[]>("readonly", (st) => st.getAll());
-export const loeschen = (id: string) => auftrag("readwrite", (st) => st.delete(id)).then(() => undefined);
+/**
+ * Own outings have UUIDs (0-9, a-f); imported ones "google:…", "gpx:…", "overland:…". So the page
+ * loads only its own outings (key range below "g"); the others (possibly thousands) are handled
+ * by the background worker only, so the page never freezes.
+ */
+const EIGENE = () => IDBKeyRange.upperBound("g", true);
+export const importBereich = (quelle: ImportQuelle) => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
 
-/** Imported outings have ids "google:…" / "gpx:…" (own ones are UUIDs), so a source is one key range. */
-export const importBereich = (quelle: "google" | "gpx") => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
-/** Deletes all imports of a source without loading them (fast, also with huge imports). */
-export const importeEntfernen = (quelle: "google" | "gpx") => auftrag("readwrite", (st) => st.delete(importBereich(quelle))).then(() => undefined);
+export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s)).then(() => undefined);
+/** Own outings only (recorded in Streifzug). */
+export const alleLaden = () => auftrag<Streifzug[]>("readonly", (st) => st.getAll(EIGENE()));
+export const loeschen = (id: string) => auftrag("readwrite", (st) => st.delete(id)).then(() => undefined);
+export const einenLaden = (id: string) => auftrag<Streifzug | undefined>("readonly", (st) => st.get(id) as IDBRequest<Streifzug | undefined>);
+
+/** All outings of the given sources (used by the background worker). */
+export async function importeLaden(quellen: ImportQuelle[]): Promise<Streifzug[]> {
+  const teile = await Promise.all(quellen.map((q) => auftrag<Streifzug[]>("readonly", (st) => st.getAll(importBereich(q)))));
+  return teile.flat();
+}
+
+/** Deletes all outings of a source without loading them (fast, also with huge imports). */
+export const importeEntfernen = (quelle: ImportQuelle) => auftrag("readwrite", (st) => st.delete(importBereich(quelle))).then(() => undefined);
+
+/** Saves many outings in one transaction. */
+export async function vieleSpeichern(liste: Streifzug[]): Promise<void> {
+  if (liste.length === 0) return;
+  const tx = (await oeffnen()).transaction(STORE, "readwrite");
+  const st = tx.objectStore(STORE);
+  for (const s of liste) st.put(s);
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
 
 /** Lets other parts of the app (list, map) know that something changed. */
 export const AENDERUNG = "streifzug-aenderung";
 export const melden = () => window.dispatchEvent(new Event(AENDERUNG));
 
-/** Keeps a matching result with the outing (does not notify: nothing visible changes). */
-export async function ergebnisMerken(id: string, ids: string[], gueltig: string): Promise<void> {
-  const s = await auftrag<Streifzug | undefined>("readonly", (st) => st.get(id) as IDBRequest<Streifzug | undefined>);
-  if (s) await speichern({ ...s, stueckIds: ids, stueckIdsGueltig: gueltig });
+/** Keeps matching results with their outings, in one transaction (does not notify: nothing visible changes). */
+export async function ergebnisseMerken(liste: { id: string; ids: string[]; gueltig: string }[]): Promise<void> {
+  if (liste.length === 0) return;
+  const tx = (await oeffnen()).transaction(STORE, "readwrite");
+  const st = tx.objectStore(STORE);
+  for (const e of liste) {
+    const req = st.get(e.id) as IDBRequest<Streifzug | undefined>;
+    req.onsuccess = () => {
+      if (req.result) st.put({ ...req.result, stueckIds: e.ids, stueckIdsGueltig: e.gueltig });
+    };
+  }
+  await new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }

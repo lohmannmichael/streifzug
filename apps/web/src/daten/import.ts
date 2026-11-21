@@ -1,67 +1,123 @@
-import { density, parseGoogleTimeline, parseGpx, splitOutings, summarizeImported, type Fix } from "@streifzug/core";
+import { useEffect, useState } from "react";
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "../konfig";
+import type { ImportVorschau, QuellenInfo } from "./abgleich.worker";
+import { ANDERE_GEAENDERT, andereGeaendert, fragen } from "./arbeiter";
 import type { Regionen } from "./regionen";
-import { alleLaden, loeschen, melden, speichern, type Quelle, type Streifzug } from "./speicher";
+import type { ImportQuelle } from "./speicher";
+import { supabase } from "./supabase";
 
-/** What a file holds, shown before anything is saved. */
-export interface ImportVorschau {
-  quelle: Exclude<Quelle, "aufnahme">;
-  wege: Streifzug[];
-  km: { fuss: number; rad: number; auto: number };
-  /** Share of point pairs dense enough to be matched to streets (0–1). */
-  dichte: number;
-  von: number | null;
-  bis: number | null;
-  /** Points found in the file at all (also outside the built regions). */
-  punkteGesamt: number;
+export type { ImportVorschau, QuellenInfo } from "./abgleich.worker";
+
+/** Reads files in the background and returns a preview (nothing is saved yet). Throws with a German message. */
+export async function lesen(quelle: "google" | "gpx", dateien: File[], daten: Regionen): Promise<ImportVorschau> {
+  const a = await fragen<"vorschau">({ typ: "importLesen", quelle, dateien, liste: daten.liste }).antwort;
+  if (!a.vorschau) throw new Error(a.fehler ?? "Die Datei konnte nicht gelesen werden.");
+  return a.vorschau;
 }
 
-/** Only points in or near a built region count; the rest of the world is left out (less data, faster). */
-function inRegionen(fixes: Fix[], daten: Regionen): Fix[] {
-  const rand = 0.01;
-  return fixes.filter((f) => daten.liste.some((r) => f.lon >= r.bbox[0] - rand && f.lon <= r.bbox[2] + rand && f.lat >= r.bbox[1] - rand && f.lat <= r.bbox[3] + rand));
+export async function uebernehmen(quelle: "google" | "gpx"): Promise<void> {
+  await fragen<"ok">({ typ: "importUebernehmen", quelle }).antwort;
+  andereGeaendert();
 }
 
-function vorschau(quelle: ImportVorschau["quelle"], fixes: Fix[], daten: Regionen): ImportVorschau {
-  const teile = splitOutings(inRegionen(fixes, daten));
-  const km = { fuss: 0, rad: 0, auto: 0 };
-  const wege = teile.map((t): Streifzug => {
-    const sum = summarizeImported(t);
-    km[sum.mode === "foot" ? "fuss" : sum.mode === "bike" ? "rad" : "auto"] += sum.distanceM / 1000;
-    // Same id for the same outing when a file is imported again, so nothing is doubled.
-    return { id: `${quelle}:${t[0]!.t}`, startedAt: t[0]!.t, endedAt: t.at(-1)!.t, fixes: t, distanceM: sum.distanceM, mode: sum.mode, status: "importiert", quelle };
-  });
-  return { quelle, wege, km, dichte: density(teile), von: teile[0]?.[0]?.t ?? null, bis: teile.at(-1)?.at(-1)?.t ?? null, punkteGesamt: fixes.length };
+/** Removes everything from one source (own recordings stay). */
+export async function quelleLoeschen(quelle: ImportQuelle): Promise<void> {
+  await fragen<"ok">({ typ: "quelleLoeschen", quelle }).antwort;
+  if (quelle === "overland") localStorage.removeItem(OVERLAND_SEIT);
+  andereGeaendert();
 }
 
-/** Reads a Google Maps Timeline export (iPhone, Android or old Takeout). Throws with a German message if it is not one. */
-export async function googleLesen(datei: File, daten: Regionen): Promise<ImportVorschau> {
-  let json: unknown;
+/** How many outings each other source holds; reloads when they change. */
+export function useQuellenInfo(): QuellenInfo {
+  const [info, setInfo] = useState<QuellenInfo>({});
+  useEffect(() => {
+    let aktiv = true;
+    const laden = () => void fragen<"info">({ typ: "info" }).antwort.then((a) => aktiv && setInfo(a.info));
+    laden();
+    window.addEventListener(ANDERE_GEAENDERT, laden);
+    return () => {
+      aktiv = false;
+      window.removeEventListener(ANDERE_GEAENDERT, laden);
+    };
+  }, []);
+  return info;
+}
+
+/* Overland: free iPhone app that records in the background and sends points to our receiver. */
+
+const OVERLAND_AN = "streifzug.overland";
+const OVERLAND_SEIT = "streifzug.overland-seit";
+const OVERLAND_ZULETZT = "streifzug.overland-zuletzt";
+export const OVERLAND_EMPFAENGER = `${SUPABASE_URL}/functions/v1/overland`;
+
+async function sha256(text: string): Promise<string> {
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Creates a new secret token for this account (only its hash goes to the server) and returns
+ * the setup link that configures Overland with one tap.
+ */
+export async function overlandVerbinden(userId: string): Promise<string> {
+  const roh = crypto.getRandomValues(new Uint8Array(32));
+  const token = btoa(String.fromCharCode(...roh)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const { error } = await supabase.from("receive_tokens").insert({ token_hash: await sha256(token), user_id: userId });
+  if (error) throw new Error("Verbinden hat nicht geklappt. Bitte mit Internet erneut versuchen.");
+  localStorage.setItem(OVERLAND_AN, "1");
+  return `overland://setup?url=${encodeURIComponent(OVERLAND_EMPFAENGER)}&token=${encodeURIComponent(token)}`;
+}
+
+/** Ends the connection: all tokens of this account stop working. Received outings stay unless deleted. */
+export async function overlandTrennen(userId: string): Promise<void> {
+  await supabase.from("receive_tokens").delete().eq("user_id", userId);
+  localStorage.removeItem(OVERLAND_AN);
+}
+
+export const overlandVerbunden = () => localStorage.getItem(OVERLAND_AN) === "1";
+export const overlandZuletzt = () => Number(localStorage.getItem(OVERLAND_ZULETZT) ?? 0) || null;
+
+let holt = false;
+
+/** Fetches new points from the receiver (in the background worker). Returns how many came in. */
+export async function overlandAbholen(daten: Regionen): Promise<number> {
+  if (holt || !overlandVerbunden() || !navigator.onLine) return 0;
+  holt = true;
   try {
-    json = JSON.parse(await datei.text());
-  } catch {
-    throw new Error("Die Datei ist keine JSON-Datei. Bitte die Datei aus „Zeitachsendaten exportieren“ wählen.");
+    const { data } = await supabase.auth.getSession();
+    const jwt = data.session?.access_token;
+    if (!jwt) return 0;
+    const a = await fragen<"abgeholt">({
+      typ: "overlandAbholen",
+      url: SUPABASE_URL,
+      schluessel: SUPABASE_PUBLISHABLE_KEY,
+      jwt,
+      seit: localStorage.getItem(OVERLAND_SEIT),
+      liste: daten.liste,
+    }).antwort;
+    if (a.fehler) return 0;
+    if (a.bis) localStorage.setItem(OVERLAND_SEIT, a.bis);
+    localStorage.setItem(OVERLAND_ZULETZT, String(Date.now()));
+    if (a.punkte > 0) andereGeaendert();
+    return a.punkte;
+  } finally {
+    holt = false;
   }
-  const fixes = parseGoogleTimeline(json);
-  if (fixes.length === 0) throw new Error("In der Datei stehen keine Wege. Ist das der Export der Google-Zeitachse?");
-  return vorschau("google", fixes, daten);
 }
 
-/** Reads one or more GPX files (e.g. Apple Health workout routes). */
-export async function gpxLesen(dateien: File[], daten: Regionen): Promise<ImportVorschau> {
-  const fixes: Fix[] = [];
-  for (const d of dateien) fixes.push(...parseGpx(await d.text()));
-  if (fixes.length === 0) throw new Error("In den Dateien stehen keine Wege mit Zeitangaben.");
-  fixes.sort((a, b) => a.t - b.t);
-  return vorschau("gpx", fixes, daten);
-}
-
-export async function uebernehmen(v: ImportVorschau): Promise<void> {
-  for (const s of v.wege) await speichern(s);
-  melden();
-}
-
-/** Removes everything imported from one source (own recordings stay). */
-export async function importeLoeschen(quelle: ImportVorschau["quelle"]): Promise<void> {
-  for (const s of await alleLaden()) if (s.quelle === quelle) await loeschen(s.id);
-  melden();
+/** Fetches Overland points when the app starts, comes back to the front, and every 5 minutes while open. */
+export function useOverlandAbholen(daten: Regionen | null) {
+  useEffect(() => {
+    if (!daten) return;
+    const los = () => {
+      if (document.visibilityState === "visible") void overlandAbholen(daten);
+    };
+    los();
+    const takt = window.setInterval(los, 5 * 60_000);
+    document.addEventListener("visibilitychange", los);
+    return () => {
+      window.clearInterval(takt);
+      document.removeEventListener("visibilitychange", los);
+    };
+  }, [daten]);
 }

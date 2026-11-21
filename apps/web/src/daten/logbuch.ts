@@ -1,6 +1,6 @@
 import { milestoneReached, seenPieceIds, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
 import { useEffect, useState } from "react";
-import { kachelnFuer, meterJeGebiet, stueckeVon } from "./fortschritt";
+import { kachelnFuer, meterJeGebiet, stueckeImZeitraum, type Zaehlen } from "./fortschritt";
 import { prozent, zaehlendeMeter, type Regionen, type Summe } from "./regionen";
 import type { Streifzug } from "./speicher";
 import { stueckeDerKachel, strassenName } from "./strassen";
@@ -30,10 +30,15 @@ const ZAEHLT_NICHT: LogEintrag = { umgebung: [], gesehen: new Set(), neu: new Se
 function kachelnMitRand(fixes: Fix[]): { x: number; y: number }[] {
   if (fixes.length === 0) return [];
   const rand = 0.006; // about 400–600 m
-  const lons = fixes.map((f) => f.lon);
-  const lats = fixes.map((f) => f.lat);
-  const a = tileFor([Math.min(...lons) - rand, Math.max(...lats) + rand / 1.6], TILE_ZOOM);
-  const b = tileFor([Math.max(...lons) + rand, Math.min(...lats) - rand / 1.6], TILE_ZOOM);
+  let [west, sued, ost, nord] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const f of fixes) {
+    west = Math.min(west, f.lon);
+    ost = Math.max(ost, f.lon);
+    sued = Math.min(sued, f.lat);
+    nord = Math.max(nord, f.lat);
+  }
+  const a = tileFor([west - rand, nord + rand / 1.6], TILE_ZOOM);
+  const b = tileFor([ost + rand, sued - rand / 1.6], TILE_ZOOM);
   const kacheln: { x: number; y: number }[] = [];
   for (let x = a.x; x <= b.x; x++) for (let y = a.y; y <= b.y; y++) kacheln.push({ x, y });
   // Very long outings: only the tiles along the track (same as for the progress).
@@ -51,32 +56,27 @@ function addieren(ziel: Map<string, Summe>, dazu: Map<string, Summe>) {
  * Goes through all outings from the oldest: what each one covered, what was new,
  * which area it moved forward and which milestones it reached. Runs on the device.
  */
-export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege: boolean, auto: boolean): Promise<Map<string, LogEintrag>> {
+export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege: boolean, zaehlen: Zaehlen): Promise<Map<string, LogEintrag>> {
   const chronologisch = [...liste].sort((a, b) => a.startedAt - b.startedAt);
-  const zaehlt = (s: Streifzug) => s.mode !== "car" || auto;
+  const zaehlt = (s: Streifzug) => s.mode !== "car" || zaehlen.auto;
   const zaehltArt = (p: Piece) => p.kind === "street" || wege;
   const bekannt = new Set<string>();
   const bisher = new Map<string, Summe>();
   const ergebnis = new Map<string, LogEintrag>();
   const anteil = (m: Map<string, Summe>, id: string) => prozent(zaehlendeMeter(m.get(id) ?? { strasse_m: 0, weg_m: 0 }, wege), zaehlendeMeter(daten.gebiete.get(id)!, wege));
 
-  // Imported outings are not shown one by one; those between two own outings are added as one block
-  // (from the background worker's results), so they count for what is "new" afterwards.
-  let puffer: string[] = [];
-  const pufferEinrechnen = async () => {
-    if (puffer.length === 0) return;
-    const neu = (await stueckeVon(puffer)).filter((p) => zaehltArt(p) && !bekannt.has(p.id));
-    puffer = [];
+  // Imports and Overland are not shown one by one; what they covered between two own outings is
+  // added as one block (from the background worker), so it counts for what is "new" afterwards.
+  let seit = 0;
+  const andereEinrechnen = async (bis: number) => {
+    const neu = (await stueckeImZeitraum(seit, bis, zaehlen)).filter((p) => zaehltArt(p) && !bekannt.has(p.id));
+    seit = bis;
     for (const p of neu) bekannt.add(p.id);
-    addieren(bisher, await meterJeGebiet(neu, daten));
+    if (neu.length) addieren(bisher, await meterJeGebiet(neu, daten));
   };
 
   for (const s of chronologisch) {
-    if (s.quelle !== undefined && s.quelle !== "aufnahme") {
-      if (zaehlt(s)) puffer.push(s.id);
-      continue;
-    }
-    await pufferEinrechnen();
+    await andereEinrechnen(s.startedAt);
     const umgebung = (await Promise.all(kachelnMitRand(s.fixes).map((k) => stueckeDerKachel({ z: TILE_ZOOM, ...k })))).flat();
     const nachId = new Map(umgebung.map((p) => [p.id, p]));
     // Only what counts (streets; paths with the switch) is "seen" and yellow in the logbook.
@@ -129,19 +129,19 @@ export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege:
 }
 
 /** The logbook for all outings on this device; recalculated when outings or switches change. */
-export function useLogbuch(liste: Streifzug[], daten: Regionen | null, wege: boolean, auto: boolean, bereit: boolean): Map<string, LogEintrag> | null {
+export function useLogbuch(liste: Streifzug[], daten: Regionen | null, wege: boolean, zaehlen: Zaehlen, bereit: boolean): Map<string, LogEintrag> | null {
   const [logbuch, setLogbuch] = useState<Map<string, LogEintrag> | null>(null);
   const schluessel = liste.map((s) => `${s.id}:${s.fixes.length}`).join(",");
   useEffect(() => {
     // Waits until the background matching is done (imports are taken from its results).
     if (!daten || !bereit) return;
     let aktiv = true;
-    void berechneLogbuch(liste, daten, wege, auto).then((l) => aktiv && setLogbuch(l));
+    void berechneLogbuch(liste, daten, wege, zaehlen).then((l) => aktiv && setLogbuch(l));
     return () => {
       aktiv = false;
     };
     // Recalculate only when the set of outings or the switches change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schluessel, daten, wege, auto, bereit]);
+  }, [schluessel, daten, wege, JSON.stringify(zaehlen), bereit]);
   return logbuch;
 }

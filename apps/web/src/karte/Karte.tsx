@@ -388,7 +388,7 @@ export function Karte(props: KartenProps) {
     const lats = c.map((p) => p[1]);
     const hoehe = karte.getContainer().clientHeight;
     karte.fitBounds(
-      [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+      [[lons.reduce((a, b) => Math.min(a, b)), lats.reduce((a, b) => Math.min(a, b))], [lons.reduce((a, b) => Math.max(a, b)), lats.reduce((a, b) => Math.max(a, b))]],
       { padding: { top: 80, bottom: hoehe * 0.45 + 40, left: 60, right: 60 }, maxZoom: 17, duration: ruhig() ? 0 : 700 },
     );
   }, [props.markiert?.nr]);

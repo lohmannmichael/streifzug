@@ -24,6 +24,8 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 ## Datenbank
 
 - Migrationen liegen in `supabase/migrations/` und werden über die Supabase-Verwaltungs-API eingespielt (`POST /v1/projects/<ref>/database/query`, Token liegt in der Umgebung „Michis Apps“). Danach den Sicherheits-Check prüfen (`GET /v1/projects/<ref>/advisors/security`)
+- Edge Functions liegen in `supabase/functions/<name>/index.ts` und werden über die Verwaltungs-API veröffentlicht (`POST /v1/projects/<ref>/functions/deploy?slug=<name>`, multipart mit `metadata` und Datei). `overland` empfängt Punkte der Overland-App (ohne JWT-Prüfung, eigener Schlüssel)
+- Die Oberfläche lädt nur eigene Runden; Importe und Overland-Wege verarbeitet nur der Hintergrund-Worker (`apps/web/src/daten/abgleich.worker.ts`). Keine `push(...liste)`/`Math.min(...liste)` mit großen Listen
 - Die App nutzt nur den öffentlichen Publishable Key (`apps/web/src/konfig.ts`); was jemand sehen darf, regelt der Zeilenschutz (RLS)
 - Supabase-Anfragen laufen erst, wenn man sie mit `await` oder `.then()` abwartet
 - Browser-Tests legen anonyme Konten an. Aufräumen nur gezielt: die IDs der Testkonten merken und genau diese löschen, nie pauschal „alle anonymen der letzten X Minuten“ (könnte Michis echtes Konto treffen). Dateien in Storage nur über die Storage-API löschen (direktes SQL ist gesperrt)

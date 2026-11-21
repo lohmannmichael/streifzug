@@ -1,0 +1,40 @@
+import type { Anfrage, Antwort } from "./abgleich.worker";
+
+/** The one background worker of the app, and a simple question/answer channel to it. */
+let worker: Worker | null = null;
+let nummer = 0;
+const wartend = new Map<number, (a: Antwort) => void>();
+const standHoerer = new Set<(a: Extract<Antwort, { typ: "stand" }>) => void>();
+
+function arbeiter(): Worker {
+  if (!worker) {
+    worker = new Worker(new URL("./abgleich.worker.ts", import.meta.url), { type: "module" });
+    worker.onmessage = (e: MessageEvent<Antwort>) => {
+      const a = e.data;
+      if (a.typ === "stand") for (const h of standHoerer) h(a);
+      else {
+        wartend.get(a.nr)?.(a);
+        wartend.delete(a.nr);
+      }
+    };
+  }
+  return worker;
+}
+
+type OhneNr<T> = T extends unknown ? Omit<T, "nr"> : never;
+
+export function fragen<T extends Antwort["typ"]>(anfrage: OhneNr<Anfrage>): { nr: number; antwort: Promise<Extract<Antwort, { typ: T }>> } {
+  const nr = ++nummer;
+  const antwort = new Promise<Extract<Antwort, { typ: T }>>((resolve) => wartend.set(nr, resolve as (a: Antwort) => void));
+  arbeiter().postMessage({ ...anfrage, nr } as Anfrage);
+  return { nr, antwort };
+}
+
+export function aufStandHoeren(h: (a: Extract<Antwort, { typ: "stand" }>) => void): () => void {
+  standHoerer.add(h);
+  return () => standHoerer.delete(h);
+}
+
+/** Other outings changed (import, delete, Overland): progress, logbook and info reload. */
+export const ANDERE_GEAENDERT = "streifzug-andere-geaendert";
+export const andereGeaendert = () => window.dispatchEvent(new Event(ANDERE_GEAENDERT));

@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 21.11.2026: Automatisch im Hintergrund über Overland; Importe nur noch im Worker
+- Michi will nicht für jede Runde „Losziehen“ drücken. Bis zur eigenen iPhone-App (Phase 3) übernimmt die kostenlose App **Overland** (quelloffen, App Store) die Hintergrund-Aufzeichnung und schickt Punkte an unsere Empfangsstelle
+- Supabase: Tabellen `receive_tokens` (nur SHA-256 des Schlüssels) und `received_points` (Punkte je Nutzer:in, doppelte Zeit wird ignoriert), Zeilenschutz: lesen und löschen nur eigene, einfügen nur über die Edge Function `overland` (`supabase/functions/overland`, `verify_jwt=false`, Schlüssel per Bearer oder `?token=`; Antwort `{"result":"ok"}`). Deploy über die Verwaltungs-API (`POST /v1/projects/<ref>/functions/deploy?slug=overland`)
+- App: Profil → „Automatisch aufzeichnen (Overland)“: Schlüssel erzeugen (nur Prüfsumme geht zum Server), Einrichtungs-Link `overland://setup?url=…&token=…`, Abholen beim Start, beim Zurückkehren und alle 5 Minuten, Schalter „Einrechnen“, Trennen, Löschen. Der Server behält alle Punkte (Sicherung, später weitere Geräte); auf dem Gerät werden nur Punkte in gebauten Regionen zu Wegen
+- Grundsatz neu: Die Oberfläche lädt nur eigene Runden (IndexedDB-Schlüssel unter „g“). Importe (`gpx:`, `google:`) und Overland (`overland:`) liest, verarbeitet und speichert nur der Worker (`daten/abgleich.worker.ts`): Datei einlesen, Vorschau, Übernehmen, Löschen, Abholen, Abgleich mit Fortschrittsanzeige, Ergebnis je Weg speichern, Übersicht je Quelle, Logbuch-Blöcke je Zeitraum
+- Fehler gefunden: `push(...liste)` und `Math.min(...liste)` sprengen bei zehntausenden Punkten den Stapelspeicher; überall durch Schleifen ersetzt
+- Getestet: Ende-zu-Ende mit Testkonten (Punkte senden wie Overland, abholen, Gelb, zwei Pakete werden ein Weg, falscher Schlüssel abgelehnt, ohne Anmeldung nichts lesbar); Testkonten danach gezielt gelöscht. Lasttest GPX mit 1.669 Wegen bei 4-fach gedrosselter CPU: längste Blockade 0,6 s
+
 ## 21.11.2026: Google-Importe entfernt, Google-Import pausiert
 - Die App hing bei Michi weiterhin nach dem Google-Import. Auf Michis Wunsch werden alle Google-Importe beim nächsten Start einmal gelöscht (`main.tsx`, vor dem ersten Laden, per Schlüsselbereich „google:…“, ohne die Daten zu laden). Merker `streifzug.google-importe-entfernt-1`
 - Notausgang: `https://streifzug.pages.dev/?notfall` löscht alle Importe (Google und GPX); eigene Runden bleiben

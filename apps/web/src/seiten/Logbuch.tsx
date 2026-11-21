@@ -1,3 +1,5 @@
+import type { Zaehlen } from "../daten/fortschritt";
+import { useQuellenInfo } from "../daten/import";
 import { useLogbuch, type LogEintrag } from "../daten/logbuch";
 import { alsStrecke, prozentText, type Regionen } from "../daten/regionen";
 import type { Streifzug } from "../daten/speicher";
@@ -11,16 +13,21 @@ const tag = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric",
 const monat = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
 
 /** Streifzüge as a logbook: newest first, grouped by month, each with a small street plan. */
-export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null; einstellungen: Einstellungen; zeigen: (gebietId: string) => void; importieren: () => void; bereit: boolean }) {
+export function LogbuchSeite(props: {
+  liste: Streifzug[];
+  daten: Regionen | null;
+  einstellungen: Einstellungen;
+  zaehlen: Zaehlen;
+  zeigen: (gebietId: string) => void;
+  importieren: () => void;
+  bereit: boolean;
+}) {
   const e = props.einstellungen;
-  const importiert = (s: Streifzug) => s.quelle !== undefined && s.quelle !== "aufnahme";
-  const zaehltQuelle = (s: Streifzug) => (s.quelle === "google" ? e.googleZaehlen : s.quelle === "gpx" ? e.gpxZaehlen : true);
-  // Imports switched on take part in "what was new", but only own outings are shown one by one.
-  const logbuch = useLogbuch(props.liste.filter(zaehltQuelle), props.daten, e.wegeZaehlen, e.autoZaehlen, props.bereit);
-  const eigene = props.liste.filter((s) => !importiert(s));
-  const importe = (["google", "gpx"] as const)
-    .map((q) => ({ q, wege: props.liste.filter((s) => s.quelle === q) }))
-    .filter((x) => x.wege.length > 0);
+  // Own outings are shown one by one; imports and Overland as one line each (they count for "new" too).
+  const logbuch = useLogbuch(props.liste, props.daten, e.wegeZaehlen, props.zaehlen, props.bereit);
+  const eigene = props.liste;
+  const info = useQuellenInfo();
+  const importe = (["overland", "gpx", "google"] as const).flatMap((q) => (info[q] ? [{ q, ...info[q] }] : []));
   if (eigene.length === 0 && importe.length === 0)
     return (
       <section className="seite" aria-labelledby="streifzuege-titel">
@@ -42,9 +49,9 @@ export function LogbuchSeite(props: { liste: Streifzug[]; daten: Regionen | null
       <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
       {importe.length > 0 && (
         <div className="gruppe import-info">
-          {importe.map(({ q, wege }) => (
+          {importe.map(({ q, wege, km }) => (
             <p key={q} className="zeile-text">
-              {t.import.logbuchKarte(t.import[q].titel.split(" (")[0]!, wege.length, alsStrecke(wege.reduce((m, s) => m + s.distanceM, 0)), q === "google" ? e.googleZaehlen : e.gpxZaehlen)}
+              {t.import.logbuchKarte(t.import[q].kurz, wege, alsStrecke(km * 1000), props.zaehlen.quellen[q])}
             </p>
           ))}
           <p className="zeile-text schalter-hinweis">{t.import.logbuchHinweis}</p>

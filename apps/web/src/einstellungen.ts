@@ -9,10 +9,11 @@ export interface Einstellungen {
   /** Whether imported histories count (switch per source; the data stays either way). */
   googleZaehlen: boolean;
   gpxZaehlen: boolean;
+  overlandZaehlen: boolean;
 }
 
 const KEY = "streifzug.einstellungen";
-const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true, googleZaehlen: true, gpxZaehlen: true };
+const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true, googleZaehlen: true, gpxZaehlen: true, overlandZaehlen: true };
 
 function lesen(): Einstellungen {
   try {

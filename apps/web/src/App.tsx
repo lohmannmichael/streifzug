@@ -2,7 +2,8 @@ import { milestoneReached, type LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
-import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur } from "./daten/fortschritt";
+import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
+import { useOverlandAbholen } from "./daten/import";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
@@ -41,24 +42,24 @@ export function App() {
   };
   const aufzeichnung = useAufzeichnung();
   const streifzuege = useStreifzuege();
-  // Car rides count only with the switch on (docs/PLAN.md, section 2).
-  // Imported histories count only with their switch on (the data stays either way).
-  const zaehlende = streifzuege.filter(
-    (s) =>
-      (s.mode !== "car" || einstellungen.autoZaehlen) &&
-      (s.quelle === "google" ? einstellungen.googleZaehlen : s.quelle === "gpx" ? einstellungen.gpxZaehlen : true),
+  // Car rides count only with the switch on (docs/PLAN.md, section 2). The page holds only own
+  // outings; imports and Overland are loaded by the background worker, each with its switch.
+  const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
+  const zaehlen: Zaehlen = useMemo(
+    () => ({ quellen: { google: einstellungen.googleZaehlen, gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, auto: einstellungen.autoZaehlen }),
+    [einstellungen.googleZaehlen, einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, einstellungen.autoZaehlen],
   );
+  useOverlandAbholen(daten);
   const spuren: Spur[] = [
     ...zaehlende.map((s) => ({
       id: s.id,
       fixes: s.fixes,
-      locker: s.quelle !== undefined && s.quelle !== "aufnahme",
       // Matched in an earlier session: no need to match again.
       ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds } : {}),
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, fixes: aufzeichnung.fixes }] : []),
   ];
-  const { fortschritt, rechnet } = useFortschritt(spuren, daten);
+  const { fortschritt, rechnet } = useFortschritt(spuren, zaehlen, daten);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
@@ -199,6 +200,7 @@ export function App() {
               setReiter("karte");
             }}
             bereit={fortschritt !== null && rechnet === null}
+            zaehlen={zaehlen}
             importieren={() => {
               setImportZeigen(true);
               setProfilOffen(true);
@@ -428,7 +430,7 @@ function Profil(props: {
           <Schalter label={t.ich.nebel} hinweis={t.ich.nebelHinweis} an={werte.nebel} onChange={(an) => aendern({ nebel: an })} />
         </div>
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
-        <Importieren daten={props.daten} streifzuege={props.streifzuege} werte={werte} aendern={aendern} />
+        <Importieren daten={props.daten} userId={props.sitzung.status === "bereit" ? props.sitzung.session.user.id : null} werte={werte} aendern={aendern} />
         <h2>{t.ich.konto}</h2>
         <div className="gruppe">
           <p className="zeile-text">{kontoText}</p>

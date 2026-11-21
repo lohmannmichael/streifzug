@@ -26,10 +26,16 @@ export function ladeFlaechen(regionId: string): Promise<Flaeche[]> {
       .then((d) =>
         d.features.map((f) => {
           const rings = f.geometry.type === "Polygon" ? f.geometry.coordinates : f.geometry.coordinates.flat();
-          const pts = rings.flat();
-          const xs = pts.map((q) => q[0]);
-          const ys = pts.map((q) => q[1]);
-          return { id: String(f.properties.id), geometry: f.geometry, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] as [number, number, number, number] };
+          // A loop, not Math.min(...): large boundaries would overflow the call stack.
+          const bbox: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+          for (const ring of rings)
+            for (const [x, y] of ring) {
+              bbox[0] = Math.min(bbox[0], x);
+              bbox[1] = Math.min(bbox[1], y);
+              bbox[2] = Math.max(bbox[2], x);
+              bbox[3] = Math.max(bbox[3], y);
+            }
+          return { id: String(f.properties.id), geometry: f.geometry, bbox };
         }),
       );
     flaechen.set(regionId, p);

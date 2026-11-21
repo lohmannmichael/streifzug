@@ -540,3 +540,8 @@ button { font: inherit; color: inherit; }
 
 /* Wide secondary button (e.g. import shortcut in the logbook) */
 .mehr-knopf { display: block; width: 100%; margin-top: 14px; min-height: 48px; border: 0; border-radius: 14px; background: var(--flaeche); color: var(--tinte); font-weight: 600; cursor: pointer; }
+
+/* Link that looks like the main button (Overland setup) */
+.link-knopf { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+button.datei-knopf { border: 0; font: inherit; }
+button.datei-knopf:disabled { opacity: 0.6; }

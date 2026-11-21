@@ -47,6 +47,7 @@ export const de = {
     soGehts: "So geht's",
     google: {
       titel: "Google-Zeitachse",
+      kurz: "Google-Zeitachse",
       waehlen: "Google-Datei wählen",
       schritte: [
         "Google Maps öffnen, auf dein Profilbild tippen, dann „Deine Zeitachse“.",
@@ -57,6 +58,7 @@ export const de = {
     },
     gpx: {
       titel: "GPX-Dateien (Apple Health, Strava, Komoot …)",
+      kurz: "GPX-Dateien",
       waehlen: "GPX-Dateien wählen",
       schritte: [
         "Apple Health: Profilbild oben rechts, dann „Alle Gesundheitsdaten exportieren“, die Datei in „Dateien“ sichern.",
@@ -68,6 +70,7 @@ export const de = {
     liest: "Datei wird gelesen …",
     nochmal: "Weitere Datei hinzufügen",
     vorhanden: (wege: number, km: string) => `${wege} ${wege === 1 ? "Weg" : "Wege"} importiert, ${km}.`,
+    empfangen: (wege: number, km: string) => `${wege} ${wege === 1 ? "Weg" : "Wege"} empfangen, ${km}.`,
     einrechnen: "Einrechnen",
     einrechnenHinweis: "Aus: zählt nicht, bleibt aber gespeichert. Autofahrten zählen nur mit dem Auto-Schalter.",
     loeschen: "Importierte löschen",
@@ -87,7 +90,33 @@ export const de = {
     abbrechen: "Abbrechen",
     nurGeraet: "Importierte Wege bleiben nur auf diesem Gerät.",
     logbuchKarte: (quelle: string, wege: number, km: string, an: boolean) => `${quelle}: ${wege} ${wege === 1 ? "Weg" : "Wege"}, ${km}${an ? "" : " (zählt gerade nicht)"}`,
-    logbuchHinweis: "Importierte Wege zählen mit, stehen aber nicht einzeln im Logbuch. Ein- und ausschalten im Profil.",
+    logbuchHinweis: "Diese Wege zählen mit, stehen aber nicht einzeln im Logbuch. Ein- und ausschalten im Profil.",
+    overland: {
+      titel: "Automatisch aufzeichnen (Overland)",
+      kurz: "Overland (automatisch)",
+      erklaerung: "Die kostenlose App Overland zeichnet im Hintergrund auf, ohne dass du etwas starten musst, und schickt die Punkte an Streifzug. Hier werden sie automatisch abgeholt und eingerechnet.",
+      schritte: [
+        "Overland aus dem App Store installieren.",
+        "Hier „Mit Overland verbinden“ tippen, dann „In Overland übernehmen“. Overland öffnet sich und ist eingerichtet.",
+        "In Overland den Standort auf „Immer“ erlauben und oben die Aufzeichnung einschalten.",
+        "Fertig. Streifzug holt neue Wege beim Öffnen und alle 5 Minuten ab.",
+      ],
+      installieren: "Overland im App Store",
+      verbinden: "Mit Overland verbinden",
+      verbindet: "Verbinde …",
+      uebernehmen: "In Overland übernehmen",
+      nurIphone: "Diesen Knopf auf dem iPhone tippen, auf dem Overland installiert ist.",
+      verbunden: "Verbunden.",
+      zuletzt: (wann: string) => `Zuletzt abgeholt: ${wann}.`,
+      nochNie: "Noch nichts abgeholt.",
+      abholen: "Jetzt abholen",
+      holt: "Holt ab …",
+      neuePunkte: (n: number) => (n === 0 ? "Keine neuen Punkte." : `${n.toLocaleString("de-DE")} neue Punkte abgeholt.`),
+      trennen: "Verbindung trennen",
+      wirklichTrennen: "Wirklich trennen?",
+      neuVerbinden: "Neuen Verbindungslink erzeugen",
+      keinKonto: "Gerade keine Verbindung zum Server. Bitte später erneut versuchen.",
+    },
   },
   stempel: {
     label: (gebiet: string, prozent: number) => `Meilenstein: ${gebiet} zu ${prozent} Prozent entdeckt`,

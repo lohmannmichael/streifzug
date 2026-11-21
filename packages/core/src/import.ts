@@ -87,7 +87,7 @@ export function parseGoogleTimeline(json: Json): Fix[] {
       for (const p of roh) if (isObj(p)) punkt(zeit(p.timestamp ?? p.timestampMs), e7(p), p.accuracyMeters, out);
     }
   }
-  return bereinigen(out);
+  return cleanFixes(out);
 }
 
 /** Track points of a GPX file (Apple Health workout routes, Strava, Komoot, …). Points without time are skipped. */
@@ -101,11 +101,11 @@ export function parseGpx(text: string): Fix[] {
     const hacc = /<(?:\w+:)?hAcc>([^<]+)</.exec(m[2]!)?.[1];
     if (Number.isFinite(lat) && Number.isFinite(lon)) punkt(t, [lon, lat], hacc !== undefined ? Number(hacc) : 5, out);
   }
-  return bereinigen(out);
+  return cleanFixes(out);
 }
 
-/** Sorted by time, without duplicates, inaccurate points and jumps. */
-function bereinigen(fixes: Fix[]): Fix[] {
+/** Sorted by time, without duplicates, inaccurate points (over 25 m) and jumps (over 50 m/s). */
+export function cleanFixes(fixes: Fix[]): Fix[] {
   fixes.sort((a, b) => a.t - b.t);
   const out: Fix[] = [];
   for (const f of fixes) {
