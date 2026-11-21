@@ -1,4 +1,4 @@
-import { pointInGeometry, seenPieceIds, tileFor, TILE_ZOOM, type Fix, type Piece, type PolygonGeometry } from "@streifzug/core";
+import { pointInGeometry, seenByLegs, tileFor, TILE_ZOOM, type Fix, type Piece, type PolygonGeometry } from "@streifzug/core";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
 
@@ -8,7 +8,8 @@ import { stueckeDerKachel } from "./strassen";
  */
 
 /** Bump when the matching rules change: stored results of older versions are worked out again. */
-export const ABGLEICH_VERSION = 1;
+// 2 (21.11.2026): legs "aktiv"/"gefahren" (Bauplan 6.2), results stored separately.
+export const ABGLEICH_VERSION = 2;
 
 interface Flaeche {
   id: string;
@@ -57,14 +58,22 @@ export function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
 }
 
 /** Ids of the pieces one track has covered (all kinds; the caller decides what counts). */
-export async function abgleichen(fixes: Fix[], locker: boolean): Promise<Piece[]> {
-  const gesehen: Piece[] = [];
+/**
+ * What one track covered, per kind of leg: "aktiv" (on foot, by bike; counts) and "gefahren"
+ * (car, bus, train; drawn as a pen line, never counts). See packages/core/src/legs.ts.
+ */
+export async function abgleichen(fixes: Fix[], locker: boolean): Promise<{ aktiv: Piece[]; gefahren: Piece[] }> {
+  const aktiv: Piece[] = [];
+  const gefahren: Piece[] = [];
   for (const k of kachelnFuer([fixes])) {
     const teile = await stueckeDerKachel({ z: TILE_ZOOM, ...k });
-    const ids = seenPieceIds(teile, fixes, locker ? { maxGapM: 60 } : {});
-    for (const p of teile) if (ids.has(p.id)) gesehen.push(p);
+    const r = seenByLegs(teile, fixes, locker ? { maxGapM: 60 } : {});
+    for (const p of teile) {
+      if (r.aktiv.has(p.id)) aktiv.push(p);
+      else if (r.gefahren.has(p.id)) gefahren.push(p);
+    }
   }
-  return gesehen;
+  return { aktiv, gefahren };
 }
 
 /** Pieces for stored ids ("<z>/<x>/<y>:<line>:<piece>"), loading each tile once. */

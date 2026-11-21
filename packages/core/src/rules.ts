@@ -1,14 +1,16 @@
 /**
  * Which OpenStreetMap ways count towards progress (see docs/PLAN.md, section 2).
  *
- * "street": always counts. "path": counts only with the paths switch on.
- * null: never counts.
+ * "street": counts. "path": counts only with the paths option (not used any more).
+ * "drive": motorways and expressways, only drawn for car rides. null: never counts.
  */
-export type WayKind = "street" | "path";
+export type WayKind = "street" | "path" | "drive";
 
 export interface RuleOptions {
   /** Count footways, cycleways, paths, steps and bridleways. */
   includePaths: boolean;
+  /** Also return motorways and expressways as "drive": shown for car rides, never counted. */
+  includeDrive?: boolean;
 }
 
 export type OsmTags = Readonly<Record<string, string | undefined>>;
@@ -39,9 +41,11 @@ export function classifyWay(tags: OsmTags, options: RuleOptions): WayKind | null
   if (isClosed(tags)) return null;
 
   if (STREETS.has(highway)) {
-    if (highway.startsWith("trunk") && tags.motorroad === "yes") return null;
+    if (highway.startsWith("trunk") && tags.motorroad === "yes") return options.includeDrive ? "drive" : null;
     return "street";
   }
+
+  if (highway === "motorway" || highway === "motorway_link") return options.includeDrive ? "drive" : null;
 
   if (PATHS.has(highway)) {
     if (isAlongsideStreet(tags)) return null;

@@ -11,3 +11,4 @@ export * from "./pieces";
 export * from "./match";
 export * from "./ziele";
 export * from "./import";
+export * from "./legs";

@@ -1,5 +1,14 @@
 # Entscheidungen
 
+## 21.11.2026: Phase 1 „Aufzeichnung, die läuft“ umgesetzt (Teil 1)
+- `packages/core/src/legs.ts` (mit Tests): Säubern (über 50 m Ungenauigkeit, Sprünge über 50 m/s), Tempo über ±5 s geglättet, Trennen bei Halt (unter 1 m/s für 30 s), Lücke über 60 s und dauerhaftem `motion`-Wechsel (20 s); Einstufen mit `motion` (automotive ≥ 50 % gefahren, aktiv ≥ 60 %), sonst 90-%-Tempo (über 38 km/h gefahren, 30–38 km/h gefahren „unsicher“); kurze Abschnitte zwischen zwei gleichen Nachbarn übernehmen deren Art. `seenByLegs`: aktiv nur Straßen mit Punkten bis 25 m, gefahren Straßen und Autobahnen mit 30 m seitlich
+- Autobahnen und Kraftfahrstraßen sind als Art „drive“ in den Stücken (nur auf dem Gerät, nicht in den Gebiets-Summen) und werden gefahren rot gezeichnet
+- `ABGLEICH_VERSION` 2: je Weg `stueckIds` (aktiv) und `stueckIdsGefahren`; alles wird einmal neu gerechnet. Zustand je Stück: aktiv schlägt gefahren
+- Karte: Kuli-Linie `#D92B20` unter dem Gelb. Entfernt: Nebel, Weißer Fleck, Schalter „Fuß- und Radwege“ und „Autofahrten“ (beides zählt nie mehr)
+- Overland: Abholen mit `motion` und `speed`; Einstellungen zeigen „Letzter Punkt“; im Blatt eine Zeile, wenn 48 Stunden nichts kam
+- Zuhause-Zone: Tabelle `privacy_zones`, Datenbank-Regel verwirft Punkte in der Zone beim Empfang und löscht beim Anlegen schon gespeicherte (Migration `20261121140000_zuhause_zone.sql`); Einstellung in der App mit Umkreis 100/200/300 m
+- Getestet: 11 neue Tests (zu Fuß, Rad, Auto, Fuß–Bahn–Fuß, Ampel, Stau, Rennrad mit/ohne motion, Glättung, Lücken, Abgleich je Art); Browser: Fuß–Bahn–Fuß auf echten Straßen ergibt aktiv/gefahren/aktiv, 84 gelbe und 39 rote Stücke; Zuhause-Zone mit Testkonto (gelöscht)
+
 ## 21.11.2026: Bauplan Fassung 2 (aus der Zweitmeinung mit Claude Fable) gilt
 - `docs/PLAN.md` ist jetzt der Bauplan Fassung 2; der alte Plan liegt in `docs/archiv/PLAN-fassung-1.md`. Logo und App-Symbol in `docs/design/`
 - Entscheidungen aus dem Sparring (Bauplan Abschnitt 0): kein Apple-Entwicklerkonto, Unterwegs bleibt Web-App auf dem Homescreen; Overland bleibt die Brücke; Michi öffnet abends, der **Rückblick** („Stift von oben“, höchstens 20 s, ein Tipp überspringt) ist der wichtigste Moment; neue Stempel **selbst stempeln** (Tipp, „Tock“, abschaltbar); Mitteilungen nur bei neuem Stempel, erst Phase 6; Stempel je Veedel (betreten, 10, 25, 50, 75, 100 %) und „Erkunden“; „Noch offen“-Liste statt Weißer Fleck; kein Familien-Pass, kein Teilen; herausgezoomt Veedel als gelb schraffierte Flächen; Straße antippen → Etikett mit „Hier komme ich nicht hin“; Gefahrenes immer sichtbar, rot unter dem Gelb; keine Logbuch-Seite, letzte fünf Wege im Veedel-Blatt; knappe Sprache, in Köln „Veedel“; Stiftfarben als feste Auswahl plus „Jedes Jahr eine Farbe“; Logo: U-förmige Straße mit Textmarker, Wortmarke Unter**weg**s; zuerst die Aufzeichnung

@@ -14,7 +14,6 @@ import { useEffect, useRef } from "react";
 import { alsStrecke, type Regionen } from "../daten/regionen";
 import { strassenName } from "../daten/strassen";
 import { t } from "../texte/de";
-import { nebelAnlegen, type Nebel } from "./nebel";
 import { stadtplan, STIL_ADRESSE } from "./stil";
 
 setWorkerUrl(workerUrl);
@@ -22,6 +21,8 @@ setWorkerUrl(workerUrl);
 const START: [number, number] = [6.8285, 50.9395];
 const TINTE = "#1e2a4a";
 const MARKER = "#ffe14a";
+// Pen colour for driven streets (Bauplan 4.2, "Kuli").
+const KULI = "#d92b20";
 // Same width for seen streets and the drawing moment.
 const MARKER_BREITE = ["interpolate", ["linear"], ["zoom"], 11, 3, 13, 5, 16, 9] as const;
 // Duration of the highlighter stroke over a newly seen street, and of the glow afterwards.
@@ -160,6 +161,8 @@ export interface KartenProps {
   spur: Fix[];
   /** Street pieces already seen (all outings), drawn in highlighter yellow. */
   entdeckt: Piece[];
+  /** Pieces only driven (car, bus, train): a pen line under the yellow. Never counted. */
+  gefahren: Piece[];
   /** Discovered share (0–100) per area id, for coloring areas when zoomed out. */
   prozente: Map<string, number>;
   folgen: boolean;
@@ -167,13 +170,9 @@ export interface KartenProps {
   zeichnen: boolean;
   /** Whether paths count (for the "+25 m" number). */
   wegeZaehlen: boolean;
-  /** Fog over undiscovered map parts. */
-  nebel: boolean;
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
   zentrieren: number;
-  /** "Weißer Fleck" to show: drawn as an ink outline, the map moves there each time `nr` changes. */
-  markiert: { linien: readonly (readonly LonLat[])[]; nr: number } | null;
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { linien: LonLat[][]; nr: number } | null;
   onRueckblickEnde: () => void;
@@ -184,6 +183,9 @@ const LEER = { type: "FeatureCollection" as const, features: [] };
 /** Own track and position, on top of everything. */
 function eigenesZeichnen(karte: MapLibreMap) {
   if (karte.getSource("spur")) return;
+  // Driven streets: a thin pen line (Kuli), under the highlighter, so walking later paints over it.
+  karte.addSource("gefahren", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.4, 16, 2.6], "line-opacity": 0.9 } });
   karte.addSource("entdeckt", { type: "geojson", data: LEER });
   karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 0.9 } });
   // Drawing moment: a soft glow and the highlighter stroke running along the new street (line-progress needs lineMetrics).
@@ -196,10 +198,6 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addLayer({ id: "rb-glanz", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 16, 24], "line-blur": 7, "line-opacity": 0.45 } });
   karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 1 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
-  // The white spot to explore: a white casing with an ink dashed line, like a pen mark on the plan.
-  karte.addSource("fleck", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "fleck-rand", type: "line", source: "fleck", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 7, 17, 16] } });
-  karte.addLayer({ id: "fleck", type: "line", source: "fleck", paint: { "line-color": TINTE, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 3, 17, 7], "line-dasharray": [1.2, 0.8] } });
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
   // The live track is a thin ink line; what it unlocks turns yellow underneath.
@@ -229,7 +227,6 @@ function setzeDaten(karte: MapLibreMap, quelle: string, data: unknown) {
 export function Karte(props: KartenProps) {
   const box = useRef<HTMLDivElement>(null);
   const karteRef = useRef<MapLibreMap | null>(null);
-  const nebelRef = useRef<Nebel | null>(null);
   const gewaehltRef = useRef(props.gewaehlt);
   const datenRef = useRef(props.daten);
   datenRef.current = props.daten;
@@ -238,8 +235,8 @@ export function Karte(props: KartenProps) {
   // Latest seen streets and shares, so they can be drawn again whenever the map style (re)loads.
   const entdecktRef = useRef(props.entdeckt);
   entdecktRef.current = props.entdeckt;
-  const markiertRef = useRef(props.markiert);
-  markiertRef.current = props.markiert;
+  const gefahrenRef = useRef(props.gefahren);
+  gefahrenRef.current = props.gefahren;
   const prozenteRef = useRef(props.prozente);
   prozenteRef.current = props.prozente;
   const dunkelRef = useRef(false);
@@ -268,9 +265,6 @@ export function Karte(props: KartenProps) {
     karte.addControl(new AttributionControl({ compact: true }), "top-left");
     // Credits start folded to the (i) button; tapping it shows them (allowed by the OSM attribution guidelines).
     karte.once("load", () => box.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
-    const nebel = nebelAnlegen(karte);
-    nebel.dunkel(dunkel.matches);
-    nebelRef.current = nebel;
 
     // Runs after every style load (also after switching light/dark). Seen streets and area shares
     // may have arrived before the style; draw them now so nothing gets lost.
@@ -278,7 +272,7 @@ export function Karte(props: KartenProps) {
       animation.current?.ende();
       eigenesZeichnen(karte);
       setzeDaten(karte, "entdeckt", linienSammlung(entdecktRef.current));
-      fleckSetzen(karte, markiertRef.current?.linien ?? null);
+      setzeDaten(karte, "gefahren", linienSammlung(gefahrenRef.current));
       if (datenRef.current)
         void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
     });
@@ -291,7 +285,6 @@ export function Karte(props: KartenProps) {
 
     const wechsel = (e: MediaQueryListEvent) => {
       dunkelRef.current = e.matches;
-      nebel.dunkel(e.matches);
       // Same base style, recolored: reload fully so our own layers are added again.
       karte.setStyle(STIL_ADRESSE, { diff: false });
     };
@@ -299,8 +292,6 @@ export function Karte(props: KartenProps) {
     return () => {
       dunkel.removeEventListener("change", wechsel);
       animation.current?.ende();
-      nebel.entfernen();
-      nebelRef.current = null;
       karte.remove();
       karteRef.current = null;
     };
@@ -352,15 +343,11 @@ export function Karte(props: KartenProps) {
     });
   }, [props.spur, props.folgen, props.position]);
 
-  // Fog: clear around seen streets, the live track and the own position.
+  // Driven streets as a pen line.
   useEffect(() => {
-    const nebel = nebelRef.current;
-    if (!nebel) return;
-    nebel.an(props.nebel);
-    const letzter = props.spur.at(-1);
-    const punkt: LonLat | null = letzter ? [letzter.lon, letzter.lat] : props.position;
-    nebel.setzen([...props.entdeckt.map((p) => p.coords), props.spur.map((f) => [f.lon, f.lat] as LonLat)], punkt);
-  }, [props.nebel, props.entdeckt, props.spur, props.position]);
+    const karte = karteRef.current;
+    if (karte?.getSource("gefahren")) setzeDaten(karte, "gefahren", linienSammlung(props.gefahren));
+  }, [props.gefahren]);
 
   // Seen streets in yellow. While recording, new ones get the drawing moment.
   useEffect(() => {
@@ -395,22 +382,6 @@ export function Karte(props: KartenProps) {
     if (!karte || !rb || rb.linien.length === 0) return;
     return rueckblickAbspielen(karte, rb.linien, () => rbEnde.current());
   }, [props.rueckblick?.nr]);
-
-  // White spot: draw it and bring it into view above the sheet.
-  useEffect(() => {
-    const karte = karteRef.current;
-    if (!karte) return;
-    fleckSetzen(karte, props.markiert?.linien ?? null);
-    if (!props.markiert) return;
-    const c = props.markiert.linien.flat();
-    const lons = c.map((p) => p[0]);
-    const lats = c.map((p) => p[1]);
-    const hoehe = karte.getContainer().clientHeight;
-    karte.fitBounds(
-      [[lons.reduce((a, b) => Math.min(a, b)), lats.reduce((a, b) => Math.min(a, b))], [lons.reduce((a, b) => Math.max(a, b)), lats.reduce((a, b) => Math.max(a, b))]],
-      { padding: { top: 80, bottom: hoehe * 0.45 + 40, left: 60, right: 60 }, maxZoom: 17, duration: ruhig() ? 0 : 700 },
-    );
-  }, [props.markiert?.nr]);
 
   // Location button: move to the own position.
   useEffect(() => {
@@ -531,10 +502,6 @@ function rueckblickAbspielen(karte: MapLibreMap, linien: LonLat[][], fertig: () 
     karte.off("moveend", laufen);
     stopp();
   };
-}
-
-function fleckSetzen(karte: MapLibreMap, linien: readonly (readonly LonLat[])[] | null) {
-  setzeDaten(karte, "fleck", linien ? { type: "Feature", properties: {}, geometry: { type: "MultiLineString", coordinates: linien } } : LEER);
 }
 
 function prozenteSetzen(karte: MapLibreMap, daten: Regionen | null, prozente: Map<string, number>) {

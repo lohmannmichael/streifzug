@@ -76,6 +76,16 @@ export async function overlandTrennen(userId: string): Promise<void> {
 
 export const overlandVerbunden = () => localStorage.getItem(OVERLAND_AN) === "1";
 export const overlandZuletzt = () => Number(localStorage.getItem(OVERLAND_ZULETZT) ?? 0) || null;
+/** Time of the newest point received from Overland (null if none yet). */
+export const overlandLetzterPunkt = () => {
+  const t = Date.parse(localStorage.getItem(OVERLAND_SEIT) ?? "");
+  return Number.isNaN(t) ? null : t;
+};
+/** Connected, but no new point for 48 hours: something is wrong with the recording. */
+export const overlandStill = () => {
+  const t = overlandLetzterPunkt();
+  return overlandVerbunden() && t !== null && Date.now() - t > 48 * 3600_000 ? t : null;
+};
 
 let holt = false;
 

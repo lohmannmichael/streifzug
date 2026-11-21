@@ -1,4 +1,4 @@
-import { milestoneReached, seenPieceIds, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
+import { milestoneReached, seenByLegs, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
 import { useEffect, useState } from "react";
 import { kachelnFuer, meterJeGebiet, stueckeImZeitraum, type Zaehlen } from "./fortschritt";
 import { prozent, zaehlendeMeter, type Regionen, type Summe } from "./regionen";
@@ -58,7 +58,8 @@ function addieren(ziel: Map<string, Summe>, dazu: Map<string, Summe>) {
  */
 export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege: boolean, zaehlen: Zaehlen): Promise<Map<string, LogEintrag>> {
   const chronologisch = [...liste].sort((a, b) => a.startedAt - b.startedAt);
-  const zaehlt = (s: Streifzug) => s.mode !== "car" || zaehlen.auto;
+  // Every outing takes part; what counts is decided per leg (only "aktiv" legs, see legs.ts).
+  const zaehlt = (_s: Streifzug) => true;
   const zaehltArt = (p: Piece) => p.kind === "street" || wege;
   const bekannt = new Set<string>();
   const bisher = new Map<string, Summe>();
@@ -80,7 +81,7 @@ export async function berechneLogbuch(liste: Streifzug[], daten: Regionen, wege:
     const umgebung = (await Promise.all(kachelnMitRand(s.fixes).map((k) => stueckeDerKachel({ z: TILE_ZOOM, ...k })))).flat();
     const nachId = new Map(umgebung.map((p) => [p.id, p]));
     // Only what counts (streets; paths with the switch) is "seen" and yellow in the logbook.
-    const gesehen = new Set([...seenPieceIds(umgebung, s.fixes)].filter((id) => zaehltArt(nachId.get(id)!)));
+    const gesehen = new Set([...seenByLegs(umgebung, s.fixes).aktiv].filter((id) => zaehltArt(nachId.get(id)!)));
     if (!zaehlt(s)) {
       ergebnis.set(s.id, { ...ZAEHLT_NICHT, umgebung, gesehen });
       continue;

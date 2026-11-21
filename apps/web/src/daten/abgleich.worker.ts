@@ -16,14 +16,14 @@ export interface SpurDaten {
   /** Number of fixes: a result is valid only for the same track. */
   n: number;
   fixes?: Fix[];
-  /** Stored result from an earlier session (piece ids); then no fixes are needed. */
+  /** Stored result from an earlier session (piece ids, "aktiv" and "gefahren"); then no fixes are needed. */
   ids?: string[];
+  gefahren?: string[];
 }
 
-/** Which other sources count, and whether car rides count. */
+/** Which other sources count. (Car, bus, train never count: that is decided per leg.) */
 export interface Zaehlen {
   quellen: Record<ImportQuelle, boolean>;
-  auto: boolean;
 }
 
 export interface ImportVorschau {
@@ -50,7 +50,7 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; proGebiet: [string, Summe][] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; gefahren: Piece[]; proGebiet: [string, Summe][] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
@@ -81,7 +81,7 @@ const gueltig = (n: number) => `${ABGLEICH_VERSION}:${n}`;
 const QUELLEN: ImportQuelle[] = ["gpx", "overland"];
 
 // Matching results per outing (own and others) and the pieces behind them.
-const jeSpur = new Map<string, { n: number; ids: string[] }>();
+const jeSpur = new Map<string, { n: number; ids: string[]; gefahren: string[] }>();
 const stueckNachId = new Map<string, Piece>();
 
 // Other outings, loaded once from the device storage. Fixes are kept only until matched.
@@ -94,7 +94,7 @@ function andereLaden(): Promise<Map<string, Kopf>> {
     for (const s of liste) {
       const n = s.fixes.length;
       if (s.stueckIds && s.stueckIdsGueltig === gueltig(n)) {
-        jeSpur.set(s.id, { n, ids: s.stueckIds });
+        jeSpur.set(s.id, { n, ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] });
         m.set(s.id, { ...s, fixes: null, n });
       } else m.set(s.id, { ...s, n });
     }
@@ -103,7 +103,7 @@ function andereLaden(): Promise<Map<string, Kopf>> {
   return andere;
 }
 
-const zaehlt = (k: Pick<Streifzug, "quelle" | "mode">, z: Zaehlen) => (k.mode !== "car" || z.auto) && (k.quelle === undefined || k.quelle === "aufnahme" || z.quellen[k.quelle]);
+const zaehlt = (k: Pick<Streifzug, "quelle">, z: Zaehlen) => k.quelle === undefined || k.quelle === "aufnahme" || z.quellen[k.quelle];
 
 let neueste = 0;
 
@@ -111,10 +111,13 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   neueste = nr;
   // Own outings: stored results first (cheap).
   const fehlend: string[] = [];
-  for (const s of eigene) if (s.ids && jeSpur.get(s.id)?.n !== s.n) jeSpur.set(s.id, { n: s.n, ids: s.ids });
+  for (const s of eigene) if (s.ids && jeSpur.get(s.id)?.n !== s.n) jeSpur.set(s.id, { n: s.n, ids: s.ids, gefahren: s.gefahren ?? [] });
   const alle = await andereLaden();
   const zaehlende = [...alle.values()].filter((k) => zaehlt(k, z));
-  for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) for (const p of jeSpur.get(id)?.ids ?? []) if (!stueckNachId.has(p)) fehlend.push(p);
+  for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) {
+    const e = jeSpur.get(id);
+    for (const p of [...(e?.ids ?? []), ...(e?.gefahren ?? [])]) if (!stueckNachId.has(p)) fehlend.push(p);
+  }
   for (const p of await stueckeFuerIds(fehlend)) stueckNachId.set(p.id, p);
 
   // Then everything that still needs matching (new outings, or after a rules change).
@@ -122,19 +125,20 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     ...eigene.filter((s) => jeSpur.get(s.id)?.n !== s.n && s.fixes).map((s) => ({ id: s.id, n: s.n, fixes: s.fixes!, locker: false, speichern: !s.id.startsWith("live:") })),
     ...zaehlende.filter((k) => jeSpur.get(k.id)?.n !== k.n && k.fixes).map((k) => ({ id: k.id, n: k.n, fixes: k.fixes!, locker: true, speichern: true })),
   ];
-  let merken: { id: string; ids: string[]; gueltig: string }[] = [];
+  let merken: { id: string; ids: string[]; gefahren: string[]; gueltig: string }[] = [];
   for (let i = 0; i < offen.length; i++) {
     const s = offen[i]!;
     // A newer request (e.g. the next live fixes) takes over; what is done so far is kept.
     if (neueste !== nr) break;
     if (offen.length > 3) senden({ typ: "stand", nr, fertig: i, gesamt: offen.length });
-    const stuecke = await abgleichen(s.fixes, s.locker);
-    for (const p of stuecke) stueckNachId.set(p.id, p);
-    const ids = stuecke.map((p) => p.id);
-    jeSpur.set(s.id, { n: s.n, ids });
+    const r = await abgleichen(s.fixes, s.locker);
+    for (const p of [...r.aktiv, ...r.gefahren]) stueckNachId.set(p.id, p);
+    const ids = r.aktiv.map((p) => p.id);
+    const gefahren = r.gefahren.map((p) => p.id);
+    jeSpur.set(s.id, { n: s.n, ids, gefahren });
     const kopf = alle.get(s.id);
     if (kopf) kopf.fixes = null;
-    if (s.speichern) merken.push({ id: s.id, ids, gueltig: gueltig(s.n) });
+    if (s.speichern) merken.push({ id: s.id, ids, gefahren, gueltig: gueltig(s.n) });
     if (merken.length >= 25) {
       await ergebnisseMerken(merken);
       merken = [];
@@ -143,14 +147,23 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   await ergebnisseMerken(merken);
   if (neueste !== nr) return;
 
+  // State per piece: "aktiv" wins over "gefahren" (yellow paints over the pen line).
   const gesehen = new Map<string, Piece>();
-  for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)])
-    for (const pid of jeSpur.get(id)?.ids ?? []) {
+  const gefahren = new Map<string, Piece>();
+  for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) {
+    const e = jeSpur.get(id);
+    for (const pid of e?.ids ?? []) {
       const p = stueckNachId.get(pid);
       if (p) gesehen.set(pid, p);
     }
+    for (const pid of e?.gefahren ?? []) {
+      const p = stueckNachId.get(pid);
+      if (p) gefahren.set(pid, p);
+    }
+  }
+  for (const pid of gesehen.keys()) gefahren.delete(pid);
   const proGebiet = await meterJeGebiet(gesehen.values(), liste);
-  senden({ typ: "ergebnis", nr, stuecke: [...gesehen.values()], proGebiet: [...proGebiet] });
+  senden({ typ: "ergebnis", nr, stuecke: [...gesehen.values()], gefahren: [...gefahren.values()], proGebiet: [...proGebiet] });
 }
 
 /** Only points in or near a built region are kept (the server keeps everything). */
@@ -199,12 +212,21 @@ async function overlandAbholen(nr: number, url: string, schluessel: string, jwt:
     // Page through the points (the server returns at most 1000 at a time).
     for (;;) {
       const filter = ab ? `&t=gt.${encodeURIComponent(ab)}` : "";
-      const r = await fetch(`${url}/rest/v1/received_points?select=t,lon,lat,acc&order=t.asc&limit=1000${filter}`, {
+      const r = await fetch(`${url}/rest/v1/received_points?select=t,lon,lat,acc,motion,speed&order=t.asc&limit=1000${filter}`, {
         headers: { apikey: schluessel, Authorization: `Bearer ${jwt}` },
       });
       if (!r.ok) throw new Error(`Abholen fehlgeschlagen (${r.status})`);
-      const seite = (await r.json()) as { t: string; lon: number; lat: number; acc: number | null }[];
-      for (const p of seite) neu.push({ t: Date.parse(p.t), lon: p.lon, lat: p.lat, acc: p.acc ?? 10 });
+      const seite = (await r.json()) as { t: string; lon: number; lat: number; acc: number | null; motion: string[] | null; speed: number | null }[];
+      for (const p of seite)
+        neu.push({
+          t: Date.parse(p.t),
+          lon: p.lon,
+          lat: p.lat,
+          acc: p.acc ?? 10,
+          // iOS motion activity and speed: used to tell "aktiv" from "gefahren" per leg.
+          ...(p.motion?.length ? { motion: p.motion } : {}),
+          ...(p.speed !== null && p.speed !== undefined ? { speed: p.speed } : {}),
+        });
       if (seite.length < 1000) break;
       ab = seite.at(-1)!.t;
     }

@@ -3,14 +3,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
-import { useOverlandAbholen } from "./daten/import";
+import { overlandStill, useOverlandAbholen } from "./daten/import";
 import { alsGesehenMerken, useRueckblick } from "./daten/rueckblick";
 import type { Streifzug } from "./daten/speicher";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
-import { useWeisserFleck, type Fleck } from "./daten/fleck";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
+import { Zuhause } from "./seiten/Zuhause";
 import { LogbuchSeite } from "./seiten/Logbuch";
 import { Stempel } from "./ui/Stempel";
 import { Karte } from "./karte/Karte";
@@ -53,10 +53,11 @@ export function App() {
   const streifzuege = useStreifzuege();
   // Car rides count only with the switch on (docs/PLAN.md, section 2). The page holds only own
   // outings; imports and Overland are loaded by the background worker, each with its switch.
-  const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
+  // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
+  const zaehlende = streifzuege;
   const zaehlen: Zaehlen = useMemo(
-    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, auto: einstellungen.autoZaehlen }),
-    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, einstellungen.autoZaehlen],
+    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen } }),
+    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen],
   );
   // Replay on opening: after fetching Overland points, run along what came in since the last visit.
   const { rueckblick, pruefen: rueckblickPruefen, beenden: rueckblickBeenden } = useRueckblick();
@@ -68,7 +69,7 @@ export function App() {
       id: s.id,
       fixes: s.fixes,
       // Matched in an earlier session: no need to match again.
-      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds } : {}),
+      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] } : {}),
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, fixes: aufzeichnung.fixes }] : []),
   ];
@@ -76,14 +77,14 @@ export function App() {
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
-  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], proGebiet: new Map() };
+  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], gefahren: [], proGebiet: new Map() };
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
   // Only what counts turns yellow: streets, and paths only with the paths switch (never driveways, see rules.ts).
   const zaehlendeStuecke = useMemo(
-    () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street" || einstellungen.wegeZaehlen),
-    [fortschritt, einstellungen.wegeZaehlen],
+    () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street"),
+    [fortschritt],
   );
   const neuUnterwegs = aufzeichnung.aktiv ? zaehlendeStuecke.filter((p) => !vorherIds.has(p.id)) : [];
   const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + p.lengthM * p.weight, 0);
@@ -91,14 +92,6 @@ export function App() {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);
-  // "Weißer Fleck": from the own position, otherwise from the middle of the chosen area.
-  const punkte = useMittelpunkte(daten);
-  const fleckBezug: LonLat | null = position ?? (gebiet ? (punkte?.get(gebiet.id) ?? null) : null);
-  const fleck = useWeisserFleck(aufzeichnung.aktiv ? null : fleckBezug, fortschritt, einstellungen.wegeZaehlen);
-  const [markiert, setMarkiert] = useState<{ fleck: Fleck; nr: number } | null>(null);
-  useEffect(() => {
-    if (aufzeichnung.aktiv) setMarkiert(null);
-  }, [aufzeichnung.aktiv]);
   // Locating: move there and show the area you are standing in (with your share) in the sheet.
   const datenRef = useRef(daten);
   datenRef.current = daten;
@@ -148,14 +141,13 @@ export function App() {
             springen={springen.current}
             spur={aufzeichnung.fixes}
             entdeckt={zaehlendeStuecke}
+            gefahren={fortschritt?.gefahren ?? []}
             prozente={prozenteJeGebiet(daten, fortschritt, einstellungen.wegeZaehlen)}
             folgen={aufzeichnung.aktiv}
             zeichnen={aufzeichnung.aktiv}
             wegeZaehlen={einstellungen.wegeZaehlen}
-            nebel={einstellungen.nebel}
             position={position}
             zentrieren={zentrieren}
-            markiert={markiert ? { linien: markiert.fleck.linien, nr: markiert.nr } : null}
             rueckblick={rueckblick && !aufzeichnung.aktiv ? { linien: rueckblick.wege.map((w) => w.coords), nr: rueckblick.nr } : null}
             onRueckblickEnde={rueckblickBeenden}
           />
@@ -196,10 +188,12 @@ export function App() {
             standortFehler={standortFehler}
             fortschritt={fortschritt}
             vorher={vorher.current}
-            fleck={fleck}
-            fleckVomStandort={position !== null}
-            fleckZeigen={(f) => setMarkiert((m) => ({ fleck: f, nr: (m?.nr ?? 0) + 1 }))}
             rechnet={rechnet}
+            overlandStill={overlandStill()}
+            zuOverland={() => {
+              setImportZeigen("overland");
+              setProfilOffen(true);
+            }}
           />
         </div>
         {reiter === "gebiete" && (
@@ -268,10 +262,10 @@ function KartenBlatt(props: {
   standortFehler: boolean;
   fortschritt: Fortschritt | null;
   vorher: Fortschritt | null;
-  fleck: Fleck | null;
-  fleckVomStandort: boolean;
-  fleckZeigen: (f: Fleck) => void;
   rechnet: { fertig: number; gesamt: number } | null;
+  /** Overland connected but silent for 48 h: time of the last point. */
+  overlandStill: number | null;
+  zuOverland: () => void;
 }) {
   const { gebiet, daten, aufzeichnung: a } = props;
   const wege = props.einstellungen.wegeZaehlen;
@@ -314,8 +308,6 @@ function KartenBlatt(props: {
       </div>
       {a.aktiv ? (
         <Unterwegs a={a} />
-      ) : !a.letzter && props.fleck && gebiet ? (
-        <FleckZeile fleck={props.fleck} gebietName={gebiet.name} vomStandort={props.fleckVomStandort} zeigen={props.fleckZeigen} />
       ) : (
         <Ruhe a={a} schonGelb={gesehen > 0} />
       )}
@@ -330,6 +322,12 @@ function KartenBlatt(props: {
       <button type="button" className={a.aktiv ? "haupt zweit" : "haupt"} onClick={a.aktiv ? a.beenden : a.starten}>
         {a.aktiv ? t.karte.beenden : t.karte.losziehen}
       </button>
+      {!a.aktiv && props.overlandStill && (
+        <p className="still-hinweis">
+          {t.import.overland.still(seitText(props.overlandStill))}{" "}
+          <button type="button" className="text-knopf" onClick={props.zuOverland}>{t.import.overland.pruefen}</button>
+        </p>
+      )}
       <p className="hinweis" aria-live="polite">{props.standortFehler
           ? t.karte.standortFehler
           : a.aktiv
@@ -341,19 +339,11 @@ function KartenBlatt(props: {
   );
 }
 
-/** Nearest undiscovered street, with a button that shows it on the map. */
-function FleckZeile(props: { fleck: Fleck; gebietName: string; vomStandort: boolean; zeigen: (f: Fleck) => void }) {
-  const name = props.fleck.name ?? t.karte.fleckOhneName;
-  return (
-    <div className="fleck">
-      <span className="fleck-punkt" aria-hidden="true" />
-      <p>
-        <b>{t.karte.fleckTitel}</b>
-        <span className="leise">{props.vomStandort ? t.karte.fleckNah(name, alsStrecke(props.fleck.distanceM)) : t.karte.fleckIn(name, props.gebietName)}</span>
-      </p>
-      <button type="button" className="text-knopf" onClick={() => props.zeigen(props.fleck)}>{t.karte.fleckZeigen}</button>
-    </div>
-  );
+const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
+const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
+/** "Montag" within the last week, otherwise "12. November". */
+function seitText(t: number): string {
+  return Date.now() - t < 6 * 86400_000 ? wochentag.format(t) : tagMonat.format(t);
 }
 
 /** What the last outing added in the shown area, with a stamp when it reached a milestone. */
@@ -449,15 +439,8 @@ function Profil(props: {
         <h1 id="profil-titel">{t.ich.titel}</h1>
         <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
         <OverlandEinrichten daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
-        <h2>{t.ich.zaehlen}</h2>
-        <div className="gruppe">
-          <Schalter label={t.ich.wege} hinweis={t.ich.wegeHinweis} an={werte.wegeZaehlen} onChange={(an) => aendern({ wegeZaehlen: an })} />
-          <Schalter label={t.ich.auto} hinweis={t.ich.autoHinweis} an={werte.autoZaehlen} onChange={(an) => aendern({ autoZaehlen: an })} />
-        </div>
-        <h2>{t.ich.ansicht}</h2>
-        <div className="gruppe">
-          <Schalter label={t.ich.nebel} hinweis={t.ich.nebelHinweis} an={werte.nebel} onChange={(an) => aendern({ nebel: an })} />
-        </div>
+        <h2>{t.zuhause.titel}</h2>
+        <Zuhause userId={userId} />
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
         <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.ich.konto}</h2>

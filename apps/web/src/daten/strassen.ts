@@ -57,7 +57,7 @@ function ladeKachel(tile: Tile): Promise<Kachel> {
         if (!name) continue;
         for (const coords of linienVon(f.toGeoJSON(tile.x, tile.y, TILE_ZOOM).geometry)) namen.push({ name, coords });
       }
-      return { stuecke: piecesFromTile(tile, features), namen };
+      return { stuecke: piecesFromTile(tile, features, { drive: true }), namen };
     })().catch(() => {
       kacheln.delete(key);
       return { stuecke: [], namen: [] };

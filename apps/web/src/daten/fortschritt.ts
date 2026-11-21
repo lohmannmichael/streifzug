@@ -10,8 +10,10 @@ export { kachelnFuer } from "./rechnen";
 export type { Zaehlen } from "./abgleich.worker";
 
 export interface Fortschritt {
-  /** Seen pieces, for the yellow layer. */
+  /** Pieces covered on foot or by bike ("aktiv"), for the yellow layer and the percentages. */
   stuecke: Piece[];
+  /** Pieces only driven (car, bus, train), for the pen line under the yellow. Never counted. */
+  gefahren: Piece[];
   /** Seen meters per area id (streets and paths separately). */
   proGebiet: Map<string, Summe>;
 }
@@ -22,6 +24,7 @@ export interface Spur {
   fixes: Fix[];
   /** Stored matching result (piece ids) from an earlier session, if still valid. */
   ids?: string[];
+  gefahren?: string[];
 }
 
 /** Key under which a stored result is valid: same matching rules, same track. */
@@ -67,7 +70,7 @@ export function useFortschritt(
     const eigene: SpurDaten[] = spuren.map((s) => ({
       id: s.id,
       n: s.fixes.length,
-      ...(imWorker.get(s.id) === s.fixes.length ? {} : s.ids ? { ids: s.ids } : { fixes: s.fixes }),
+      ...(imWorker.get(s.id) === s.fixes.length ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
     }));
     const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste: daten.liste });
     aktuell.current = nr;
@@ -79,7 +82,7 @@ export function useFortschritt(
       for (const sd of eigene) if (!sd.id.startsWith("live:")) imWorker.set(sd.id, sd.n);
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
-      setFortschritt({ stuecke: a.stuecke, proGebiet: new Map(a.proGebiet) });
+      setFortschritt({ stuecke: a.stuecke, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet) });
     });
     return weg;
     // Recalculate only when the set of outings changes or the live track grows.

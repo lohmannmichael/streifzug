@@ -6,6 +6,10 @@ export interface Fix {
   lon: number;
   lat: number;
   acc: number;
+  /** iOS motion activity from Overland ("walking", "running", "cycling", "automotive", "stationary", …), if known. */
+  motion?: string[];
+  /** Speed in m/s as measured by the phone, if known. */
+  speed?: number;
 }
 
 export type Mode = "foot" | "bike" | "car";

@@ -4,20 +4,19 @@ import { supabase, type Sitzung } from "./daten/supabase";
 export interface Einstellungen {
   wegeZaehlen: boolean;
   autoZaehlen: boolean;
-  /** Fog over undiscovered map parts; only on this device. */
-  nebel: boolean;
   /** Whether imported histories count (switch per source; the data stays either way). */
   gpxZaehlen: boolean;
   overlandZaehlen: boolean;
 }
 
 const KEY = "streifzug.einstellungen";
-const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, nebel: true, gpxZaehlen: true, overlandZaehlen: true };
+const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, gpxZaehlen: true, overlandZaehlen: true };
 
 function lesen(): Einstellungen {
   try {
     const roh = localStorage.getItem(KEY);
-    return roh ? { ...STANDARD, ...(JSON.parse(roh) as Partial<Einstellungen>) } : STANDARD;
+    // Paths and car rides no longer count (Bauplan 6.1/6.2): the old switches are ignored.
+    return roh ? { ...STANDARD, ...(JSON.parse(roh) as Partial<Einstellungen>), wegeZaehlen: false, autoZaehlen: false } : STANDARD;
   } catch {
     return STANDARD;
   }
@@ -40,7 +39,7 @@ export function useEinstellungen(sitzung: Sitzung) {
       .maybeSingle()
       .then(({ data }) => {
         if (!aktiv || !data) return;
-        const neu = { ...aktuell.current, wegeZaehlen: data.count_paths, autoZaehlen: data.count_car };
+        const neu = { ...aktuell.current, wegeZaehlen: false, autoZaehlen: false };
         localStorage.setItem(KEY, JSON.stringify(neu));
         setWerte(neu);
       });

@@ -18,6 +18,8 @@ export interface Streifzug {
   quelle?: Quelle;
   /** Stored matching result: ids of the street pieces this outing covered, valid for `stueckIdsGueltig`. */
   stueckIds?: string[];
+  /** Pieces covered on legs that were driven (car, bus, train): drawn, never counted. */
+  stueckIdsGefahren?: string[];
   stueckIdsGueltig?: string;
 }
 
@@ -86,14 +88,14 @@ export const AENDERUNG = "streifzug-aenderung";
 export const melden = () => window.dispatchEvent(new Event(AENDERUNG));
 
 /** Keeps matching results with their outings, in one transaction (does not notify: nothing visible changes). */
-export async function ergebnisseMerken(liste: { id: string; ids: string[]; gueltig: string }[]): Promise<void> {
+export async function ergebnisseMerken(liste: { id: string; ids: string[]; gefahren: string[]; gueltig: string }[]): Promise<void> {
   if (liste.length === 0) return;
   const tx = (await oeffnen()).transaction(STORE, "readwrite");
   const st = tx.objectStore(STORE);
   for (const e of liste) {
     const req = st.get(e.id) as IDBRequest<Streifzug | undefined>;
     req.onsuccess = () => {
-      if (req.result) st.put({ ...req.result, stueckIds: e.ids, stueckIdsGueltig: e.gueltig });
+      if (req.result) st.put({ ...req.result, stueckIds: e.ids, stueckIdsGefahren: e.gefahren, stueckIdsGueltig: e.gueltig });
     };
   }
   await new Promise<void>((resolve, reject) => {

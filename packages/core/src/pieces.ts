@@ -15,7 +15,7 @@ export interface TileFeature {
 export interface Piece {
   /** "<z>/<x>/<y>:<line>:<piece>", stable for the same tile data. */
   id: string;
-  kind: "street" | "path";
+  kind: "street" | "path" | "drive";
   weight: number;
   lengthM: number;
   coords: LonLat[];
@@ -28,13 +28,13 @@ const MAJOR = new Set(["trunk", "primary", "secondary", "tertiary"]);
  * Turns one street tile into counted pieces. Used by the region build (totals) and on the device
  * (what you have seen), so both always agree.
  */
-export function piecesFromTile(tile: Tile, features: readonly TileFeature[]): Piece[] {
+export function piecesFromTile(tile: Tile, features: readonly TileFeature[], options: { drive?: boolean } = {}): Piece[] {
   const bounds = tileBounds(tile);
-  const lines: { kind: "street" | "path"; group: StreetGroup; coords: LonLat[] }[] = [];
+  const lines: { kind: Piece["kind"]; group: StreetGroup; coords: LonLat[] }[] = [];
   for (const f of features) {
-    const kind = classifyOmt(f.props, { includePaths: true });
+    const kind = classifyOmt(f.props, { includePaths: true, includeDrive: options.drive ?? false });
     if (!kind) continue;
-    const group: StreetGroup = kind === "path" ? null : MAJOR.has(String(f.props.class)) ? "major" : "minor";
+    const group: StreetGroup = kind === "path" ? null : kind === "drive" || MAJOR.has(String(f.props.class)) ? "major" : "minor";
     for (const line of f.lines)
       for (const part of clipLine(line, bounds)) if (lineLengthM(part) >= 0.5) lines.push({ kind, group, coords: part });
   }

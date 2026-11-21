@@ -385,8 +385,6 @@ button { font: inherit; color: inherit; }
 .blatt.klein .prozent-label { display: none; }
 .blatt.klein .gebiet { font-size: var(--t-gross); }
 
-/* Fog over undiscovered map parts (canvas above the map, below the map controls). */
-.nebel { position: absolute; pointer-events: none; will-change: transform; }
 .karte { overflow: hidden; }
 
 /* Drawing moment: "+25 m" rises above the own position and fades. */
@@ -417,13 +415,6 @@ button { font: inherit; color: inherit; }
   .plus-meter { animation: plus-ruhig 2.2s linear forwards; }
   @keyframes plus-ruhig { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
 }
-
-/* "Weißer Fleck" in the sheet: a white dot with an ink ring, text, and a button to show it. */
-.fleck { display: flex; align-items: center; gap: 12px; }
-.fleck p { flex: 1; min-width: 0; display: grid; }
-.fleck p .leise { font-size: var(--t-klein); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fleck-punkt { flex: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px var(--tinte); }
-.fleck .text-knopf { font-size: var(--t-text); }
 
 /* Reward line with an optional milestone stamp */
 .belohnung-zeile { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -479,7 +470,6 @@ button { font: inherit; color: inherit; }
 @media (prefers-color-scheme: dark) { .log-neu .marker { color: #1e2a4a; } }
 .log-strassen { font-size: var(--t-klein); color: var(--text-leise); }
 .log-fuss { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
-.blatt.klein .fleck { display: none; }
 
 /* Unterwegs-Modus: counter at the top of the map while recording. */
 .unterwegs-zaehler {
@@ -571,3 +561,8 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .rueckblick small { font-size: var(--t-klein); color: var(--text-leise); }
 .rueckblick b { font-weight: 600; white-space: nowrap; }
 .rueckblick .text-knopf { min-height: 40px; }
+
+/* Overland silent for 48 h: one plain line in the sheet */
+.still-hinweis { font-size: var(--t-klein); color: var(--text-leise); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.radius { display: grid; gap: 2px; }
+.radius select { font: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; border: 1px solid var(--linie); border-radius: 10px; background: var(--flaeche); color: var(--text); }

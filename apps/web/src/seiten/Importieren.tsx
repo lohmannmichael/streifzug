@@ -5,6 +5,7 @@ import {
   overlandTrennen,
   overlandVerbinden,
   overlandVerbunden,
+  overlandLetzterPunkt,
   overlandZuletzt,
   quelleLoeschen,
   uebernehmen,
@@ -81,6 +82,7 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
   const [meldung, setMeldung] = useState<string | null>(null);
   const [trennenFragen, setTrennenFragen] = useState(false);
   const zuletzt = overlandZuletzt();
+  const letzterPunkt = overlandLetzterPunkt();
 
   const verbinden = async () => {
     if (!props.userId) return setMeldung(tx.keinKonto);
@@ -110,7 +112,8 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
       {verbunden && (
         <>
           <p className="zeile-text">
-            {tx.verbunden} {zuletzt ? tx.zuletzt(zeitpunkt.format(zuletzt)) : tx.nochNie}
+            {tx.verbunden} {letzterPunkt ? tx.letzterPunkt(zeitpunkt.format(letzterPunkt)) : tx.nochKeinPunkt}{" "}
+            {zuletzt ? tx.zuletzt(zeitpunkt.format(zuletzt)) : tx.nochNie}
           </p>
           <Bestand empfangen info={props.info.overland} an={props.werte.overlandZaehlen} setzen={(an) => props.aendern({ overlandZaehlen: an })} />
         </>

@@ -1,6 +1,6 @@
 # Stand für die nächste Sitzung (21.11.2026)
 
-**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Aktuelle Phase: **Phase 1 „Aufzeichnung, die läuft“**. Erledigt daraus: Overland liefert (seit 21.11., 11 Uhr), Empfang speichert `motion` und `speed`. Offen in Phase 1: `motion`/`speed` mit abholen, `legs.ts` (Abschnitte aktiv/gefahren) mit Tests, Stück-Zustände 0/1/2 mit roter Kuli-Linie (auch Autobahn), Zähl-Schalter, Nebel und Weißer Fleck entfernen, „Letzter Punkt“ und 48-Stunden-Hinweis. Für Phase 2 fehlen noch die Bilder „Plan“, „Viertel“, „Stempelpass“ von der Design-Leinwand.
+**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Aktuelle Phase: **Phase 1 „Aufzeichnung, die läuft“**. Erledigt (21.11.): Overland liefert, Empfang und Abholen mit `motion`/`speed`, `legs.ts` mit Tests, Zustände aktiv/gefahren mit roter Kuli-Linie (auch Autobahn), Zähl-Schalter/Nebel/Weißer Fleck entfernt, „Letzter Punkt“ und 48-Stunden-Hinweis, Zuhause-Zone. Offen: Definition of Done prüfen (7 Tage Wege ohne App-Öffnen, Vergleich mit Apple Health; echter Weg Fuß–Bahn–Fuß auf dem iPhone). Für Phase 2 fehlen noch die Bilder „Plan“, „Viertel“, „Stempelpass“ von der Design-Leinwand.
 
 Ältere Notizen (bis 20.11.2026):
 
