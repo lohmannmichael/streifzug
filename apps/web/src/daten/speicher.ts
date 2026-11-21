@@ -16,6 +16,8 @@ export interface Streifzug {
   status: "aktiv" | "lokal" | "gesichert" | "importiert";
   /** Where it comes from; missing means recorded in Streifzug. */
   quelle?: Quelle;
+  /** When this outing last got new points (Overland sends with delay); for the replay. */
+  empfangenAm?: number;
   /** Stored matching result: ids of the street pieces this outing covered, valid for `stueckIdsGueltig`. */
   stueckIds?: string[];
   /** Pieces covered on legs that were driven (car, bus, train): drawn, never counted. */

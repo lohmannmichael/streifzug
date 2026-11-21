@@ -89,13 +89,22 @@ export const overlandStill = () => {
 
 let holt = false;
 
+/** Waits up to 10 s for the sign-in (right after opening it may not be ready yet). */
+async function sitzungAbwarten(): Promise<string | null> {
+  for (let i = 0; i < 20; i++) {
+    const jwt = (await supabase.auth.getSession()).data.session?.access_token;
+    if (jwt) return jwt;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return null;
+}
+
 /** Fetches new points from the receiver (in the background worker). Returns how many came in. */
 export async function overlandAbholen(daten: Regionen): Promise<number> {
   if (holt || !overlandVerbunden() || !navigator.onLine) return 0;
   holt = true;
   try {
-    const { data } = await supabase.auth.getSession();
-    const jwt = data.session?.access_token;
+    const jwt = await sitzungAbwarten();
     if (!jwt) return 0;
     const a = await fragen<"abgeholt">({
       typ: "overlandAbholen",

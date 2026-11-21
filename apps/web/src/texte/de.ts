@@ -186,6 +186,7 @@ export const de = {
   menue: {
     titel: "Menü",
     staedte: "Deine Städte und Veedel",
+    wege: "Letzte Wege",
     stempelpass: "Stempelpass",
     einstellungen: "Einstellungen",
   },

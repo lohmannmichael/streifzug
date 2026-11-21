@@ -245,7 +245,7 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
 
       {istVeedel && <Stempelkarte gebiet={gebiet} daten={daten} gesehen={props.gesehen} gesamt={props.gesamt} gesetzt={props.gesetzt} />}
 
-      <h2 className="abschnitt-titel">{t.blatt.zuletzt}</h2>
+      <h2 id="zuletzt" className="abschnitt-titel">{t.blatt.zuletzt}</h2>
       {wege.length === 0 ? (
         <p className="zeile-text leise">{t.blatt.keineWege}</p>
       ) : (

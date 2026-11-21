@@ -239,6 +239,10 @@ export function App() {
               {(
                 [
                   [t.menue.staedte, () => { setTeil("veedel"); setHoehe(3); }],
+                  [t.menue.wege, () => {
+                    setHoehe(2);
+                    window.setTimeout(() => document.getElementById("zuletzt")?.scrollIntoView({ block: "start", behavior: "smooth" }), 350);
+                  }],
                   [t.menue.stempelpass, () => { setTeil("pass"); setHoehe(3); }],
                   [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
                 ] as const

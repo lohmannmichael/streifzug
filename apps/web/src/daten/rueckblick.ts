@@ -45,7 +45,9 @@ export function useRueckblick() {
     ].sort((a, b) => a.startedAt - b.startedAt);
     alsGesehenMerken();
     if (neu.length === 0) return;
-    setRueckblick((alt) => ({ nr: (alt?.nr ?? 0) + 1, seit, wege: neu, km: neu.reduce((m, w) => m + w.distanceM, 0) / 1000 }));
+    // Streets first walked on one of these ways are "new" (their start, not the last visit, counts).
+    const ab = neu.reduce((m, w) => Math.min(m, w.startedAt), Infinity);
+    setRueckblick((alt) => ({ nr: (alt?.nr ?? 0) + 1, seit: ab, wege: neu, km: neu.reduce((m, w) => m + w.distanceM, 0) / 1000 }));
   }, []);
 
   return { rueckblick, pruefen, beenden: useCallback(() => setRueckblick(null), []) };

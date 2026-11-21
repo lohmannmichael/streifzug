@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 21.11.2026: Rückblick nach Empfangszeit, Abholen wartet auf die Anmeldung
+- Overland schickt mit Verspätung. Der Rückblick nimmt jetzt Wege, deren Punkte seit dem letzten Besuch **angekommen** sind (`empfangenAm` je Weg), nicht die seitdem **aufgezeichnet** wurden. Neu sind Straßen, die auf einem dieser Wege zuerst gegangen wurden
+- Beim Öffnen wartet das Abholen bis zu 10 s auf die Anmeldung, statt still auszufallen (dann kam erst nach 5 Minuten etwas)
+- Menü: „Letzte Wege“ (öffnet das Blatt bei „Zuletzt“)
+
 ## 21.11.2026: Menü oben rechts (Abweichung vom Bauplan, Wunsch Michi)
 - Runder „…“-Knopf über dem Standort-Knopf, klappt ein Menü auf: „Deine Städte und Veedel“, „Stempelpass“, „Einstellungen“. Zusätzlich die Zeile „Deine Städte und Veedel“ im Veedel-Blatt. „Automatisch aufzeichnen“ steht bewusst nicht im Menü (läuft ohnehin), Overland bleibt in den Einstellungen
 

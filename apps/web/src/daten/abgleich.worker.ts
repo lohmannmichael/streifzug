@@ -374,7 +374,8 @@ async function overlandAbholen(nr: number, url: string, schluessel: string, jwt:
       const letzte = [...alle.values()].filter((k) => k.quelle === "overland").sort((a, b) => b.startedAt - a.startedAt)[0];
       let basis: Fix[] = [];
       if (letzte && (letzte.endedAt ?? 0) >= imGebiet[0]!.t - 600_000) basis = (await einenLaden(letzte.id))?.fixes ?? [];
-      const wege = wegeAus("overland", cleanFixes([...basis, ...imGebiet]));
+      const jetzt = Date.now();
+      const wege = wegeAus("overland", cleanFixes([...basis, ...imGebiet])).map((w) => ({ ...w, empfangenAm: jetzt }));
       await vieleSpeichern(wege);
       andere = null;
     }
@@ -428,10 +429,11 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
     case "overlandAbholen":
       return void overlandAbholen(a.nr, a.url, a.schluessel, a.jwt, a.seit, a.liste);
     case "wegeSeit": {
-      // Other outings (Overland, GPX) that ended after a point in time, for the replay.
+      // Other outings (Overland, GPX) that came in after a point in time, for the replay. Overland
+      // sends with delay, so what counts is when the points arrived, not when they were recorded.
       const wege: KurzWeg[] = [];
       for (const k of (await andereLaden()).values()) {
-        if ((k.endedAt ?? k.startedAt) <= a.seit) continue;
+        if ((k.empfangenAm ?? k.endedAt ?? k.startedAt) <= a.seit) continue;
         const fixes = k.fixes ?? (await einenLaden(k.id))?.fixes ?? [];
         if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
       }
