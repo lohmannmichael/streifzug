@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
-import { alsKm, alsStrecke, elternText, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
+import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useLetzteWege, useOffeneStrassen, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
@@ -21,7 +21,8 @@ export function seitText(zeit: number): string {
 
 const LEER = { strasse_m: 0, weg_m: 0 };
 const gesehenM = (f: Fortschritt | null, g: GebietDaten) => zaehlendeMeter(f?.proGebiet.get(g.id) ?? LEER, false);
-const gesamtM = (g: GebietDaten) => zaehlendeMeter(g, false);
+let abzugJetzt: Fortschritt["abzug"] | undefined;
+const gesamtM = (g: GebietDaten) => gesamtMeter(g, abzugJetzt);
 
 export interface BlattProps {
   hoehe: Hoehe;
@@ -54,6 +55,7 @@ export interface BlattProps {
  */
 export function Blatt(props: BlattProps) {
   const { hoehe, setHoehe, gebiet, daten, aufzeichnung: a } = props;
+  abzugJetzt = props.fortschritt?.abzug;
   const gesamt = gebiet ? gesamtM(gebiet) : 0;
   const gesehen = gebiet ? gesehenM(props.fortschritt, gebiet) : 0;
   const p = prozent(gesehen, gesamt);

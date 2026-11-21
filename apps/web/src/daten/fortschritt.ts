@@ -16,11 +16,17 @@ export interface Fortschritt {
   gefahren: Piece[];
   /** Seen meters per area id (streets and paths separately). */
   proGebiet: Map<string, Summe>;
+  /** Year each piece in `stuecke` was first walked (same order), for "Jedes Jahr eine Farbe". */
+  jahre: number[];
+  /** Meters per area taken out of the total ("Hier komme ich nicht hin"). */
+  abzug: Map<string, Summe>;
 }
 
 /** One track to match: an outing (own or imported) or the one being recorded. */
 export interface Spur {
   id: string;
+  /** Start time. */
+  t: number;
   fixes: Fix[];
   /** Stored matching result (piece ids) from an earlier session, if still valid. */
   ids?: string[];
@@ -70,6 +76,7 @@ export function useFortschritt(
     const eigene: SpurDaten[] = spuren.map((s) => ({
       id: s.id,
       n: s.fixes.length,
+      t: s.t,
       ...(imWorker.get(s.id) === s.fixes.length ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
     }));
     const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste: daten.liste });
@@ -82,7 +89,7 @@ export function useFortschritt(
       for (const sd of eigene) if (!sd.id.startsWith("live:")) imWorker.set(sd.id, sd.n);
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
-      setFortschritt({ stuecke: a.stuecke, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet) });
+      setFortschritt({ stuecke: a.stuecke, jahre: a.jahre, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug) });
     });
     return weg;
     // Recalculate only when the set of outings changes or the live track grows.

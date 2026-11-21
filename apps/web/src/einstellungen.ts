@@ -7,10 +7,48 @@ export interface Einstellungen {
   /** Whether imported histories count (switch per source; the data stays either way). */
   gpxZaehlen: boolean;
   overlandZaehlen: boolean;
+  /** Pens (Bauplan 4.2): highlighter for walked streets, pen for driven ones. */
+  marker: string;
+  kuli: string;
+  /** Each street keeps the highlighter colour of the year it was first walked. */
+  jahresFarben: boolean;
 }
 
+export const MARKER_FARBEN = [
+  { farbe: "#ffe83a", name: "Gelb" },
+  { farbe: "#b8f060", name: "Grün" },
+  { farbe: "#ff9bcb", name: "Pink" },
+  { farbe: "#ffb95a", name: "Orange" },
+  { farbe: "#7de6d9", name: "Türkis" },
+] as const;
+
+export const KULI_FARBEN = [
+  { farbe: "#d92b20", name: "Rot" },
+  { farbe: "#2447c9", name: "Blau" },
+  { farbe: "#1f7a4d", name: "Grün" },
+  { farbe: "#1c1c1c", name: "Schwarz" },
+] as const;
+
+/** Year colours: 2026 yellow, 2027 green, … and from the start again (earlier years backwards). */
+export const ERSTES_JAHR = 2026;
+export function jahresFarbe(jahr: number): (typeof MARKER_FARBEN)[number] {
+  const n = MARKER_FARBEN.length;
+  return MARKER_FARBEN[(((jahr - ERSTES_JAHR) % n) + n) % n]!;
+}
+
+/** The highlighter colour in use now (the year's colour with "Jedes Jahr eine Farbe"). */
+export const markerJetzt = (e: Einstellungen) => (e.jahresFarben ? jahresFarbe(new Date().getFullYear()).farbe : e.marker);
+
 const KEY = "streifzug.einstellungen";
-const STANDARD: Einstellungen = { wegeZaehlen: false, autoZaehlen: false, gpxZaehlen: true, overlandZaehlen: true };
+const STANDARD: Einstellungen = {
+  wegeZaehlen: false,
+  autoZaehlen: false,
+  gpxZaehlen: true,
+  overlandZaehlen: true,
+  marker: "#ffe83a",
+  kuli: "#d92b20",
+  jahresFarben: false,
+};
 
 function lesen(): Einstellungen {
   try {

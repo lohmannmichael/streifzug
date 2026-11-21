@@ -72,7 +72,8 @@ function strassenEbenen(f: Farben): LayerSpecification[] {
       minzoom: 11,
       filter,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": farbe, "line-width": breite(istHaupt, rand) },
+      // Zoomed far out the streets fade and the hatched Veedel take over (Bauplan 4.5).
+      paint: { "line-color": farbe, "line-width": breite(istHaupt, rand), "line-opacity": ["interpolate", ["linear"], ["zoom"], 11.4, 0, 12.4, 1] },
     }) as LayerSpecification;
   return [
     {
@@ -134,6 +135,9 @@ export function stadtplan(stil: StyleSpecification, dunkel: boolean): StyleSpeci
     const paint: Record<string, unknown> = { ...(("paint" in l ? l.paint : {}) as Record<string, unknown>) };
     for (const [k, v] of Object.entries(neu)) if (k.startsWith(`${l.type}-`) || (l.type === "symbol" && k.startsWith("text-"))) paint[k] = v;
     if (/^railway/.test(l.id) && l.type === "line") paint["line-width"] = /dashline$/.test(l.id) ? 1.2 : 2.6;
+    // Place and water names in German where the map has them ("Köln", not "Cologne").
+    if (l.type === "symbol" && "source-layer" in l && /^(place|water_name|waterway|mountain_peak|poi)$/.test(String(l["source-layer"])))
+      (l.layout as Record<string, unknown>)["text-field"] = ["coalesce", ["get", "name:de"], ["get", "name"]];
     if (l.id === "highway-name-major" || l.id === "highway-name-minor") (l.layout as Record<string, unknown>)["text-font"] = ["Noto Sans Bold"];
     layers.push({ ...l, paint } as LayerSpecification);
   }

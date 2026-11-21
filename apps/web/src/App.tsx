@@ -6,11 +6,13 @@ import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Sp
 import { overlandStill, useOverlandAbholen, type KurzWeg } from "./daten/import";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
-import { findeNachName, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
+import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
 import type { OffeneStrasse } from "./daten/veedel";
-import { useEinstellungen, type Einstellungen } from "./einstellungen";
+import { useAusnahmen } from "./daten/ausnahmen";
+import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, type Hoehe } from "./seiten/Blatt";
+import { Stifte } from "./seiten/Stifte";
 import { Zuhause } from "./seiten/Zuhause";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
@@ -66,10 +68,14 @@ export function App() {
   // outings; imports and Overland are loaded by the background worker, each with its switch.
   // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
   const zaehlende = streifzuege;
+  const ausnahmen = useAusnahmen();
   const zaehlen: Zaehlen = useMemo(
-    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen } }),
-    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen],
+    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, ausnahmen }),
+    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, ausnahmen],
   );
+  // The pen colours live in CSS too (marker swipe behind the percentage).
+  const marker = markerJetzt(einstellungen);
+  useEffect(() => document.documentElement.style.setProperty("--marker", marker), [marker]);
   // Replay on opening: after fetching Overland points, run along what came in since the last visit.
   const { rueckblick, pruefen: rueckblickPruefen, beenden: rueckblickBeenden } = useRueckblick();
   useOverlandAbholen(daten, () => {
@@ -78,17 +84,18 @@ export function App() {
   const spuren: Spur[] = [
     ...zaehlende.map((s) => ({
       id: s.id,
+      t: s.startedAt,
       fixes: s.fixes,
       // Matched in an earlier session: no need to match again.
       ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] } : {}),
     })),
-    ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, fixes: aufzeichnung.fixes }] : []),
+    ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
   const { fortschritt, rechnet } = useFortschritt(spuren, zaehlen, daten);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
-  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], gefahren: [], proGebiet: new Map() };
+  if (aufzeichnung.aktiv && !warAktiv.current) vorher.current = fortschritt ?? { stuecke: [], jahre: [], gefahren: [], proGebiet: new Map(), abzug: new Map() };
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
@@ -96,6 +103,11 @@ export function App() {
   const zaehlendeStuecke = useMemo(
     () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street"),
     [fortschritt],
+  );
+  const jahre = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.jahre[i] ?? new Date().getFullYear()])), [fortschritt]);
+  const stifte = useMemo(
+    () => ({ marker: einstellungen.marker, kuli: einstellungen.kuli, jahresFarben: einstellungen.jahresFarben }),
+    [einstellungen.marker, einstellungen.kuli, einstellungen.jahresFarben],
   );
   const neuUnterwegs = aufzeichnung.aktiv ? zaehlendeStuecke.filter((p) => !vorherIds.has(p.id)) : [];
   const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + p.lengthM * p.weight, 0);
@@ -169,6 +181,8 @@ export function App() {
             if (!einzeln) rueckblickBeenden();
           }}
           offen={offen?.linien ?? null}
+          jahre={jahre}
+          stifte={stifte}
         />
         <div className="karten-knoepfe">
           <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
@@ -214,7 +228,7 @@ function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null): Map<st
   if (!daten || !f) return m;
   for (const [id, gesehen] of f.proGebiet) {
     const g = daten.gebiete.get(id);
-    if (g) m.set(id, prozent(zaehlendeMeter(gesehen, false), zaehlendeMeter(g, false)));
+    if (g) m.set(id, prozent(zaehlendeMeter(gesehen, false), gesamtMeter(g, f.abzug)));
   }
   return m;
 }
@@ -245,6 +259,8 @@ function Profil(props: {
           <span>{t.ich.zurueck}</span>
         </button>
         <h1 id="profil-titel">{t.ich.titel}</h1>
+        <h2>{t.stifte.titel}</h2>
+        <Stifte werte={werte} aendern={aendern} />
         <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
         <OverlandEinrichten daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.zuhause.titel}</h2>

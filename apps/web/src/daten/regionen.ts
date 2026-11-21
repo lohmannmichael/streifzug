@@ -125,3 +125,8 @@ export function useMittelpunkte(daten: Regionen | null): Map<string, [number, nu
   }, [daten]);
   return punkte;
 }
+
+/** Counting meters of an area minus the exceptions ("Hier komme ich nicht hin"). */
+export function gesamtMeter(g: GebietDaten, abzug: Map<string, Summe> | undefined): number {
+  return Math.max(0, zaehlendeMeter(g, false) - zaehlendeMeter(abzug?.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, false));
+}

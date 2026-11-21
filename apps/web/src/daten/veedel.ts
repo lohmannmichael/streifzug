@@ -1,11 +1,11 @@
 import { faelligeStempel, naechsteStempel, type Gruppe, type Naechster, type Stand, type Stempel } from "@streifzug/core";
 import { useEffect, useMemo, useState } from "react";
-import type { KurzWeg, OffeneStrasse } from "./abgleich.worker";
+import type { Etikett, KurzWeg, OffeneStrasse } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, fragen } from "./arbeiter";
 import type { Fortschritt } from "./fortschritt";
-import { zaehlendeMeter, type Regionen } from "./regionen";
+import { gesamtMeter, zaehlendeMeter, type Regionen } from "./regionen";
 
-export type { OffeneStrasse } from "./abgleich.worker";
+export type { Etikett, OffeneStrasse } from "./abgleich.worker";
 
 /** Newest other outings (Overland, GPX), shortened, from the background worker. */
 export async function letzteWege(anzahl: number): Promise<KurzWeg[]> {
@@ -66,7 +66,7 @@ function lesen(): GesetzterStempel[] {
 export function standAus(daten: Regionen, f: Fortschritt): Stand {
   const veedel = [...daten.gebiete.values()]
     .filter((g) => g.kinder.length === 0)
-    .map((g) => ({ id: g.id, aktivM: zaehlendeMeter(f.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, false), gesamtM: zaehlendeMeter(g, false) }));
+    .map((g) => ({ id: g.id, aktivM: zaehlendeMeter(f.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, false), gesamtM: gesamtMeter(g, f.abzug) }));
   const blaetter = (id: string): string[] => {
     const g = daten.gebiete.get(id);
     return !g ? [] : g.kinder.length === 0 ? [id] : g.kinder.flatMap(blaetter);
@@ -104,4 +104,9 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stand]);
   return { gesetzt, naechste: stand ? naechsteStempel(stand) : [] };
+}
+
+/** The street at a tapped point (within radiusM), for the label. */
+export async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etikett | null> {
+  return (await fragen<"etikett">({ typ: "etikett", punkt, radiusM }).antwort).etikett;
 }

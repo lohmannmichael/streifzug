@@ -16,6 +16,8 @@ export interface SpurDaten {
   id: string;
   /** Number of fixes: a result is valid only for the same track. */
   n: number;
+  /** Start time, for "gegangen am …" and the year colours. */
+  t: number;
   fixes?: Fix[];
   /** Stored result from an earlier session (piece ids, "aktiv" and "gefahren"); then no fixes are needed. */
   ids?: string[];
@@ -25,6 +27,8 @@ export interface SpurDaten {
 /** Which other sources count. (Car, bus, train never count: that is decided per leg.) */
 export interface Zaehlen {
   quellen: Record<ImportQuelle, boolean>;
+  /** "Hier komme ich nicht hin": pieces that do not count, neither seen nor in the total. */
+  ausnahmen: string[];
 }
 
 export interface ImportVorschau {
@@ -49,18 +53,33 @@ export type Anfrage =
   | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] }
   | { typ: "wegeSeit"; nr: number; seit: number }
   | { typ: "letzteWege"; nr: number; anzahl: number }
-  | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null };
+  | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null }
+  | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; gefahren: Piece[]; proGebiet: [string, Summe][] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; jahre: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
   | { typ: "ok"; nr: number }
   | { typ: "wege"; nr: number; wege: KurzWeg[] }
-  | { typ: "offen"; nr: number; strassen: OffeneStrasse[] };
+  | { typ: "offen"; nr: number; strassen: OffeneStrasse[] }
+  | { typ: "etikett"; nr: number; etikett: Etikett | null };
+
+/** What the tapped street is (Bauplan 3.2, "Etikett einer Straße"). */
+export interface Etikett {
+  id: string;
+  name: string | null;
+  coords: [number, number][];
+  zustand: "aktiv" | "gefahren" | "offen";
+  /** First time seen in this state. */
+  zeit: number | null;
+  /** Open meters of this street nearby (same name). */
+  restM: number;
+  ausnahme: boolean;
+}
 
 /** A named street in a Veedel that is not walked completely yet ("Noch offen", Bauplan 3.2). */
 export interface OffeneStrasse {
@@ -121,6 +140,35 @@ const zaehlt = (k: Pick<Streifzug, "quelle">, z: Zaehlen) => k.quelle === undefi
 let neueste = 0;
 // Pieces covered "aktiv" in the last complete calculation (for "Noch offen").
 let zuletztGesehen = new Set<string>();
+// First time each piece was seen, per state, and the current exceptions (for the street label).
+let ersteAktiv = new Map<string, number>();
+let ersteGefahren = new Map<string, number>();
+let zuletztAusnahmen = new Set<string>();
+
+/** The counting piece nearest to a tapped point (within radiusM), with its state. */
+async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etikett | null> {
+  const mitte = tileFor(punkt, TILE_ZOOM);
+  let best: { p: Piece; d: number } | null = null;
+  const nahe: Piece[] = [];
+  for (let dx = -1; dx <= 1; dx++)
+    for (let dy = -1; dy <= 1; dy++)
+      for (const p of await stueckeDerKachel({ z: TILE_ZOOM, x: mitte.x + dx, y: mitte.y + dy })) {
+        if (p.kind !== "street") continue;
+        nahe.push(p);
+        const d = distanceToLineM(punkt, p.coords);
+        if (d <= radiusM && (!best || d < best.d)) best = { p, d };
+      }
+  if (!best) return null;
+  const p = best.p;
+  const name = await strassenName(p);
+  let restM = 0;
+  if (name)
+    for (const q of nahe)
+      if (!zuletztGesehen.has(q.id) && !zuletztAusnahmen.has(q.id) && (await strassenName(q)) === name) restM += q.lengthM * q.weight;
+  const zustand = zuletztGesehen.has(p.id) ? "aktiv" : ersteGefahren.has(p.id) ? "gefahren" : "offen";
+  const zeit = zustand === "aktiv" ? (ersteAktiv.get(p.id) ?? null) : zustand === "gefahren" ? (ersteGefahren.get(p.id) ?? null) : null;
+  return { id: p.id, name, coords: p.coords.map((c) => [c[0], c[1]] as [number, number]), zustand, zeit, restM, ausnahme: zuletztAusnahmen.has(p.id) };
+}
 
 /** Named streets of a Veedel with open meters, nearest first (at most 12). */
 async function offeneStrassen(regionId: string, gebietId: string, bezug: [number, number] | null): Promise<OffeneStrasse[]> {
@@ -196,23 +244,39 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   if (neueste !== nr) return;
 
   // State per piece: "aktiv" wins over "gefahren" (yellow paints over the pen line).
+  // Exceptions ("Hier komme ich nicht hin") count neither as seen nor in the total.
+  const ausnahmen = new Set(z.ausnahmen);
   const gesehen = new Map<string, Piece>();
   const gefahren = new Map<string, Piece>();
-  for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) {
+  const aktivAb = new Map<string, number>();
+  const gefahrenAb = new Map<string, number>();
+  const start = new Map<string, number>(eigene.map((s) => [s.id, s.t]));
+  for (const k of zaehlende) start.set(k.id, k.startedAt);
+  for (const [id, t] of start) {
     const e = jeSpur.get(id);
     for (const pid of e?.ids ?? []) {
       const p = stueckNachId.get(pid);
-      if (p) gesehen.set(pid, p);
+      if (!p) continue;
+      if (!ausnahmen.has(pid)) gesehen.set(pid, p);
+      if (t < (aktivAb.get(pid) ?? Infinity)) aktivAb.set(pid, t);
     }
     for (const pid of e?.gefahren ?? []) {
       const p = stueckNachId.get(pid);
-      if (p) gefahren.set(pid, p);
+      if (!p) continue;
+      gefahren.set(pid, p);
+      if (t < (gefahrenAb.get(pid) ?? Infinity)) gefahrenAb.set(pid, t);
     }
   }
   for (const pid of gesehen.keys()) gefahren.delete(pid);
   zuletztGesehen = new Set(gesehen.keys());
+  ersteAktiv = aktivAb;
+  ersteGefahren = gefahrenAb;
+  zuletztAusnahmen = ausnahmen;
   const proGebiet = await meterJeGebiet(gesehen.values(), liste);
-  senden({ typ: "ergebnis", nr, stuecke: [...gesehen.values()], gefahren: [...gefahren.values()], proGebiet: [...proGebiet] });
+  const abzug = ausnahmen.size ? await meterJeGebiet(await stueckeFuerIds([...ausnahmen]), liste) : new Map<string, Summe>();
+  const stuecke = [...gesehen.values()];
+  const jahre = stuecke.map((p) => new Date(aktivAb.get(p.id) ?? Date.now()).getFullYear());
+  senden({ typ: "ergebnis", nr, stuecke, jahre, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug] });
 }
 
 /** Only points in or near a built region are kept (the server keeps everything). */
@@ -360,6 +424,8 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
       }
       return senden({ typ: "wege", nr: a.nr, wege });
     }
+    case "etikett":
+      return senden({ typ: "etikett", nr: a.nr, etikett: await etikettAn(a.punkt, a.radiusM) });
     case "offen":
       return senden({ typ: "offen", nr: a.nr, strassen: await offeneStrassen(a.regionId, a.gebietId, a.bezug) });
   }
