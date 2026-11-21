@@ -88,7 +88,7 @@ export const de = {
       erklaerung: "Die kostenlose App Overland zeichnet im Hintergrund auf, ohne dass du etwas starten musst, und schickt die Punkte an Streifzug. Hier werden sie automatisch abgeholt und eingerechnet.",
       schritte: [
         "Overland aus dem App Store installieren.",
-        "Hier „Mit Overland verbinden“ tippen, dann „In Overland übernehmen“. Overland öffnet sich und ist eingerichtet.",
+        "Hier „Mit Overland verbinden“ tippen, dann „Adresse kopieren“ und in Overland unter Settings → Server URL einfügen.",
         "In Overland den Standort auf „Immer“ erlauben und oben die Aufzeichnung einschalten.",
         "Fertig. Streifzug holt neue Wege beim Öffnen und alle 5 Minuten ab.",
       ],
@@ -107,6 +107,13 @@ export const de = {
       wirklichTrennen: "Wirklich trennen?",
       neuVerbinden: "Neuen Verbindungslink erzeugen",
       keinKonto: "Gerade keine Verbindung zum Server. Bitte später erneut versuchen.",
+      adresseTitel: "Deine Adresse für Overland",
+      manuellSchritte: [
+        "„Adresse kopieren“ tippen.",
+        "Overland öffnen, unten „Settings“, oben den Regler „Slide to unlock“ nach rechts ziehen.",
+        "„Server URL“ antippen, alles im Feld löschen, Adresse einfügen und bestätigen.",
+        "Wichtig: Die Adresse gilt nur für dich. Nicht weitergeben.",
+      ],
       klapptNicht: "Klappt der Knopf nicht?",
       manuell: "Diese Adresse kopieren und in Overland unter Settings → Server URL einfügen (vorher oben „Slide to unlock“ ziehen).",
       adresseLabel: "Adresse für Overland",

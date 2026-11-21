@@ -118,9 +118,8 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
 
       {link && (
         <div className="vorschau">
-          <a className="haupt link-knopf" href={link}>{tx.uebernehmen}</a>
-          <p className="schalter-hinweis">{tx.nurIphone}</p>
           <AdresseKopieren link={link} />
+          <a className="text-knopf" href={link}>{tx.uebernehmen}</a>
         </div>
       )}
 
@@ -187,18 +186,18 @@ function AdresseKopieren({ link }: { link: string }) {
   const adresse = `${OVERLAND_EMPFAENGER}?token=${encodeURIComponent(token)}`;
   const [kopiert, setKopiert] = useState(false);
   return (
-    <details className="anleitung">
-      <summary>{tx.klapptNicht}</summary>
-      <p className="schalter-hinweis">{tx.manuell}</p>
-      <input className="adresse" readOnly value={adresse} onFocus={(e) => e.target.select()} aria-label={tx.adresseLabel} />
+    <>
+      <p className="vorschau-titel">{tx.adresseTitel}</p>
+      <textarea className="adresse" readOnly rows={4} value={adresse} onFocus={(e) => e.target.select()} aria-label={tx.adresseLabel} />
       <button
         type="button"
-        className="text-knopf"
+        className="haupt"
         onClick={() => void navigator.clipboard?.writeText(adresse).then(() => setKopiert(true))}
       >
         {kopiert ? tx.kopiert : tx.kopieren}
       </button>
-    </details>
+      <ol className="schritte-klein">{tx.manuellSchritte.map((x) => <li key={x}>{x}</li>)}</ol>
+    </>
   );
 }
 
