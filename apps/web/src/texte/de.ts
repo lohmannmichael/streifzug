@@ -116,6 +116,11 @@ export const de = {
       wirklichTrennen: "Wirklich trennen?",
       neuVerbinden: "Neuen Verbindungslink erzeugen",
       keinKonto: "Gerade keine Verbindung zum Server. Bitte später erneut versuchen.",
+      klapptNicht: "Klappt der Knopf nicht?",
+      manuell: "Diese Adresse kopieren und in Overland unter Settings → Server URL einfügen (vorher oben „Slide to unlock“ ziehen).",
+      adresseLabel: "Adresse für Overland",
+      kopieren: "Adresse kopieren",
+      kopiert: "Kopiert.",
     },
   },
   stempel: {

@@ -12,6 +12,7 @@ import {
   type ImportVorschau,
   type QuellenInfo,
 } from "../daten/import";
+import { OVERLAND_EMPFAENGER } from "../daten/import";
 import { alsKm, type Regionen } from "../daten/regionen";
 import type { Einstellungen } from "../einstellungen";
 import { t } from "../texte/de";
@@ -114,6 +115,7 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
         <div className="vorschau">
           <a className="haupt link-knopf" href={link}>{tx.uebernehmen}</a>
           <p className="schalter-hinweis">{tx.nurIphone}</p>
+          <AdresseKopieren link={link} />
         </div>
       )}
 
@@ -167,6 +169,31 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
       )}
       {meldung && <p className="zeile-text" role="status">{meldung}</p>}
     </div>
+  );
+}
+
+/**
+ * Fallback if the setup link does not open Overland: the receiver address with the token,
+ * to paste into Overland under "Server URL" (the receiver also accepts ?token=).
+ */
+function AdresseKopieren({ link }: { link: string }) {
+  const tx = t.import.overland;
+  const token = new URLSearchParams(link.split("?")[1] ?? "").get("token") ?? "";
+  const adresse = `${OVERLAND_EMPFAENGER}?token=${encodeURIComponent(token)}`;
+  const [kopiert, setKopiert] = useState(false);
+  return (
+    <details className="anleitung">
+      <summary>{tx.klapptNicht}</summary>
+      <p className="schalter-hinweis">{tx.manuell}</p>
+      <input className="adresse" readOnly value={adresse} onFocus={(e) => e.target.select()} aria-label={tx.adresseLabel} />
+      <button
+        type="button"
+        className="text-knopf"
+        onClick={() => void navigator.clipboard?.writeText(adresse).then(() => setKopiert(true))}
+      >
+        {kopiert ? tx.kopiert : tx.kopieren}
+      </button>
+    </details>
   );
 }
 
