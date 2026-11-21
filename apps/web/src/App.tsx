@@ -9,7 +9,7 @@ import { useSitzung, type Sitzung } from "./daten/supabase";
 import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { useWeisserFleck, type Fleck } from "./daten/fleck";
-import { Importieren } from "./seiten/Importieren";
+import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { LogbuchSeite } from "./seiten/Logbuch";
 import { Stempel } from "./ui/Stempel";
 import { Karte } from "./karte/Karte";
@@ -28,7 +28,7 @@ export function App() {
   const [reiter, setReiter] = useState<Reiter>("karte");
   const [profilOffen, setProfilOffen] = useState(false);
   // Shortcut from the logbook: open the profile at "Importieren".
-  const [importZeigen, setImportZeigen] = useState(false);
+  const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
   const [einstellungen, aendern] = useEinstellungen(sitzung);
   const daten = useRegionen();
@@ -46,8 +46,8 @@ export function App() {
   // outings; imports and Overland are loaded by the background worker, each with its switch.
   const zaehlende = streifzuege.filter((s) => s.mode !== "car" || einstellungen.autoZaehlen);
   const zaehlen: Zaehlen = useMemo(
-    () => ({ quellen: { google: einstellungen.googleZaehlen, gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, auto: einstellungen.autoZaehlen }),
-    [einstellungen.googleZaehlen, einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, einstellungen.autoZaehlen],
+    () => ({ quellen: { gpx: einstellungen.gpxZaehlen, overland: einstellungen.overlandZaehlen }, auto: einstellungen.autoZaehlen }),
+    [einstellungen.gpxZaehlen, einstellungen.overlandZaehlen, einstellungen.autoZaehlen],
   );
   useOverlandAbholen(daten);
   const spuren: Spur[] = [
@@ -121,7 +121,7 @@ export function App() {
   }, [daten]);
 
   if (profilOffen)
-    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(false); }} />;
+    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(null); }} />;
 
   return (
     <div className="app">
@@ -201,8 +201,8 @@ export function App() {
             }}
             bereit={fortschritt !== null && rechnet === null}
             zaehlen={zaehlen}
-            importieren={() => {
-              setImportZeigen(true);
+            importieren={(ziel) => {
+              setImportZeigen(ziel);
               setProfilOffen(true);
             }}
           />
@@ -402,12 +402,15 @@ function Profil(props: {
   aendern: (teil: Partial<Einstellungen>) => void;
   daten: Regionen | null;
   streifzuege: Streifzug[];
-  zumImport: boolean;
+  zumImport: "overland" | "gpx" | null;
   schliessen: () => void;
 }) {
+  const userId = props.sitzung.status === "bereit" ? props.sitzung.session.user.id : null;
   const importRef = useRef<HTMLHeadingElement>(null);
+  const overlandRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    if (props.zumImport) importRef.current?.scrollIntoView({ block: "start" });
+    if (props.zumImport === "gpx") importRef.current?.scrollIntoView({ block: "start" });
+    if (props.zumImport === "overland") overlandRef.current?.scrollIntoView({ block: "start" });
   }, [props.zumImport]);
   const { werte, aendern } = props;
   const kontoText =
@@ -420,6 +423,8 @@ function Profil(props: {
           <span>{t.ich.zurueck}</span>
         </button>
         <h1 id="profil-titel">{t.ich.titel}</h1>
+        <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
+        <OverlandEinrichten daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.ich.zaehlen}</h2>
         <div className="gruppe">
           <Schalter label={t.ich.wege} hinweis={t.ich.wegeHinweis} an={werte.wegeZaehlen} onChange={(an) => aendern({ wegeZaehlen: an })} />
@@ -430,7 +435,7 @@ function Profil(props: {
           <Schalter label={t.ich.nebel} hinweis={t.ich.nebelHinweis} an={werte.nebel} onChange={(an) => aendern({ nebel: an })} />
         </div>
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
-        <Importieren daten={props.daten} userId={props.sitzung.status === "bereit" ? props.sitzung.session.user.id : null} werte={werte} aendern={aendern} />
+        <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.ich.konto}</h2>
         <div className="gruppe">
           <p className="zeile-text">{kontoText}</p>

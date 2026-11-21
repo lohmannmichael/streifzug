@@ -19,7 +19,7 @@ export function LogbuchSeite(props: {
   einstellungen: Einstellungen;
   zaehlen: Zaehlen;
   zeigen: (gebietId: string) => void;
-  importieren: () => void;
+  importieren: (ziel: "overland" | "gpx") => void;
   bereit: boolean;
 }) {
   const e = props.einstellungen;
@@ -27,13 +27,16 @@ export function LogbuchSeite(props: {
   const logbuch = useLogbuch(props.liste, props.daten, e.wegeZaehlen, props.zaehlen, props.bereit);
   const eigene = props.liste;
   const info = useQuellenInfo();
-  const importe = (["overland", "gpx", "google"] as const).flatMap((q) => (info[q] ? [{ q, ...info[q] }] : []));
+  const importe = (["overland", "gpx"] as const).flatMap((q) => (info[q] ? [{ q, ...info[q] }] : []));
   if (eigene.length === 0 && importe.length === 0)
     return (
       <section className="seite" aria-labelledby="streifzuege-titel">
         <h1 id="streifzuege-titel">{t.streifzuege.titel}</h1>
         <p className="leer gross">{t.streifzuege.leer}</p>
-        <button type="button" className="mehr-knopf" onClick={props.importieren}>{t.import.abkuerzung}</button>
+        <>
+          <button type="button" className="mehr-knopf" onClick={() => props.importieren("overland")}>{t.import.overland.abkuerzung}</button>
+          <button type="button" className="mehr-knopf zweit" onClick={() => props.importieren("gpx")}>{t.import.abkuerzung}</button>
+        </>
       </section>
     );
 
@@ -58,7 +61,10 @@ export function LogbuchSeite(props: {
         </div>
       )}
       {importe.length === 0 && (
-        <button type="button" className="mehr-knopf" onClick={props.importieren}>{t.import.abkuerzung}</button>
+        <>
+          <button type="button" className="mehr-knopf" onClick={() => props.importieren("overland")}>{t.import.overland.abkuerzung}</button>
+          <button type="button" className="mehr-knopf zweit" onClick={() => props.importieren("gpx")}>{t.import.abkuerzung}</button>
+        </>
       )}
       {gruppen.map((g) => (
         <div key={g.titel}>

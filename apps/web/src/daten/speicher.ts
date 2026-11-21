@@ -2,7 +2,7 @@ import type { Fix, Mode } from "@streifzug/core";
 
 export type Quelle = "aufnahme" | ImportQuelle;
 /** Outings that come from elsewhere: imported files or Overland (automatic background recording). */
-export type ImportQuelle = "google" | "gpx" | "overland";
+export type ImportQuelle = "gpx" | "overland";
 
 /** A recorded outing as kept on the device. */
 export interface Streifzug {
@@ -46,12 +46,13 @@ async function auftrag<T>(modus: IDBTransactionMode, fn: (s: IDBObjectStore) => 
 }
 
 /**
- * Own outings have UUIDs (0-9, a-f); imported ones "google:…", "gpx:…", "overland:…". So the page
+ * Own outings have UUIDs (0-9, a-f); imported ones "gpx:…", "overland:…" (old "google:…" ones are
+ * removed on start). So the page
  * loads only its own outings (key range below "g"); the others (possibly thousands) are handled
  * by the background worker only, so the page never freezes.
  */
 const EIGENE = () => IDBKeyRange.upperBound("g", true);
-export const importBereich = (quelle: ImportQuelle) => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
+export const importBereich = (quelle: ImportQuelle | "google") => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
 
 export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s)).then(() => undefined);
 /** Own outings only (recorded in Streifzug). */
@@ -66,7 +67,7 @@ export async function importeLaden(quellen: ImportQuelle[]): Promise<Streifzug[]
 }
 
 /** Deletes all outings of a source without loading them (fast, also with huge imports). */
-export const importeEntfernen = (quelle: ImportQuelle) => auftrag("readwrite", (st) => st.delete(importBereich(quelle))).then(() => undefined);
+export const importeEntfernen = (quelle: ImportQuelle | "google") => auftrag("readwrite", (st) => st.delete(importBereich(quelle))).then(() => undefined);
 
 /** Saves many outings in one transaction. */
 export async function vieleSpeichern(liste: Streifzug[]): Promise<void> {

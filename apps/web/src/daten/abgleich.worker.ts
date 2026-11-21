@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { cleanFixes, density, parseGoogleTimeline, parseGpx, splitOutings, summarizeImported, type Fix, type Piece } from "@streifzug/core";
+import { cleanFixes, density, parseGpx, splitOutings, summarizeImported, type Fix, type Piece } from "@streifzug/core";
 import { abgleichen, ABGLEICH_VERSION, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import type { Region, Summe } from "./regionen";
 import { einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
@@ -27,7 +27,7 @@ export interface Zaehlen {
 }
 
 export interface ImportVorschau {
-  quelle: "google" | "gpx";
+  quelle: "gpx";
   wege: number;
   km: { fuss: number; rad: number; auto: number };
   dichte: number;
@@ -41,8 +41,8 @@ export type QuellenInfo = Partial<Record<ImportQuelle, { wege: number; km: numbe
 export type Anfrage =
   | { typ: "berechne"; nr: number; eigene: SpurDaten[]; zaehlen: Zaehlen; liste: Region[] }
   | { typ: "zeitraum"; nr: number; ab: number; bis: number; zaehlen: Zaehlen }
-  | { typ: "importLesen"; nr: number; quelle: "google" | "gpx"; dateien: File[]; liste: Region[] }
-  | { typ: "importUebernehmen"; nr: number; quelle: "google" | "gpx" }
+  | { typ: "importLesen"; nr: number; dateien: File[]; liste: Region[] }
+  | { typ: "importUebernehmen"; nr: number }
   | { typ: "quelleLoeschen"; nr: number; quelle: ImportQuelle }
   | { typ: "info"; nr: number }
   | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] };
@@ -58,7 +58,6 @@ export type Antwort =
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);
 const gueltig = (n: number) => `${ABGLEICH_VERSION}:${n}`;
-// Google imports are paused and being removed (they made the app hang); the worker leaves them alone.
 const QUELLEN: ImportQuelle[] = ["gpx", "overland"];
 
 // Matching results per outing (own and others) and the pieces behind them.
@@ -148,35 +147,24 @@ function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {
   });
 }
 
-const wartend = new Map<"google" | "gpx", Streifzug[]>();
+let wartend: Streifzug[] = [];
 
-async function importLesen(nr: number, quelle: "google" | "gpx", dateien: File[], liste: Region[]) {
+async function importLesen(nr: number, dateien: File[], liste: Region[]) {
   try {
-    let fixes: Fix[] = [];
-    if (quelle === "google") {
-      let json: unknown;
-      try {
-        json = JSON.parse(await dateien[0]!.text());
-      } catch {
-        throw new Error("Die Datei ist keine JSON-Datei. Bitte die Datei aus „Zeitachsendaten exportieren“ wählen.");
-      }
-      fixes = parseGoogleTimeline(json);
-      if (fixes.length === 0) throw new Error("In der Datei stehen keine Wege. Ist das der Export der Google-Zeitachse?");
-    } else {
-      // No spread here: tens of thousands of points would overflow the call stack.
-      for (const d of dateien) for (const f of parseGpx(await d.text())) fixes.push(f);
-      if (fixes.length === 0) throw new Error("In den Dateien stehen keine Wege mit Zeitangaben.");
-      fixes.sort((a, b) => a.t - b.t);
-    }
-    const wege = wegeAus(quelle, inRegionen(fixes, liste));
-    wartend.set(quelle, wege);
+    const fixes: Fix[] = [];
+    // No spread here: tens of thousands of points would overflow the call stack.
+    for (const d of dateien) for (const f of parseGpx(await d.text())) fixes.push(f);
+    if (fixes.length === 0) throw new Error("In den Dateien stehen keine Wege mit Zeitangaben.");
+    fixes.sort((a, b) => a.t - b.t);
+    const wege = wegeAus("gpx", inRegionen(fixes, liste));
+    wartend = wege;
     const km = { fuss: 0, rad: 0, auto: 0 };
     for (const w of wege) km[w.mode === "foot" ? "fuss" : w.mode === "bike" ? "rad" : "auto"] += w.distanceM / 1000;
     senden({
       typ: "vorschau",
       nr,
       fehler: null,
-      vorschau: { quelle, wege: wege.length, km, dichte: density(wege.map((w) => w.fixes)), von: wege[0]?.startedAt ?? null, bis: wege.at(-1)?.endedAt ?? null, punkteGesamt: fixes.length },
+      vorschau: { quelle: "gpx", wege: wege.length, km, dichte: density(wege.map((w) => w.fixes)), von: wege[0]?.startedAt ?? null, bis: wege.at(-1)?.endedAt ?? null, punkteGesamt: fixes.length },
     });
   } catch (e) {
     senden({ typ: "vorschau", nr, vorschau: null, fehler: e instanceof Error ? e.message : String(e) });
@@ -236,10 +224,10 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
       return senden({ typ: "stuecke", nr: a.nr, stuecke: [...out.values()] });
     }
     case "importLesen":
-      return void importLesen(a.nr, a.quelle, a.dateien, a.liste);
+      return void importLesen(a.nr, a.dateien, a.liste);
     case "importUebernehmen":
-      await vieleSpeichern(wartend.get(a.quelle) ?? []);
-      wartend.delete(a.quelle);
+      await vieleSpeichern(wartend);
+      wartend = [];
       andere = null;
       return senden({ typ: "ok", nr: a.nr });
     case "quelleLoeschen":

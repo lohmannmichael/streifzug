@@ -21,7 +21,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung:
 ## Reihenfolge ab 20.11.2026 (Michi: erst für ihn selbst richtig nutzbar, Freund:innen-Test später)
 1. Michi nutzt die App draußen, Feedback einarbeiten
 2. Phase 3 vorziehen: iPhone-App mit Hintergrund-Aufzeichnung (ohne „Losziehen“, App muss nicht offen sein)
-3. Phase 2: Import (Google und GPX erledigt 20.11.2026; offen: Apple-Health-Zip direkt ohne Entpacken)
+3. Phase 2: Import (GPX erledigt; Google-Import am 21.11.2026 auf Wunsch entfernt; offen: Apple-Health-Zip direkt ohne Entpacken)
 4. Sehenswürdigkeiten-Checkliste (Urlaub)
 5. Später, vor dem Freund:innen-Test: erster Start mit 3 Bildschirmen, App-Icon und Startbildschirm, Teilen-Bild mit Privatzone
 - Test draußen durch Michi (Weiden), Feedback einarbeiten

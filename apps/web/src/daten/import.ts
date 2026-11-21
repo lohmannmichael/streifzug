@@ -9,14 +9,14 @@ import { supabase } from "./supabase";
 export type { ImportVorschau, QuellenInfo } from "./abgleich.worker";
 
 /** Reads files in the background and returns a preview (nothing is saved yet). Throws with a German message. */
-export async function lesen(quelle: "google" | "gpx", dateien: File[], daten: Regionen): Promise<ImportVorschau> {
-  const a = await fragen<"vorschau">({ typ: "importLesen", quelle, dateien, liste: daten.liste }).antwort;
+export async function lesen(dateien: File[], daten: Regionen): Promise<ImportVorschau> {
+  const a = await fragen<"vorschau">({ typ: "importLesen", dateien, liste: daten.liste }).antwort;
   if (!a.vorschau) throw new Error(a.fehler ?? "Die Datei konnte nicht gelesen werden.");
   return a.vorschau;
 }
 
-export async function uebernehmen(quelle: "google" | "gpx"): Promise<void> {
-  await fragen<"ok">({ typ: "importUebernehmen", quelle }).antwort;
+export async function uebernehmen(): Promise<void> {
+  await fragen<"ok">({ typ: "importUebernehmen" }).antwort;
   andereGeaendert();
 }
 

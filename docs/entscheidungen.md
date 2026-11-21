@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 21.11.2026: Google-Import ausgebaut, Overland oben im Profil
+- Auf Michis Wunsch ist der Google-Import ganz entfernt (Leser in `packages/core`, Worker, Oberfläche, Schalter). Bleibt: einmaliges Löschen alter Google-Einträge beim Start (`main.tsx`) und `?notfall`
+- Overland war zu versteckt (unten im Profil unter „Importieren“). Jetzt ganz oben im Profil unter „Automatisch aufzeichnen“; im Reiter Streifzüge zwei Knöpfe: „Automatisch aufzeichnen (ohne Losziehen)“ und „Alte Wege importieren (Apple Health, GPX)“
+
 ## 21.11.2026: Start nicht mehr blockieren
 - Michi konnte in der App nichts drücken. Wahrscheinliche Ursache: Die App wartete beim Start auf das Löschen der Google-Importe (bei großer Zeitachse auf dem iPhone langsam; beim Schließen bricht es ab und beginnt neu). Jetzt startet die App sofort, gelöscht wird im Hintergrund; der Worker lädt Google-Importe gar nicht mehr. Test: 2.000 Google-Wege à 500 Punkte, CPU 4-fach gedrosselt, bedienbar nach 0,5 s
 

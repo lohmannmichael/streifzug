@@ -21,16 +21,21 @@ const monat = new Intl.DateTimeFormat("de-DE", { month: "short", year: "numeric"
 const zeitpunkt = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const OVERLAND_APP_STORE = "https://apps.apple.com/app/id1292426766";
 
-/** Other sources: Overland (automatic, in the background) and GPX files, each with a switch. */
-export function Importieren(props: { daten: Regionen | null; userId: string | null; werte: Einstellungen; aendern: (teil: Partial<Einstellungen>) => void }) {
-  const info = useQuellenInfo();
-  return (
-    <>
-      <Overland {...props} info={info} />
-      {/* Google import is paused (large timelines made the app hang; Michi had them removed on 21.11.2026). */}
-      <Gpx {...props} info={info} />
-    </>
-  );
+interface QuellenProps {
+  daten: Regionen | null;
+  userId: string | null;
+  werte: Einstellungen;
+  aendern: (teil: Partial<Einstellungen>) => void;
+}
+
+/** Overland: automatic recording in the background (shown first in the profile). */
+export function OverlandEinrichten(props: QuellenProps) {
+  return <Overland {...props} info={useQuellenInfo()} />;
+}
+
+/** GPX files (e.g. Apple Health workouts), with a switch. */
+export function GpxImport(props: QuellenProps) {
+  return <Gpx {...props} info={useQuellenInfo()} />;
 }
 
 /** Count, km and the "count it" switch for a source that already has outings. */
@@ -210,7 +215,7 @@ function Gpx(props: { daten: Regionen | null; werte: Einstellungen; aendern: (te
     setVorschau(null);
     setZustand("liest");
     try {
-      setVorschau(await lesen("gpx", [...dateien], props.daten));
+      setVorschau(await lesen([...dateien], props.daten));
     } catch (e) {
       setFehler(e instanceof Error ? e.message : String(e));
     } finally {
@@ -237,7 +242,7 @@ function Gpx(props: { daten: Regionen | null; werte: Einstellungen; aendern: (te
           abbrechen={() => setVorschau(null)}
           uebernehmen={async () => {
             setZustand("speichert");
-            await uebernehmen("gpx");
+            await uebernehmen();
             setZustand("ruhe");
             setVorschau(null);
             props.aendern({ gpxZaehlen: true });

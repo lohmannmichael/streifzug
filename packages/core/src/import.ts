@@ -2,92 +2,18 @@ import { distanceM } from "./geo";
 import { MAX_ACCURACY_M, type Fix, type TrackSummary } from "./track";
 
 /**
- * Reading location history from other apps into plain fixes (time, position, accuracy).
+ * Reading tracks from other apps (GPX) into plain fixes (time, position, accuracy).
+ * (A Google Timeline reader existed until 21.11.2026 and was removed on Michi's wish.)
  * Only real recorded points are used; nothing is guessed between them.
  */
 
-/** Accuracy assumed for points that come without one (Google's smoothed path points). */
-const ASSUMED_ACC_M = 15;
 /** Jumps faster than this are GPS errors (same limit as live recording). */
 const MAX_SPEED_MS = 50;
 
-type Json = unknown;
-const isObj = (x: Json): x is Record<string, Json> => typeof x === "object" && x !== null && !Array.isArray(x);
-const arr = (x: Json): Json[] => (Array.isArray(x) ? x : []);
-
-/** "geo:50.94,6.83", "50.9406794°, 6.8319856°" or "50.94, 6.83" → [lon, lat]. */
-export function parseLatLngText(text: string): [number, number] | null {
-  const m = /(-?\d+(?:\.\d+)?)°?\s*,\s*(-?\d+(?:\.\d+)?)°?/.exec(text.replace(/^geo:/, ""));
-  if (!m) return null;
-  const lat = Number(m[1]);
-  const lon = Number(m[2]);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
-  return [lon, lat];
-}
-
-function zeit(x: Json): number | null {
-  if (typeof x === "number") return x > 1e11 ? x : x * 1000;
-  if (typeof x !== "string") return null;
-  if (/^\d+$/.test(x)) return Number(x);
+function zeit(x: string | undefined): number | null {
+  if (!x) return null;
   const t = Date.parse(x);
   return Number.isNaN(t) ? null : t;
-}
-
-function e7(o: Record<string, Json>): [number, number] | null {
-  const lat = o.latE7 ?? o.latitudeE7;
-  const lon = o.lngE7 ?? o.longitudeE7;
-  return typeof lat === "number" && typeof lon === "number" ? [lon / 1e7, lat / 1e7] : null;
-}
-
-function punkt(t: number | null, lonLat: [number, number] | null, acc: Json, out: Fix[]) {
-  if (t === null || !lonLat) return;
-  out.push({ t, lon: lonLat[0], lat: lonLat[1], acc: typeof acc === "number" ? acc : ASSUMED_ACC_M });
-}
-
-/**
- * All recorded points of a Google location history export, sorted by time. Understands:
- * the iPhone on-device export (location-history.json), the Android export (Timeline.json with
- * semanticSegments and rawSignals), the old Takeout Records.json and the old monthly
- * "Semantic Location History" files. Visits and start/end-only activities carry no route and are skipped.
- */
-export function parseGoogleTimeline(json: Json): Fix[] {
-  const out: Fix[] = [];
-  const segmente = Array.isArray(json) ? json : isObj(json) ? arr(json.semanticSegments) : [];
-  for (const s of segmente) {
-    if (!isObj(s)) continue;
-    const start = zeit(s.startTime);
-    const pfad = arr(s.timelinePath);
-    // iPhone: offsets in whole minutes, so several points share one minute; spread them evenly within it.
-    const jeMinute = new Map<string, number>();
-    for (const p of pfad) if (isObj(p) && p.time === undefined) jeMinute.set(String(p.durationMinutesOffsetFromStartTime), (jeMinute.get(String(p.durationMinutesOffsetFromStartTime)) ?? 0) + 1);
-    const gezaehlt = new Map<string, number>();
-    for (const p of pfad) {
-      if (!isObj(p) || typeof p.point !== "string") continue;
-      let t = zeit(p.time);
-      if (t === null && start !== null && p.durationMinutesOffsetFromStartTime !== undefined) {
-        const k = String(p.durationMinutesOffsetFromStartTime);
-        const i = gezaehlt.get(k) ?? 0;
-        gezaehlt.set(k, i + 1);
-        t = start + Number(k) * 60_000 + Math.round((i * 60_000) / (jeMinute.get(k) ?? 1));
-      }
-      punkt(t, parseLatLngText(p.point), undefined, out);
-    }
-  }
-  if (isObj(json)) {
-    for (const r of arr(json.rawSignals)) {
-      const pos = isObj(r) && isObj(r.position) ? r.position : null;
-      if (!pos) continue;
-      const text = pos.LatLng ?? pos.latLng;
-      punkt(zeit(pos.timestamp), typeof text === "string" ? parseLatLngText(text) : null, pos.accuracyMeters, out);
-    }
-    for (const l of arr(json.locations)) if (isObj(l)) punkt(zeit(l.timestamp ?? l.timestampMs), e7(l), l.accuracy, out);
-    for (const o of arr(json.timelineObjects)) {
-      const seg = isObj(o) && isObj(o.activitySegment) ? o.activitySegment : null;
-      const roh = seg && isObj(seg.simplifiedRawPath) ? arr(seg.simplifiedRawPath.points) : [];
-      for (const p of roh) if (isObj(p)) punkt(zeit(p.timestamp ?? p.timestampMs), e7(p), p.accuracyMeters, out);
-    }
-  }
-  return cleanFixes(out);
 }
 
 /** Track points of a GPX file (Apple Health workout routes, Strava, Komoot, …). Points without time are skipped. */
@@ -99,7 +25,7 @@ export function parseGpx(text: string): Fix[] {
     const lon = Number(/\blon="([^"]+)"/.exec(m[1]!)?.[1]);
     const t = zeit(/<time>([^<]+)<\/time>/.exec(m[2]!)?.[1]?.trim());
     const hacc = /<(?:\w+:)?hAcc>([^<]+)</.exec(m[2]!)?.[1];
-    if (Number.isFinite(lat) && Number.isFinite(lon)) punkt(t, [lon, lat], hacc !== undefined ? Number(hacc) : 5, out);
+    if (Number.isFinite(lat) && Number.isFinite(lon) && t !== null) out.push({ t, lon, lat, acc: hacc !== undefined ? Number(hacc) : 5 });
   }
   return cleanFixes(out);
 }

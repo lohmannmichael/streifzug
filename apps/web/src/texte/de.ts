@@ -45,17 +45,6 @@ export const de = {
     titel: "Importieren",
     abkuerzung: "Alte Wege importieren (Apple Health, GPX)",
     soGehts: "So geht's",
-    google: {
-      titel: "Google-Zeitachse",
-      kurz: "Google-Zeitachse",
-      waehlen: "Google-Datei wählen",
-      schritte: [
-        "Google Maps öffnen, auf dein Profilbild tippen, dann „Deine Zeitachse“.",
-        "In der Zeitachse die Einstellungen öffnen und „Zeitachsendaten exportieren“ wählen (die Bezeichnung kann je nach Version leicht abweichen).",
-        "Die Datei (location-history.json) in „Dateien“ sichern.",
-        "Hier „Google-Datei wählen“ tippen und die Datei auswählen.",
-      ],
-    },
     gpx: {
       titel: "GPX-Dateien (Apple Health, Strava, Komoot …)",
       kurz: "GPX-Dateien",
@@ -92,7 +81,9 @@ export const de = {
     logbuchKarte: (quelle: string, wege: number, km: string, an: boolean) => `${quelle}: ${wege} ${wege === 1 ? "Weg" : "Wege"}, ${km}${an ? "" : " (zählt gerade nicht)"}`,
     logbuchHinweis: "Diese Wege zählen mit, stehen aber nicht einzeln im Logbuch. Ein- und ausschalten im Profil.",
     overland: {
-      titel: "Automatisch aufzeichnen (Overland)",
+      titel: "Mit der App Overland",
+      ueberschrift: "Automatisch aufzeichnen",
+      abkuerzung: "Automatisch aufzeichnen (ohne Losziehen)",
       kurz: "Overland (automatisch)",
       erklaerung: "Die kostenlose App Overland zeichnet im Hintergrund auf, ohne dass du etwas starten musst, und schickt die Punkte an Streifzug. Hier werden sie automatisch abgeholt und eingerechnet.",
       schritte: [
