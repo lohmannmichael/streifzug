@@ -1,28 +1,28 @@
-/* Streifzug: "Textmarker auf dem Stadtplan".
-   Entdecktes wird gelb markiert wie früher mit dem Textmarker auf dem Papier-Stadtplan.
-   Tinte (Kugelschreiber-Blau) für Text und Knöpfe, sonst ruhig. Das Gelb ist das einzige Laute. */
+/* Unterwegs: ein gedruckter Stadtplan, den jemand benutzt hat (docs/PLAN.md, Abschnitt 4).
+   Charakter haben nur Plan, Marker, Kuli und Stempel; die Bedienung ist still und iPhone-üblich. */
 
 :root {
-  --tinte: #1e2a4a;
-  --tinte-weich: #4a5573;
-  --marker: #ffe14a;
-  --marker-kante: #e9c400;
-  --nebel: #e9ecef;
-  --flaeche: #ffffff;
-  --linie: #d9dde3;
-  --text: #1e2a4a;
-  --text-leise: #5b6475;
-  --schatten: 0 -1px 0 rgb(30 42 74 / 0.06), 0 -8px 24px rgb(30 42 74 / 0.10);
+  --tinte: #151515;
+  --tinte-weich: #5a5a56;
+  --marker: #ffe83a;
+  --marker-kante: #e0c400;
+  --kuli: #d92b20;
+  --nebel: #fbfbf8;          /* paper (plan ground, pages) */
+  --flaeche: #ffffff;        /* sheet */
+  --linie: #e4e4e0;          /* hairline in the sheet */
+  --text: #151515;
+  --text-leise: #5a5a56;
+  --schatten: 0 -1px 0 rgb(21 21 21 / 0.05), 0 -10px 28px rgb(21 21 21 / 0.10);
 
-  --schrift: "Barlow", system-ui, sans-serif;
-  --schrift-zahl: "Barlow Condensed", "Barlow", system-ui, sans-serif;
+  --schrift: -apple-system, system-ui, "Helvetica Neue", sans-serif;
+  --schrift-zahl: "Archivo Variable", "Archivo", -apple-system, system-ui, sans-serif;
 
-  /* Type scale (major third). */
-  --t-klein: 0.8rem;
-  --t-text: 1rem;
+  /* iPhone-like type sizes: rows 17, values 15, secondary 13 (Bauplan 4.3). */
+  --t-klein: 0.8125rem;
+  --t-text: 1.0625rem;
   --t-gross: 1.25rem;
-  --t-titel: 1.95rem;
-  --t-zahl: 4.2rem;
+  --t-titel: 2rem;
+  --t-zahl: 2.875rem;
 
   --leiste-hoehe: 56px;
   color-scheme: light dark;
@@ -30,14 +30,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --tinte: #f3f5f9;
-    --tinte-weich: #aab3c5;
-    --nebel: #12161c;
-    --flaeche: #1b2129;
-    --linie: #2c3440;
-    --text: #eef1f6;
-    --text-leise: #9aa4b6;
-    --schatten: 0 -1px 0 rgb(0 0 0 / 0.4), 0 -8px 24px rgb(0 0 0 / 0.35);
+    --tinte: #ededea;
+    --tinte-weich: #a2a29d;
+    --kuli: #ff6257;
+    --nebel: #17181a;
+    --flaeche: #1f2023;
+    --linie: #303136;
+    --text: #ededea;
+    --text-leise: #a2a29d;
+    --schatten: 0 -1px 0 rgb(0 0 0 / 0.4), 0 -10px 28px rgb(0 0 0 / 0.35);
   }
 }
 
@@ -566,3 +567,8 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .still-hinweis { font-size: var(--t-klein); color: var(--text-leise); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .radius { display: grid; gap: 2px; }
 .radius select { font: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; border: 1px solid var(--linie); border-radius: 10px; background: var(--flaeche); color: var(--text); }
+
+/* Bauplan 4.3: Veedel name and percent in Archivo (narrowed), plain UI in the system font. */
+.gebiet { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 90%; font-size: 2rem; letter-spacing: -0.01em; }
+.zahl { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 88%; font-size: var(--t-zahl); }
+.ober { font-size: var(--t-klein); }

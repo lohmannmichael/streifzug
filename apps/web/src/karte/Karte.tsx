@@ -2,6 +2,7 @@ import {
   AttributionControl,
   Map as MapLibreMap,
   Marker,
+  ScaleControl,
   setWorkerUrl,
   type FilterSpecification,
   type MapLayerMouseEvent,
@@ -14,17 +15,18 @@ import { useEffect, useRef } from "react";
 import { alsStrecke, type Regionen } from "../daten/regionen";
 import { strassenName } from "../daten/strassen";
 import { t } from "../texte/de";
-import { stadtplan, STIL_ADRESSE } from "./stil";
+import { FARBEN, stadtplan, STIL_ADRESSE, strassenBreite } from "./stil";
 
 setWorkerUrl(workerUrl);
 
 const START: [number, number] = [6.8285, 50.9395];
 const TINTE = "#1e2a4a";
-const MARKER = "#ffe14a";
+const MARKER = "#ffe83a";
 // Pen colour for driven streets (Bauplan 4.2, "Kuli").
 const KULI = "#d92b20";
 // Same width for seen streets and the drawing moment.
-const MARKER_BREITE = ["interpolate", ["linear"], ["zoom"], 11, 3, 13, 5, 16, 9] as const;
+// Highlighter: street width + 4 px (Bauplan 4.5).
+const MARKER_BREITE = strassenBreite(4);
 // Duration of the highlighter stroke over a newly seen street, and of the glow afterwards.
 const ZEICHNEN_MS = 700;
 const GLANZ_MS = 1400;
@@ -54,10 +56,12 @@ function ladeRegion(id: string, daten: Regionen) {
 
 /** Draws all regions: thin lines for the smallest areas, thicker ones for the levels above. */
 async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regionen, gewaehlt: string | null) {
-  const linie = dunkel ? "#aab3c5" : TINTE;
-  const halo = dunkel ? "#12161c" : "#ffffff";
-  // Area layers stay below street names and always below the yellow streets (layer names differ between styles).
-  const davor = karte.getLayer("highway-name-path") ? "highway-name-path" : karte.getLayer("entdeckt") ? "entdeckt" : undefined;
+  const f = dunkel ? FARBEN.dunkel : FARBEN.hell;
+  const linie = f.grenze;
+  const halo = f.hof;
+  // Area fills lie under the streets; borders above the streets but under the highlighter.
+  const unterStrassen = karte.getLayer("plan-nebenweg") ? "plan-nebenweg" : undefined;
+  const davor = karte.getLayer("gefahren") ? "gefahren" : undefined;
 
   for (const region of daten.liste) {
     const { gebiete, namen } = await ladeRegion(region.id, daten);
@@ -74,26 +78,28 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
         // Zoomed out, areas glow in highlighter yellow by how much is discovered; zoomed in, single streets take over.
         paint: {
           // Areas with progress glow yellow (also when chosen); a chosen area without progress gets a light ink tint.
-          "fill-color": ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], "#ffe14a", linie],
+          "fill-color": ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], MARKER, linie],
           // On the dark plan the yellow glow is toned down, otherwise it turns muddy.
           "fill-opacity": [
             "interpolate", ["linear"], ["zoom"],
             11, ["*", dunkel ? 0.55 : 1, ["case", [">", ["coalesce", ["feature-state", "prozent"], 0], 0], ["min", 0.65, ["+", 0.15, ["*", 0.005, ["coalesce", ["feature-state", "prozent"], 0]]]], ["boolean", ["feature-state", "gewaehlt"], false], 0.08, 0]],
-            15, ["case", ["boolean", ["feature-state", "gewaehlt"], false], 0.06, 0],
+            12.5, 0,
           ],
         },
       },
-      davor,
+      unterStrassen,
     );
     karte.addLayer(
       {
         id: `linie-${region.id}`,
         type: "line",
         source: `gebiete-${region.id}`,
+        // Veedel border: dash-dot, 1.1 px (Bauplan 4.2); districts a little stronger.
         paint: {
           "line-color": linie,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 9, ["case", ["get", "blatt"], 0.5, 1.1], 14, ["case", ["get", "blatt"], 1, 1.8]],
-          "line-opacity": ["case", ["get", "blatt"], 0.22, 0.35],
+          "line-width": ["case", ["get", "blatt"], 1.1, 1.6],
+          "line-opacity": ["case", ["get", "blatt"], 0.85, 0.6],
+          "line-dasharray": [6, 3, 1.5, 3],
         },
       },
       davor,
@@ -104,23 +110,25 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
       source: `gebiete-${region.id}`,
       filter: ["==", ["get", "id"], gewaehlt ?? ""],
       layout: { "line-join": "round" },
-      paint: { "line-color": linie, "line-width": 3 },
-    });
+      paint: { "line-color": linie, "line-width": 2.4 },
+    }, davor);
     karte.addLayer({
       id: `namen-${region.id}`,
       type: "symbol",
       source: `namen-${region.id}`,
       filter: ["==", ["get", "blatt"], true] as FilterSpecification,
       minzoom: 9.6,
-      maxzoom: 14.5,
+      maxzoom: 16.5,
+      // The Veedel name stands large, widely spaced and pale across the area, as on printed plans.
       layout: {
-        "text-field": ["get", "name"],
-        "text-font": SCHRIFT,
-        "text-size": ["interpolate", ["linear"], ["zoom"], 9.6, 9, 11, 11, 13, 14],
-        "text-max-width": 7,
+        "text-field": ["upcase", ["get", "name"]],
+        "text-font": ["Noto Sans Bold"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 9.6, 10, 12, 14, 14, 22, 16, 30],
+        "text-letter-spacing": 0.35,
+        "text-max-width": 12,
         "text-padding": 2,
       },
-      paint: { "text-color": linie, "text-halo-color": halo, "text-halo-width": 1.5 },
+      paint: { "text-color": f.schrift, "text-opacity": ["interpolate", ["linear"], ["zoom"], 9.6, 0.7, 13, 0.28], "text-halo-color": halo, "text-halo-width": 1 },
     });
     if (gewaehlt && daten.gebiete.get(gewaehlt)?.regionId === region.id)
       karte.setFeatureState({ source: `gebiete-${region.id}`, id: gewaehlt }, { gewaehlt: true });
@@ -183,20 +191,22 @@ const LEER = { type: "FeatureCollection" as const, features: [] };
 /** Own track and position, on top of everything. */
 function eigenesZeichnen(karte: MapLibreMap) {
   if (karte.getSource("spur")) return;
+  // Pen line and highlighter lie under the street names, so names stay readable (Bauplan 4.5).
+  const vorSchrift = karte.getStyle().layers.find((l) => l.type === "symbol")?.id;
   // Driven streets: a thin pen line (Kuli), under the highlighter, so walking later paints over it.
   karte.addSource("gefahren", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.4, 16, 2.6], "line-opacity": 0.9 } });
+  karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.2, 16, 1.8, 18, 2.4], "line-offset": 1, "line-opacity": 0.95 } }, vorSchrift);
   karte.addSource("entdeckt", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 0.9 } });
+  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": 0.82 } }, vorSchrift);
   // Drawing moment: a soft glow and the highlighter stroke running along the new street (line-progress needs lineMetrics).
   karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
   karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
-  karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE as never, "line-opacity": 0.9, "line-gradient": strich(0) } });
+  karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE, "line-opacity": 0.9, "line-gradient": strich(0) } });
   // Replay on opening: a highlighter trail with a glow and an ink dot at its head.
   karte.addSource("rb", { type: "geojson", data: LEER });
   karte.addSource("rb-kopf", { type: "geojson", data: LEER });
   karte.addLayer({ id: "rb-glanz", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 16, 24], "line-blur": 7, "line-opacity": 0.45 } });
-  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE as never, "line-opacity": 1 } });
+  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": 1 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
@@ -263,6 +273,7 @@ export function Karte(props: KartenProps) {
     karteRef.current = karte;
     karte.touchZoomRotate.disableRotation();
     karte.addControl(new AttributionControl({ compact: true }), "top-left");
+    karte.addControl(new ScaleControl({ unit: "metric", maxWidth: 90 }), "bottom-left");
     // Credits start folded to the (i) button; tapping it shows them (allowed by the OSM attribution guidelines).
     karte.once("load", () => box.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
 
