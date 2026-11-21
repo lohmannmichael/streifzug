@@ -54,6 +54,8 @@ export interface BlattProps {
   fremdeOrte: FremderOrt[];
   /** During the replay the number stays at the share before the new ways. */
   zahlVorher: number | null;
+  /** The calculation failed: shown instead of the district line, so it can be reported. */
+  rechenFehler: string | null;
   teil: SammlungTeil;
   setTeil: (t: SammlungTeil) => void;
   /** After the replay: count up from `von` (Bauplan 5, Nr. 6). */
@@ -115,7 +117,9 @@ export function Blatt(props: BlattProps) {
     ? t.blatt.unterwegs(alsStrecke(props.neuUnterwegsM), props.neueStrassen)
     : props.rueckblick
       ? t.blatt.seit(seitText(props.rueckblick.wege[0]?.startedAt ?? Date.now()), props.rueckblick.wege.length, alsStrecke(props.rueckblick.km * 1000))
-      : props.rechnet
+      : props.rechenFehler
+        ? t.blatt.rechenFehler(props.rechenFehler)
+        : props.rechnet
         ? t.blatt.rechnetWege(Math.max(1, props.rechnet.gesamt - props.rechnet.fertig))
         : gebiet && daten
           ? elternText(daten, gebiet.id)

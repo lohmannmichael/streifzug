@@ -3,7 +3,7 @@ import type { Anfrage, Antwort } from "./abgleich.worker";
 /** The one background worker of the app, and a simple question/answer channel to it. */
 let worker: Worker | null = null;
 let nummer = 0;
-const wartend = new Map<number, (a: Antwort) => void>();
+const wartend = new Map<number, { ok: (a: Antwort) => void; fehler: (e: Error) => void }>();
 const standHoerer = new Set<(a: Extract<Antwort, { typ: "stand" }>) => void>();
 
 function arbeiter(): Worker {
@@ -13,8 +13,10 @@ function arbeiter(): Worker {
       const a = e.data;
       if (a.typ === "stand") for (const h of standHoerer) h(a);
       else {
-        wartend.get(a.nr)?.(a);
+        const w = wartend.get(a.nr);
         wartend.delete(a.nr);
+        if (a.typ === "fehler") w?.fehler(new Error(a.text));
+        else w?.ok(a);
       }
     };
   }
@@ -25,7 +27,7 @@ type OhneNr<T> = T extends unknown ? Omit<T, "nr"> : never;
 
 export function fragen<T extends Antwort["typ"]>(anfrage: OhneNr<Anfrage>): { nr: number; antwort: Promise<Extract<Antwort, { typ: T }>> } {
   const nr = ++nummer;
-  const antwort = new Promise<Extract<Antwort, { typ: T }>>((resolve) => wartend.set(nr, resolve as (a: Antwort) => void));
+  const antwort = new Promise<Extract<Antwort, { typ: T }>>((resolve, reject) => wartend.set(nr, { ok: resolve as (a: Antwort) => void, fehler: reject }));
   arbeiter().postMessage({ ...anfrage, nr } as Anfrage);
   return { nr, antwort };
 }

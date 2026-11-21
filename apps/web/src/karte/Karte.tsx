@@ -502,6 +502,7 @@ export function Karte(props: KartenProps) {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,
         zeichnen: (stuecke) => setzeDaten(karte, "entdeckt", linienSammlung(stuecke)),
+        aktuell: () => entdecktRef.current,
         untenFrei: Math.min(blatt, karte.getContainer().clientHeight * 0.4),
         veedel: veedelRahmen(gewaehltRef.current, datenRef.current),
       },

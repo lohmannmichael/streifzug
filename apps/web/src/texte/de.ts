@@ -177,6 +177,7 @@ export const de = {
     einrichten: "Automatisch aufzeichnen einrichten",
     jetztAufzeichnen: "Jetzt mit offener App aufzeichnen",
     beenden: "Aufzeichnung beenden",
+    rechenFehler: (text: string) => `Einrechnen hat nicht geklappt (${text}). Bitte Screenshot an Claude.`,
     rechnetWege: (n: number) => (n === 1 ? "rechnet 1 Weg ein …" : `rechnet ${n} Wege ein …`),
     seit: (tag: string, wege: number, km: string) => `Seit ${tag} · ${wege} ${wege === 1 ? "Weg" : "Wege"} · ${km}`,
     ueberspringen: "Überspringen",

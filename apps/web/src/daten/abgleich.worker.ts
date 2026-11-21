@@ -68,7 +68,8 @@ export type Antwort =
   | { typ: "wege"; nr: number; wege: KurzWeg[] }
   | { typ: "offen"; nr: number; strassen: OffeneStrasse[] }
   | { typ: "etikett"; nr: number; etikett: Etikett | null }
-  | { typ: "ortsName"; nr: number; name: string | null };
+  | { typ: "ortsName"; nr: number; name: string | null }
+  | { typ: "fehler"; nr: number; text: string };
 
 /** Walked streets outside all regions, per cell of about 5 km (a place that is not prepared yet). */
 export interface Draussen {
@@ -243,7 +244,14 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     // A newer request (e.g. the next live fixes) takes over; what is done so far is kept.
     if (neueste !== nr) break;
     if (offen.length > 3) senden({ typ: "stand", nr, fertig: i, gesamt: offen.length });
-    const r = await abgleichen(s.fixes, s.locker);
+    // One broken outing must not stop all the others: it is skipped (and tried again next time).
+    let r: Awaited<ReturnType<typeof abgleichen>>;
+    try {
+      r = await abgleichen(s.fixes, s.locker);
+    } catch (e) {
+      console.warn("Weg übersprungen", s.id, e);
+      continue;
+    }
     for (const p of [...r.aktiv, ...r.gefahren]) stueckNachId.set(p.id, p);
     const ids = r.aktiv.map((p) => p.id);
     const gefahren = r.gefahren.map((p) => p.id);
@@ -386,10 +394,18 @@ async function overlandAbholen(nr: number, url: string, schluessel: string, jwt:
 }
 
 self.onmessage = async (e: MessageEvent<Anfrage>) => {
-  const a = e.data;
+  try {
+    await antworten(e.data);
+  } catch (fehler) {
+    // Never leave the page waiting: say what went wrong.
+    senden({ typ: "fehler", nr: e.data.nr, text: fehler instanceof Error ? fehler.message : String(fehler) });
+  }
+};
+
+async function antworten(a: Anfrage): Promise<void> {
   switch (a.typ) {
     case "berechne":
-      return void berechne(a.nr, a.eigene, a.zaehlen, a.liste);
+      return berechne(a.nr, a.eigene, a.zaehlen, a.liste);
     case "zeitraum": {
       // Pieces of the other outings that count and started in [ab, bis) (for the logbook).
       const out = new Map<string, Piece>();
@@ -456,4 +472,4 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
     case "offen":
       return senden({ typ: "offen", nr: a.nr, strassen: await offeneStrassen(a.regionId, a.gebietId, a.bezug) });
   }
-};
+}

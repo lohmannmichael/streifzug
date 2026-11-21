@@ -95,7 +95,7 @@ export function App() {
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
-  const { fortschritt, rechnet } = useFortschritt(spuren, zaehlen, daten);
+  const { fortschritt, rechnet, fehler: rechenFehler } = useFortschritt(spuren, zaehlen, daten);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
@@ -116,7 +116,10 @@ export function App() {
   useEffect(() => {
     if (!rueckblick) return setRbBereit(null);
     if (rbBereit === rueckblick.nr) return;
-    if (!rechnet && fortschritt?.erstesMal.some((t) => t >= rueckblick.seit)) return setRbBereit(rueckblick.nr);
+    // Never before the progress is there and fully calculated (after an update everything is
+    // matched again, which takes a while on the phone).
+    if (!fortschritt || rechnet) return;
+    if (fortschritt.erstesMal.some((t) => t >= rueckblick.seit)) return setRbBereit(rueckblick.nr);
     const warten = window.setTimeout(() => setRbBereit(rueckblick.nr), 2500);
     return () => window.clearTimeout(warten);
   }, [rueckblick, fortschritt, rechnet, rbBereit]);
@@ -294,6 +297,7 @@ export function App() {
           fremdeOrte={fremdeOrte}
           zahlVorher={rueckblick && !aufzeichnung.aktiv ? zahlVorher : null}
           hochzaehlen={hochzaehlen}
+          rechenFehler={rechenFehler}
           teil={teil}
           setTeil={setTeil}
         />

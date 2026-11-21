@@ -18,6 +18,8 @@ export interface RueckblickKontext {
   erstesMal: ReadonlyMap<string, number>;
   /** Draws the seen pieces (the replay hides the new ones and releases them one by one). */
   zeichnen: (stuecke: readonly Piece[]) => void;
+  /** The seen pieces as they are now (they may change while the replay runs). */
+  aktuell: () => readonly Piece[];
   /** Free space at the bottom (sheet). */
   untenFrei: number;
   /** Bounds of the chosen Veedel, for the closing zoom. */
@@ -56,7 +58,8 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
     if (aus) return;
     aus = true;
     aufraeumen();
-    k.zeichnen(k.entdeckt);
+    // Always end with the latest state, never with the snapshot from the start.
+    k.zeichnen(k.aktuell());
   };
   /** End (also when skipped): all new streets yellow, zoom to the whole Veedel, then the number. */
   const ende = () => {
@@ -81,7 +84,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
   karte.fitBounds([[w, s], [o, n]], { padding: { top: 70, bottom: k.untenFrei + 30, left: 40, right: 40 }, maxZoom: 16.5, duration: 0 });
 
   if (ruhig()) {
-    k.zeichnen(k.entdeckt);
+    k.zeichnen(k.aktuell());
     zeiten.push(window.setTimeout(ende, 1500));
     return stopp;
   }
@@ -100,7 +103,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
       k.zeichnen([...alt, ...reihenfolge.slice(0, m)]);
     }
     if (t >= plan.dauer) {
-      k.zeichnen(k.entdeckt);
+      k.zeichnen(k.aktuell());
       zeiten.push(window.setTimeout(ende, 700));
       return;
     }
