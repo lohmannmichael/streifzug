@@ -184,6 +184,8 @@ export interface KartenProps {
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { linien: LonLat[][]; nr: number } | null;
   onRueckblickEnde: () => void;
+  /** "Noch offen", tapped: the open pieces of one street, shown as a dashed black line. */
+  offen: LonLat[][] | null;
 }
 
 const LEER = { type: "FeatureCollection" as const, features: [] };
@@ -208,6 +210,9 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addLayer({ id: "rb-glanz", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 16, 24], "line-blur": 7, "line-opacity": 0.45 } });
   karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": 1 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+  // A tapped open street: black dashes along its middle (Bauplan 4.5).
+  karte.addSource("offen", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "offen", type: "line", source: "offen", layout: { "line-cap": "butt", "line-join": "round" }, paint: { "line-color": "#151515", "line-width": 1.6, "line-dasharray": [3, 2] } }, vorSchrift);
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
   // The live track is a thin ink line; what it unlocks turns yellow underneath.
@@ -402,6 +407,22 @@ export function Karte(props: KartenProps) {
     if (ruhig()) karte.jumpTo(ziel);
     else karte.easeTo({ ...ziel, duration: 600 });
   }, [props.zentrieren]);
+
+  // Show a tapped open street, and bring it into view above the sheet.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (!karte?.getSource("offen")) return;
+    const linien = props.offen ?? [];
+    setzeDaten(karte, "offen", { type: "FeatureCollection", features: linien.map((l) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: l } })) });
+    if (linien.length === 0) return;
+    let w = Infinity, s = Infinity, o = -Infinity, n = -Infinity;
+    for (const l of linien)
+      for (const [x, y] of l) {
+        w = Math.min(w, x); o = Math.max(o, x); s = Math.min(s, y); n = Math.max(n, y);
+      }
+    const h = karte.getContainer().clientHeight;
+    karte.fitBounds([[w, s], [o, n]], { padding: { top: 60, bottom: h * 0.6, left: 40, right: 40 }, maxZoom: 17, duration: ruhig() ? 0 : 600 });
+  }, [props.offen]);
 
   return <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />;
 }

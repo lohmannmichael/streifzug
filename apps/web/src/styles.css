@@ -24,7 +24,7 @@
   --t-titel: 2rem;
   --t-zahl: 2.875rem;
 
-  --leiste-hoehe: 56px;
+
   color-scheme: light dark;
 }
 
@@ -68,7 +68,7 @@ button { font: inherit; color: inherit; }
 
 .app {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr;
   height: 100%;
 }
 
@@ -79,87 +79,7 @@ button { font: inherit; color: inherit; }
 
 .karte { position: absolute; inset: 0; }
 
-/* Bottom sheet over the map */
-.blatt {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px 20px 16px;
-  background: var(--flaeche);
-  border-radius: 20px 20px 0 0;
-  box-shadow: var(--schatten);
-  display: grid;
-  gap: 12px;
-}
 
-.griff {
-  justify-self: center;
-  width: 36px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--linie);
-}
-
-.blatt-kopf {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.gebiet {
-  font-size: var(--t-titel);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-}
-
-.ober { color: var(--text-leise); font-size: var(--t-klein); margin-top: 2px; }
-
-.prozent { display: grid; justify-items: end; gap: 4px; }
-
-.zahl {
-  font-family: var(--schrift-zahl);
-  font-weight: 600;
-  font-size: var(--t-zahl);
-  line-height: 0.9;
-  font-variant-numeric: tabular-nums;
-  color: var(--tinte);
-  white-space: nowrap;
-}
-
-/* The one loud element: a highlighter stroke across the lower part of the number,
-   slightly tilted and wider than the digits, like a real marker on paper. */
-.marker {
-  position: relative;
-  isolation: isolate;
-}
-.marker::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -0.07em;
-  right: -0.07em;
-  top: 0.4em;
-  bottom: 0.06em;
-  background: var(--marker);
-  border-radius: 0.05em 0.12em 0.06em 0.14em;
-  transform: rotate(-2deg);
-}
-
-@media (prefers-color-scheme: dark) {
-  /* On dark ground the whole digit sits on the marker, in dark ink. */
-  .marker { color: #1e2a4a; }
-  .marker::before { top: 0.04em; bottom: 0.02em; }
-}
-
-.einheit { font-size: 0.55em; margin-left: 0.12em; }
-
-.prozent-label { font-size: var(--t-klein); color: var(--text-leise); }
-
-.leer { color: var(--text-leise); max-width: 60ch; }
-.leer.gross { font-size: var(--t-gross); line-height: 1.4; margin-top: 12px; }
 
 .haupt {
   min-height: 52px;
@@ -173,31 +93,6 @@ button { font: inherit; color: inherit; }
 }
 .haupt:active { transform: scale(0.98); }
 
-.hinweis { min-height: 1.2em; font-size: var(--t-klein); color: var(--text-leise); text-align: center; }
-
-/* Tab bar */
-.leiste {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  min-height: var(--leiste-hoehe);
-  padding-bottom: env(safe-area-inset-bottom);
-  background: var(--flaeche);
-  border-top: 1px solid var(--linie);
-}
-
-.reiter {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 2px;
-  min-height: 48px;
-  border: 0;
-  background: none;
-  color: var(--text-leise);
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-.reiter[aria-current="page"] { color: var(--tinte); font-weight: 600; }
 
 /* Plain pages */
 .seite {
@@ -310,82 +205,6 @@ button { font: inherit; color: inherit; }
 /* Keep the expanded map credits clear of the profile button. */
 .maplibregl-ctrl-top-left .maplibregl-ctrl-attrib { max-width: calc(100vw - 120px); }
 
-/* Progress line in the sheet */
-.fortschritt { display: grid; gap: 6px; }
-.balken { height: 8px; border-radius: 4px; background: var(--nebel); overflow: hidden; }
-.balken i { display: block; height: 100%; background: var(--marker); }
-.km { font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; }
-
-/* Areas list */
-.stadt-kopf { margin-top: 16px; display: grid; gap: 2px; }
-.seite .stadt-name { font-size: var(--t-gross); color: var(--text); margin: 0; }
-.leise { color: var(--text-leise); }
-.liste { list-style: none; margin: 0; padding: 0; }
-.gebiet-zeile {
-  display: flex;
-  width: 100%;
-  min-height: 52px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-}
-.gebiet-zeile-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
-.gebiet-zeile-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gebiet-zeile-zusatz { font-size: var(--t-klein); color: var(--text-leise); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gebiet-zeile-wert { display: grid; justify-items: end; font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-/* Mini progress bar per area: yellow only for what is discovered. */
-.mini-balken { display: block; height: 5px; margin-top: 6px; border-radius: 3px; background: var(--nebel); overflow: hidden; max-width: 220px; }
-.mini-balken i { display: block; height: 100%; min-width: 0; background: var(--marker); border-radius: 3px; }
-
-/* Percent in the list: ink, on a small marker stroke once something is discovered. */
-.gebiet-prozent { font-family: var(--schrift-zahl); font-weight: 600; font-size: 1.35rem; line-height: 1.1; color: var(--text-leise); }
-.gebiet-prozent.an { color: var(--tinte); background: linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 92%, transparent 92%); padding: 0 0.12em; }
-.leise .gebiet-prozent { font-size: 1.05rem; }
-@media (prefers-color-scheme: dark) { .gebiet-prozent.an { color: #1e2a4a; background: var(--marker); border-radius: 3px; } }
-
-
-.region + .region { margin-top: 36px; }
-
-.haupt.zweit { background: var(--flaeche); color: var(--tinte); box-shadow: inset 0 0 0 2px var(--tinte); }
-
-/* Live numbers while recording */
-.unterwegs { display: grid; gap: 8px; }
-.werte { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.werte div { background: var(--nebel); border-radius: 12px; padding: 10px 12px; display: grid; }
-.werte b { font-family: var(--schrift-zahl); font-weight: 600; font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.werte span { font-size: var(--t-klein); color: var(--text-leise); }
-.gps { font-size: var(--t-klein); color: var(--text-leise); }
-.gps-gut::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2f9e6e; margin-right: 6px; }
-.gps-schwach::before, .gps-suche::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e9c400; margin-right: 6px; }
-.gps-verweigert, .gps-fehler { color: #c0392b; }
-
-/* Upload status (logbook) */
-.status { font-size: var(--t-klein); white-space: nowrap; color: var(--text-leise); }
-.status-gesichert { color: #2f9e6e; }
-
-/* Reward after an outing */
-.belohnung { font-weight: 600; font-size: var(--t-gross); }
-.belohnung .marker { font-family: var(--schrift-zahl); font-variant-numeric: tabular-nums; padding: 0 0.1em; }
-
-/* Pull-down sheet: the handle is a button (tap or drag the sheet). */
-.blatt { touch-action: none; transition: transform 0.2s; user-select: none; -webkit-user-select: none; }
-.griff { border: 0; padding: 0; cursor: pointer; width: 44px; height: 5px; box-shadow: 0 0 0 12px transparent; }
-.blatt.klein .fortschritt,
-.blatt.klein .leer,
-.blatt.klein .belohnung,
-.blatt.klein .hinweis,
-.blatt.klein .gps { display: none; }
-.blatt.klein .unterwegs .werte b { font-size: 1.3rem; }
-.blatt.klein .zahl { font-size: 2.6rem; }
-.blatt.klein .prozent-label { display: none; }
-.blatt.klein .gebiet { font-size: var(--t-gross); }
-
 .karte { overflow: hidden; }
 
 /* Drawing moment: "+25 m" rises above the own position and fades. */
@@ -416,95 +235,6 @@ button { font: inherit; color: inherit; }
   .plus-meter { animation: plus-ruhig 2.2s linear forwards; }
   @keyframes plus-ruhig { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
 }
-
-/* Reward line with an optional milestone stamp */
-.belohnung-zeile { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-
-/* Milestone stamp: ink on paper, slightly tilted, like a stamp in a passport. */
-.stempel {
-  flex: none;
-  display: grid;
-  justify-items: center;
-  gap: 1px;
-  padding: 6px 10px 5px;
-  border: 2.5px solid var(--tinte);
-  outline: 1px solid var(--tinte);
-  outline-offset: 2px;
-  border-radius: 10px;
-  color: var(--tinte);
-  background: var(--flaeche);
-  transform: rotate(-7deg);
-  text-transform: uppercase;
-  line-height: 1;
-}
-.stempel-name { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stempel-zahl { font-family: var(--schrift-zahl); font-weight: 600; font-size: 1.7rem; background: linear-gradient(transparent 50%, var(--marker) 50%, var(--marker) 90%, transparent 90%); padding: 0 0.1em; }
-.stempel-datum { font-size: 0.6rem; letter-spacing: 0.06em; color: var(--text-leise); }
-.stempel-klein { position: absolute; top: 8px; right: 10px; padding: 4px 8px 3px; }
-.stempel-klein .stempel-zahl { font-size: 1.3rem; }
-@media (prefers-color-scheme: dark) { .stempel-zahl { color: #1e2a4a; background: var(--marker); border-radius: 3px; margin: 1px 0; } }
-.stempel-neu { animation: stempeln 0.55s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
-@keyframes stempeln {
-  0% { opacity: 0; transform: rotate(-16deg) scale(1.9); }
-  60% { opacity: 1; transform: rotate(-6deg) scale(0.94); }
-  100% { opacity: 1; transform: rotate(-7deg) scale(1); }
-}
-@media (prefers-reduced-motion: reduce) { .stempel-neu { animation: none; } }
-
-/* Logbook */
-.logbuch { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-.log-karte { background: var(--flaeche); border-radius: 16px; overflow: hidden; }
-.log-bild { position: relative; }
-.mini-karte { display: block; width: 100%; aspect-ratio: 2.2; background: var(--nebel); }
-.mini-karte.laedt { animation: laedt 1.2s ease-in-out infinite alternate; }
-@keyframes laedt { from { opacity: 0.6; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .mini-karte.laedt { animation: none; } }
-.mini-karte path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.mk-grau { stroke: var(--linie); stroke-width: 1.5; }
-.mk-bekannt { stroke: var(--marker); stroke-width: 3; opacity: 0.45; }
-.mk-neu { stroke: var(--marker); stroke-width: 4; }
-.mk-spur { stroke: var(--tinte); stroke-width: 1.5; stroke-dasharray: 3 2.5; }
-.log-text { padding: 12px 16px 6px; display: grid; gap: 3px; }
-.log-datum { font-weight: 600; }
-.log-neu { font-weight: 600; margin-top: 4px; }
-.log-neu .marker { font-family: var(--schrift-zahl); font-size: 1.15rem; padding: 0 0.1em; }
-@media (prefers-color-scheme: dark) { .log-neu .marker { color: #1e2a4a; } }
-.log-strassen { font-size: var(--t-klein); color: var(--text-leise); }
-.log-fuss { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
-
-/* Unterwegs-Modus: counter at the top of the map while recording. */
-.unterwegs-zaehler {
-  position: absolute;
-  top: calc(14px + env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  max-width: calc(100% - 150px);
-  padding: 8px 14px;
-  border-radius: 22px;
-  background: var(--flaeche);
-  box-shadow: 0 2px 10px rgb(30 42 74 / 0.18);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.unterwegs-zaehler .marker { font-family: var(--schrift-zahl); font-size: 1.2rem; padding: 0 0.1em; }
-.unterwegs-zaehler .leise { font-weight: 400; }
-@media (prefers-color-scheme: dark) { .unterwegs-zaehler .marker { color: #1e2a4a; } }
-
-/* Areas: fold-out lists (city → district → Stadtteil) */
-.seiten-unterzeile { margin: 6px 4px 16px; font-size: var(--t-klein); }
-.ordner-liste { display: grid; gap: 14px; }
-.ordner.stadt { background: var(--flaeche); border-radius: 14px; overflow: hidden; }
-.ordner summary { list-style: none; cursor: pointer; }
-.ordner summary::-webkit-details-marker { display: none; }
-.ordner.stadt > summary .gebiet-zeile-name { font-size: var(--t-gross); }
-.ordner .liste > li { border-top: 1px solid var(--linie); }
-.ordner .ordner .liste { padding-left: 14px; }
-.pfeil { flex: none; width: 10px; height: 10px; border-right: 2px solid var(--text-leise); border-bottom: 2px solid var(--text-leise); transform: rotate(45deg) translate(-2px, -2px); transition: transform 0.2s; }
-.ordner[open] > summary .pfeil { transform: rotate(225deg) translate(-2px, -2px); }
-.gebiet-zeile[aria-current="true"] .gebiet-zeile-name { text-decoration: underline; text-decoration-color: var(--marker-kante); text-decoration-thickness: 3px; text-underline-offset: 3px; }
 
 /* Plain text button (ink, no frame) */
 .text-knopf { border: 0; background: none; color: var(--tinte); font-weight: 600; font-size: var(--t-klein); min-height: 44px; padding: 0 4px; cursor: pointer; white-space: nowrap; }
@@ -542,29 +272,6 @@ button.datei-knopf:disabled { opacity: 0.6; }
 textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-height: 1.35; }
 .schritte-klein { margin: 4px 0 0; padding-left: 20px; font-size: var(--t-klein); color: var(--text-leise); display: grid; gap: 3px; }
 
-/* Replay banner on opening: card at the top, left of the round buttons. */
-.rueckblick {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top));
-  left: 44px;
-  right: 70px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 8px 8px 14px;
-  border-radius: 14px;
-  background: var(--flaeche);
-  box-shadow: 0 2px 10px rgb(30 42 74 / 0.18);
-}
-.rueckblick > span { display: grid; min-width: 0; }
-.rueckblick small { font-size: var(--t-klein); color: var(--text-leise); }
-.rueckblick b { font-weight: 600; white-space: nowrap; }
-.rueckblick .text-knopf { min-height: 40px; }
-
-/* Overland silent for 48 h: one plain line in the sheet */
-.still-hinweis { font-size: var(--t-klein); color: var(--text-leise); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .radius { display: grid; gap: 2px; }
 .radius select { font: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; border: 1px solid var(--linie); border-radius: 10px; background: var(--flaeche); color: var(--text); }
 
@@ -572,3 +279,139 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .gebiet { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 90%; font-size: 2rem; letter-spacing: -0.01em; }
 .zahl { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 88%; font-size: var(--t-zahl); }
 .ober { font-size: var(--t-klein); }
+
+/* Sheet over the plan, three heights (Bauplan 3.2, 4.4): 26 pt radius, soft shadow upwards. */
+.blatt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 12px - env(safe-area-inset-top));
+  padding: 0 20px env(safe-area-inset-bottom);
+  background: var(--flaeche);
+  border-radius: 26px 26px 0 0;
+  box-shadow: var(--schatten);
+  transition: height 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.blatt.hoehe-1 { min-height: calc(128px + env(safe-area-inset-bottom)); }
+.blatt.hoehe-2 { height: 64%; }
+.blatt.hoehe-3 { height: calc(100% - 12px - env(safe-area-inset-top)); }
+.blatt-zug { flex: none; display: grid; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; padding-bottom: 14px; }
+.griff {
+  justify-self: center;
+  width: 36px;
+  height: 5px;
+  margin: 8px 0 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--linie);
+  box-shadow: 0 0 0 14px transparent;
+  cursor: pointer;
+}
+.blatt-kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.kopf-links { min-width: 0; }
+.gebiet { line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ober { color: var(--text-leise); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.ober .text-knopf.klein { min-height: 28px; font-size: var(--t-klein); padding: 0 2px; }
+.prozent { flex: none; }
+.zahl { line-height: 0.95; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--tinte); }
+.zahl .einheit { font-size: 0.5em; }
+/* The highlighter swipe behind the number: wider than the digits, slightly tilted, uneven ends. */
+.wisch { position: relative; isolation: isolate; padding: 0 0.06em; }
+.wisch::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -0.1em;
+  right: -0.14em;
+  top: 0.26em;
+  bottom: 0.02em;
+  background: var(--marker);
+  border-radius: 0.04em 0.16em 0.05em 0.2em / 0.1em 0.3em 0.12em 0.25em;
+  transform: rotate(-1.6deg) skewX(-6deg);
+}
+@media (prefers-color-scheme: dark) {
+  .wisch { color: #151515; }
+  .wisch::before { opacity: 0.85; top: 0.06em; }
+}
+
+.aufnahme-zeile { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -8px 0 8px; border-top: 1px solid var(--linie); }
+.gps { font-size: var(--t-klein); color: var(--text-leise); }
+.gps-verweigert, .gps-fehler { color: #c0392b; }
+
+.blatt-inhalt { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -20px; padding: 0 20px 24px; border-top: 1px solid var(--linie); }
+.blatt-inhalt > .zeile-text { padding: 12px 0 0; }
+.zahlen-zeile { padding: 14px 0 4px; font-size: var(--t-text); }
+.wert { font-size: 0.9375rem; color: var(--text-leise); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.zahlen-zeile .wert { color: var(--text); font-size: var(--t-text); }
+.leise { color: var(--text-leise); }
+.abschnitt { padding-top: 8px; }
+.abschnitt-titel { margin: 22px 0 2px; font-size: var(--t-klein); font-weight: 600; color: var(--text-leise); }
+
+/* Lists: rows separated by hairlines, no tiles. */
+.zeilen { list-style: none; margin: 0; padding: 0; }
+.zeilen > li + li { border-top: 1px solid var(--linie); }
+.zeile, .zeile-knopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--text);
+  font-size: var(--t-text);
+  cursor: pointer;
+}
+.zeile { cursor: default; }
+.zeile-knopf[aria-pressed="true"] > span:first-child { text-decoration: underline dashed; text-underline-offset: 4px; }
+.text-knopf.fuss { display: block; margin: 20px auto 0; font-size: var(--t-text); font-weight: 500; }
+
+/* Stamp card: six fields in two rows, hairline grid. */
+.stempelkarte { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--linie); border-left: 1px solid var(--linie); }
+.feld { position: relative; display: grid; place-items: center; align-content: start; gap: 2px; height: 104px; padding: 8px 4px; border-right: 1px solid var(--linie); border-bottom: 1px solid var(--linie); overflow: hidden; }
+.feld-titel { font-size: var(--t-klein); font-weight: 600; font-variant-numeric: tabular-nums; }
+.feld-rest { font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; margin-top: 18px; }
+.feld.voll .feld-titel { position: absolute; top: 6px; left: 8px; color: var(--text-leise); font-weight: 500; }
+.feld.voll .stempel-svg { margin-top: 10px; }
+.stempel-svg { display: block; overflow: visible; }
+@media (prefers-color-scheme: dark) { .stempel-svg { filter: brightness(1.9) saturate(0.8); } }
+
+/* Collection: two words as a switch, "…" on the right. */
+.sammlung { border-top: 0; }
+.sammlung-kopf { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; background: var(--flaeche); min-height: 48px; }
+.umschalter { display: flex; align-items: center; gap: 8px; color: var(--text-leise); }
+.umschalter button { border: 0; background: none; padding: 0 2px; min-height: 44px; font-family: var(--schrift-zahl); font-stretch: 90%; font-weight: 700; font-size: 1.5rem; color: var(--text-leise); cursor: pointer; }
+.umschalter button[aria-selected="true"] { color: var(--text); }
+.icon-knopf { display: grid; place-items: center; width: 44px; height: 44px; margin-right: -10px; border: 0; background: none; color: var(--text); cursor: pointer; }
+
+.baum { border-top: 1px solid var(--linie); }
+.baum-ordner > summary { list-style: none; }
+.baum-ordner > summary::-webkit-details-marker { display: none; }
+.baum-ordner .zeilen > li, .baum > .baum-ordner + .baum-ordner { border-top: 1px solid var(--linie); }
+.baum-zeile { display: grid; grid-template-columns: minmax(0, 1fr) 72px 62px; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0; border: 0; background: none; color: var(--text); font-size: var(--t-text); text-align: left; cursor: pointer; }
+.baum-zeile.tiefe-0 .baum-name { font-weight: 600; }
+.baum-zeile.tiefe-1 { padding-left: 14px; }
+.baum-zeile.tiefe-2 { padding-left: 28px; }
+.baum-zeile .wert { text-align: right; }
+.baum-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.baum-zeile[aria-current="true"] .baum-name { text-decoration: underline; text-decoration-color: var(--marker); text-decoration-thickness: 4px; text-underline-offset: 3px; }
+.mini-balken { display: block; height: 4px; background: var(--linie); overflow: hidden; }
+.mini-balken i { display: block; height: 100%; background: var(--marker); }
+
+.passseite { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); justify-items: center; gap: 10px 4px; padding: 18px 0 8px; border-top: 1px solid var(--linie); }
+.pass-stempel { width: 112px; height: 112px; display: grid; place-items: center; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The only button on the plan: location, round, 44 pt, white with shadow. */
+.karten-knoepfe { z-index: 2; }
+.rund-knopf { width: 44px; height: 44px; }
+@media (prefers-reduced-motion: reduce) { .blatt { transition: none; } }

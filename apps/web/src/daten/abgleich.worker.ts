@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
-import { cleanFixes, density, parseGpx, splitOutings, summarizeImported, type Fix, type Piece } from "@streifzug/core";
-import { abgleichen, ABGLEICH_VERSION, meterJeGebiet, stueckeFuerIds } from "./rechnen";
+import { cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
+import { abgleichen, ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
+import { stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
 import { einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
 
@@ -46,7 +47,9 @@ export type Anfrage =
   | { typ: "quelleLoeschen"; nr: number; quelle: ImportQuelle }
   | { typ: "info"; nr: number }
   | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] }
-  | { typ: "wegeSeit"; nr: number; seit: number };
+  | { typ: "wegeSeit"; nr: number; seit: number }
+  | { typ: "letzteWege"; nr: number; anzahl: number }
+  | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
@@ -56,7 +59,17 @@ export type Antwort =
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
   | { typ: "ok"; nr: number }
-  | { typ: "wege"; nr: number; wege: KurzWeg[] };
+  | { typ: "wege"; nr: number; wege: KurzWeg[] }
+  | { typ: "offen"; nr: number; strassen: OffeneStrasse[] };
+
+/** A named street in a Veedel that is not walked completely yet ("Noch offen", Bauplan 3.2). */
+export interface OffeneStrasse {
+  name: string;
+  restM: number;
+  /** Distance from the reference point (own position or Veedel middle) to its nearest open piece. */
+  abstandM: number;
+  linien: [number, number][][];
+}
 
 /** An outing reduced for the replay on opening the app (at most ~400 points). */
 export interface KurzWeg {
@@ -106,6 +119,41 @@ function andereLaden(): Promise<Map<string, Kopf>> {
 const zaehlt = (k: Pick<Streifzug, "quelle">, z: Zaehlen) => k.quelle === undefined || k.quelle === "aufnahme" || z.quellen[k.quelle];
 
 let neueste = 0;
+// Pieces covered "aktiv" in the last complete calculation (for "Noch offen").
+let zuletztGesehen = new Set<string>();
+
+/** Named streets of a Veedel with open meters, nearest first (at most 12). */
+async function offeneStrassen(regionId: string, gebietId: string, bezug: [number, number] | null): Promise<OffeneStrasse[]> {
+  const flaeche = (await ladeFlaechen(regionId)).find((f) => f.id === gebietId);
+  if (!flaeche) return [];
+  const [w, s, o, n] = flaeche.bbox;
+  const a = tileFor([w, n], TILE_ZOOM);
+  const b = tileFor([o, s], TILE_ZOOM);
+  if ((b.x - a.x + 1) * (b.y - a.y + 1) > 64) return [];
+  const jeName = new Map<string, { gesamt: number; offen: number; linien: [number, number][][]; abstand: number }>();
+  const mitte: [number, number] = bezug ?? [(w + o) / 2, (s + n) / 2];
+  for (let x = a.x; x <= b.x; x++)
+    for (let y = a.y; y <= b.y; y++)
+      for (const p of await stueckeDerKachel({ z: TILE_ZOOM, x, y })) {
+        if (p.kind !== "street" || !pointInGeometry(p.mid, flaeche.geometry)) continue;
+        const name = await strassenName(p);
+        if (!name) continue;
+        const e = jeName.get(name) ?? { gesamt: 0, offen: 0, linien: [], abstand: Infinity };
+        const m = p.lengthM * p.weight;
+        e.gesamt += m;
+        if (!zuletztGesehen.has(p.id)) {
+          e.offen += m;
+          e.linien.push(p.coords.map((c) => [c[0], c[1]] as [number, number]));
+          e.abstand = Math.min(e.abstand, distanceToLineM(mitte, p.coords));
+        }
+        jeName.set(name, e);
+      }
+  return [...jeName]
+    .filter(([, e]) => e.offen >= 10)
+    .map(([name, e]) => ({ name, restM: e.offen, abstandM: e.abstand, linien: e.linien }))
+    .sort((x, y) => x.abstandM - y.abstandM)
+    .slice(0, 12);
+}
 
 async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Region[]) {
   neueste = nr;
@@ -162,6 +210,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     }
   }
   for (const pid of gesehen.keys()) gefahren.delete(pid);
+  zuletztGesehen = new Set(gesehen.keys());
   const proGebiet = await meterJeGebiet(gesehen.values(), liste);
   senden({ typ: "ergebnis", nr, stuecke: [...gesehen.values()], gefahren: [...gefahren.values()], proGebiet: [...proGebiet] });
 }
@@ -301,5 +350,17 @@ self.onmessage = async (e: MessageEvent<Anfrage>) => {
       }
       return senden({ typ: "wege", nr: a.nr, wege });
     }
+    case "letzteWege": {
+      // The newest other outings (Overland, GPX), for "Zuletzt" in the Veedel sheet.
+      const neueste = [...(await andereLaden()).values()].sort((x, y) => (y.endedAt ?? y.startedAt) - (x.endedAt ?? x.startedAt)).slice(0, a.anzahl);
+      const wege: KurzWeg[] = [];
+      for (const k of neueste) {
+        const fixes = k.fixes ?? (await einenLaden(k.id))?.fixes ?? [];
+        if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
+      }
+      return senden({ typ: "wege", nr: a.nr, wege });
+    }
+    case "offen":
+      return senden({ typ: "offen", nr: a.nr, strassen: await offeneStrassen(a.regionId, a.gebietId, a.bezug) });
   }
 };

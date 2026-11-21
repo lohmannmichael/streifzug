@@ -1,24 +1,20 @@
-import { milestoneReached, type LonLat } from "@streifzug/core";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { LonLat } from "@streifzug/core";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
-import { useAufzeichnung, useStreifzuege, type Aufzeichnung } from "./daten/aufzeichnung";
+import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
-import { overlandStill, useOverlandAbholen } from "./daten/import";
-import { alsGesehenMerken, useRueckblick } from "./daten/rueckblick";
-import type { Streifzug } from "./daten/speicher";
+import { overlandStill, useOverlandAbholen, type KurzWeg } from "./daten/import";
+import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
-import { alsKm, alsStrecke, elternText, findeNachName, prozent, prozentText, useMittelpunkte, useRegionen, zaehlendeMeter, type GebietDaten, type Regionen } from "./daten/regionen";
+import { findeNachName, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
+import type { OffeneStrasse } from "./daten/veedel";
 import { useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
+import { Blatt, type Hoehe } from "./seiten/Blatt";
 import { Zuhause } from "./seiten/Zuhause";
-import { LogbuchSeite } from "./seiten/Logbuch";
-import { Stempel } from "./ui/Stempel";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
-import { dauerText } from "./ui/format";
-import { IconGebiete, IconIch, IconKarte, IconStandort, IconStreifzuege, IconZurueck } from "./ui/Icons";
-
-type Reiter = "karte" | "gebiete" | "streifzuege";
+import { IconSchliessen, IconStandort } from "./ui/Icons";
 
 // Until the location is used, the map starts at home; the last chosen area is remembered.
 const START_NAME = "Weiden";
@@ -26,9 +22,11 @@ const MERKEN = "streifzug.gebiet";
 
 export function App() {
   const sitzung = useSitzung();
-  const [reiter, setReiter] = useState<Reiter>("karte");
+  const [hoehe, setHoehe] = useState<Hoehe>(1);
+  const [einzeln, setEinzeln] = useState<{ linien: LonLat[][]; nr: number } | null>(null);
+  const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   const [profilOffen, setProfilOffen] = useState(false);
-  // Shortcut from the logbook: open the profile at "Importieren".
+  // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
   const [einstellungen, aendern] = useEinstellungen(sitzung);
@@ -47,10 +45,23 @@ export function App() {
   // An outing watched live counts as seen (no replay of it on the next opening).
   useEffect(() => {
     if (!aufzeichnung.aktiv && warAktivFuerRueckblick.current) alsGesehenMerken();
+    // Unterwegs-Modus: small sheet while recording, the Veedel (with what was added) afterwards.
+    if (aufzeichnung.aktiv) setHoehe(1);
+    else if (warAktivFuerRueckblick.current) setHoehe(2);
     warAktivFuerRueckblick.current = aufzeichnung.aktiv;
     aufnahmeAktiv.current = aufzeichnung.aktiv;
   }, [aufzeichnung.aktiv]);
   const streifzuege = useStreifzuege();
+  // Own finished outings, shortened, for "Zuletzt".
+  const eigeneWege: KurzWeg[] = useMemo(
+    () =>
+      streifzuege
+        .filter((s) => s.status !== "aktiv" && s.fixes.length > 1)
+        .sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt))
+        .slice(0, 5)
+        .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, coords: kuerzen(s.fixes) })),
+    [streifzuege],
+  );
   // Car rides count only with the switch on (docs/PLAN.md, section 2). The page holds only own
   // outings; imports and Overland are loaded by the background worker, each with its switch.
   // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
@@ -127,287 +138,85 @@ export function App() {
   }, [daten]);
 
   if (profilOffen)
-    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} streifzuege={streifzuege} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(null); }} />;
+    return <Profil sitzung={sitzung} werte={einstellungen} aendern={aendern} daten={daten} zumImport={importZeigen} schliessen={() => { setProfilOffen(false); setImportZeigen(null); }} />;
 
+  // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
+  const abspielen = einzeln ?? (rueckblick && !aufzeichnung.aktiv ? { linien: rueckblick.wege.map((w) => w.coords), nr: rueckblick.nr } : null);
   return (
     <div className="app">
       <main className="inhalt">
-        <div className="ansicht" hidden={reiter !== "karte"}>
-          <Karte
-            daten={daten}
-            gewaehlt={gebiet?.id ?? null}
-            gewaehltName={gebiet?.name ?? ""}
-            onWaehlen={(id, sprung) => waehlen(id, sprung)}
-            springen={springen.current}
-            spur={aufzeichnung.fixes}
-            entdeckt={zaehlendeStuecke}
-            gefahren={fortschritt?.gefahren ?? []}
-            prozente={prozenteJeGebiet(daten, fortschritt, einstellungen.wegeZaehlen)}
-            folgen={aufzeichnung.aktiv}
-            zeichnen={aufzeichnung.aktiv}
-            wegeZaehlen={einstellungen.wegeZaehlen}
-            position={position}
-            zentrieren={zentrieren}
-            rueckblick={rueckblick && !aufzeichnung.aktiv ? { linien: rueckblick.wege.map((w) => w.coords), nr: rueckblick.nr } : null}
-            onRueckblickEnde={rueckblickBeenden}
-          />
-          {rueckblick && !aufzeichnung.aktiv && (
-            <div className="rueckblick" role="status">
-              <span>
-                <small>{t.karte.rueckblickTitel}</small>
-                <b>{t.karte.rueckblick(rueckblick.wege.length, alsStrecke(rueckblick.km * 1000))}</b>
-              </span>
-              <button type="button" className="text-knopf" onClick={rueckblickBeenden}>{t.karte.rueckblickUeberspringen}</button>
-            </div>
-          )}
-          {aufzeichnung.aktiv && (
-            <p className="unterwegs-zaehler" aria-live="polite">
-              {neuUnterwegsM >= 1 ? (
-                <>
-                  <span className="marker">+{alsStrecke(neuUnterwegsM)}</span> {t.karte.zaehlerNeu}
-                  {neueStrassen > 0 && <span className="leise"> · {t.karte.zaehlerStrassen(neueStrassen)}</span>}
-                </>
-              ) : (
-                t.karte.zaehlerNichts
-              )}
-            </p>
-          )}
-          <div className="karten-knoepfe">
-            <button type="button" className="rund-knopf" aria-label={t.karte.profil} onClick={() => setProfilOffen(true)}>
-              <IconIch />
-            </button>
-            <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
-              <IconStandort />
-            </button>
-          </div>
-          <KartenBlatt
-            gebiet={gebiet}
-            daten={daten}
-            einstellungen={einstellungen}
-            aufzeichnung={aufzeichnung}
-            standortFehler={standortFehler}
-            fortschritt={fortschritt}
-            vorher={vorher.current}
-            rechnet={rechnet}
-            overlandStill={overlandStill()}
-            zuOverland={() => {
-              setImportZeigen("overland");
-              setProfilOffen(true);
-            }}
-          />
+        <Karte
+          daten={daten}
+          gewaehlt={gebiet?.id ?? null}
+          gewaehltName={gebiet?.name ?? ""}
+          onWaehlen={(id, sprung) => {
+            waehlen(id, sprung);
+            setOffen(null);
+          }}
+          springen={springen.current}
+          spur={aufzeichnung.fixes}
+          entdeckt={zaehlendeStuecke}
+          gefahren={fortschritt?.gefahren ?? []}
+          prozente={prozenteJeGebiet(daten, fortschritt)}
+          folgen={aufzeichnung.aktiv}
+          zeichnen={aufzeichnung.aktiv}
+          wegeZaehlen={false}
+          position={position}
+          zentrieren={zentrieren}
+          rueckblick={abspielen}
+          onRueckblickEnde={() => {
+            setEinzeln(null);
+            if (!einzeln) rueckblickBeenden();
+          }}
+          offen={offen?.linien ?? null}
+        />
+        <div className="karten-knoepfe">
+          <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
+            <IconStandort />
+          </button>
         </div>
-        {reiter === "gebiete" && (
-          <GebieteSeite
-            daten={daten}
-            fortschritt={fortschritt}
-            einstellungen={einstellungen}
-            gewaehlt={gebiet}
-            waehlen={(id) => {
-              waehlen(id);
-              setReiter("karte");
-            }}
-          />
-        )}
-        {reiter === "streifzuege" && (
-          <LogbuchSeite
-            liste={streifzuege}
-            daten={daten}
-            einstellungen={einstellungen}
-            zeigen={(id) => {
-              waehlen(id);
-              setReiter("karte");
-            }}
-            bereit={fortschritt !== null && rechnet === null}
-            zaehlen={zaehlen}
-            importieren={(ziel) => {
-              setImportZeigen(ziel);
-              setProfilOffen(true);
-            }}
-          />
-        )}
+        <Blatt
+          hoehe={hoehe}
+          setHoehe={setHoehe}
+          gebiet={gebiet}
+          daten={daten}
+          fortschritt={fortschritt}
+          vorher={vorher.current}
+          rechnet={rechnet}
+          aufzeichnung={aufzeichnung}
+          standortFehler={standortFehler}
+          neuUnterwegsM={neuUnterwegsM}
+          neueStrassen={neueStrassen}
+          rueckblick={rueckblick && !aufzeichnung.aktiv ? rueckblick : null}
+          rueckblickBeenden={rueckblickBeenden}
+          overlandStill={overlandStill()}
+          einstellungen={(ziel) => {
+            setImportZeigen(ziel ?? null);
+            setProfilOffen(true);
+          }}
+          eigeneWege={eigeneWege}
+          abspielen={(w) => {
+            setHoehe(1);
+            setEinzeln((alt) => ({ linien: [w.coords], nr: (alt?.nr ?? 1000) + 1 }));
+          }}
+          position={position}
+          offen={offen?.name ?? null}
+          offenZeigen={setOffen}
+          waehlen={(id) => waehlen(id)}
+        />
       </main>
-      <nav className="leiste" aria-label="Hauptnavigation">
-        <ReiterKnopf aktiv={reiter === "karte"} onClick={() => setReiter("karte")} icon={<IconKarte />} label={t.tabs.karte} />
-        <ReiterKnopf aktiv={reiter === "gebiete"} onClick={() => setReiter("gebiete")} icon={<IconGebiete />} label={t.tabs.gebiete} />
-        <ReiterKnopf aktiv={reiter === "streifzuege"} onClick={() => setReiter("streifzuege")} icon={<IconStreifzuege />} label={t.tabs.streifzuege} />
-      </nav>
     </div>
   );
 }
 
-function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null, wege: boolean): Map<string, number> {
+function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null): Map<string, number> {
   const m = new Map<string, number>();
   if (!daten || !f) return m;
   for (const [id, gesehen] of f.proGebiet) {
     const g = daten.gebiete.get(id);
-    if (g) m.set(id, prozent(zaehlendeMeter(gesehen, wege), zaehlendeMeter(g, wege)));
+    if (g) m.set(id, prozent(zaehlendeMeter(gesehen, false), zaehlendeMeter(g, false)));
   }
   return m;
-}
-
-function ReiterKnopf(props: { aktiv: boolean; onClick: () => void; icon: ReactNode; label: string }) {
-  return (
-    <button type="button" className="reiter" aria-current={props.aktiv ? "page" : undefined} onClick={props.onClick}>
-      {props.icon}
-      <span>{props.label}</span>
-    </button>
-  );
-}
-
-function KartenBlatt(props: {
-  gebiet: GebietDaten | null;
-  daten: Regionen | null;
-  einstellungen: Einstellungen;
-  aufzeichnung: Aufzeichnung;
-  standortFehler: boolean;
-  fortschritt: Fortschritt | null;
-  vorher: Fortschritt | null;
-  rechnet: { fertig: number; gesamt: number } | null;
-  /** Overland connected but silent for 48 h: time of the last point. */
-  overlandStill: number | null;
-  zuOverland: () => void;
-}) {
-  const { gebiet, daten, aufzeichnung: a } = props;
-  const wege = props.einstellungen.wegeZaehlen;
-  const gesamt = gebiet ? zaehlendeMeter(gebiet, wege) : 0;
-  const gesehen = gebiet ? zaehlendeMeter(props.fortschritt?.proGebiet.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, wege) : 0;
-  const p = prozent(gesehen, gesamt);
-  // The sheet can be pulled down (or the handle tapped) to free the map, and pulled up again.
-  const [klein, setKlein] = useState(false);
-  // Unterwegs-Modus: small sheet and a big map while recording; back to full size for the reward.
-  useEffect(() => setKlein(a.aktiv), [a.aktiv]);
-  const zug = useRef<number | null>(null);
-  const kmText = gebiet ? t.karte.kmZeile(alsKm(gesehen), alsKm(gesamt)) : t.karte.kmLaedt;
-  return (
-    <section
-      className={klein ? "blatt klein" : "blatt"}
-      aria-labelledby="gebiet-name"
-      onPointerDown={(e) => (zug.current = e.clientY)}
-      onPointerUp={(e) => {
-        if (zug.current === null) return;
-        const weg = e.clientY - zug.current;
-        zug.current = null;
-        if (weg > 40) setKlein(true);
-        else if (weg < -40) setKlein(false);
-      }}
-    >
-      <button type="button" className="griff" aria-label={klein ? t.karte.blattAuf : t.karte.blattZu} aria-expanded={!klein} onClick={() => setKlein(!klein)} />
-      <div className="blatt-kopf">
-        <div>
-          <h1 id="gebiet-name" className="gebiet">{gebiet?.name ?? "\u00a0"}</h1>
-          <p className="ober">{gebiet && daten ? elternText(daten, gebiet.id) : "\u00a0"}</p>
-        </div>
-        <p className="prozent" aria-label={`${prozentText(p)} Prozent ${t.karte.prozentLabel}`}>
-          <span className="zahl"><span className="marker">{prozentText(p)}</span><span className="einheit">%</span></span>
-          <span className="prozent-label" aria-hidden="true">{t.karte.prozentLabel}</span>
-        </p>
-      </div>
-      <div className="fortschritt">
-        <div className="balken" aria-hidden="true"><i style={{ width: `${p}%` }} /></div>
-        <p className="km">{kmText}</p>
-      </div>
-      {a.aktiv ? (
-        <Unterwegs a={a} />
-      ) : (
-        <Ruhe a={a} schonGelb={gesehen > 0} />
-      )}
-      {!a.aktiv && a.letzter && gebiet && props.vorher && (
-        <Belohnung
-          name={gebiet.name}
-          vorherM={zaehlendeMeter(props.vorher.proGebiet.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, wege)}
-          jetztM={gesehen}
-          gesamtM={gesamt}
-        />
-      )}
-      <button type="button" className={a.aktiv ? "haupt zweit" : "haupt"} onClick={a.aktiv ? a.beenden : a.starten}>
-        {a.aktiv ? t.karte.beenden : t.karte.losziehen}
-      </button>
-      {!a.aktiv && props.overlandStill && (
-        <p className="still-hinweis">
-          {t.import.overland.still(seitText(props.overlandStill))}{" "}
-          <button type="button" className="text-knopf" onClick={props.zuOverland}>{t.import.overland.pruefen}</button>
-        </p>
-      )}
-      <p className="hinweis" aria-live="polite">{props.standortFehler
-          ? t.karte.standortFehler
-          : a.aktiv
-            ? t.karte.hinweisOffen
-            : props.rechnet
-              ? t.karte.rechnet(Math.round((100 * props.rechnet.fertig) / props.rechnet.gesamt))
-              : ""}</p>
-    </section>
-  );
-}
-
-const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
-const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
-/** "Montag" within the last week, otherwise "12. November". */
-function seitText(t: number): string {
-  return Date.now() - t < 6 * 86400_000 ? wochentag.format(t) : tagMonat.format(t);
-}
-
-/** What the last outing added in the shown area, with a stamp when it reached a milestone. */
-function Belohnung(props: { name: string; vorherM: number; jetztM: number; gesamtM: number }) {
-  const neu = props.jetztM - props.vorherM;
-  if (neu < 1) return null;
-  const vorherP = prozent(props.vorherM, props.gesamtM);
-  const jetztP = prozent(props.jetztM, props.gesamtM);
-  const stufe = milestoneReached(vorherP, jetztP);
-  return (
-    <div className="belohnung-zeile">
-      <p className="belohnung" role="status">
-        <span className="marker">+{alsStrecke(neu)}</span> {t.karte.belohnung(props.name, prozentText(vorherP), prozentText(jetztP))}
-      </p>
-      {stufe && <Stempel name={props.name} prozent={stufe} datum={Date.now()} neu />}
-    </div>
-  );
-}
-
-/** Live numbers while recording. */
-function Unterwegs({ a }: { a: Aufzeichnung }) {
-  const [jetzt, setJetzt] = useState(Date.now());
-  useEffect(() => {
-    const takt = window.setInterval(() => setJetzt(Date.now()), 1000);
-    return () => window.clearInterval(takt);
-  }, []);
-  const sekunden = a.startedAt ? Math.max(0, Math.round((jetzt - a.startedAt) / 1000)) : 0;
-  return (
-    <div className="unterwegs" aria-live="polite">
-      <div className="werte">
-        <div><b>{dauerText(sekunden, true)}</b><span>{t.karte.unterwegs}</span></div>
-        <div><b>{alsStrecke(a.distanzM)}</b><span>Strecke</span></div>
-      </div>
-      <p className={`gps gps-${a.gps}`}>{t.karte.gps[a.gps]}</p>
-    </div>
-  );
-}
-
-/** Before the first outing: the invitation; after one: its summary. */
-function Ruhe({ a, schonGelb }: { a: Aufzeichnung; schonGelb: boolean }) {
-  const s = a.letzter;
-  if (!s) return <p className="leer">{schonGelb ? t.karte.schonEntdeckt : t.karte.leer}</p>;
-  return (
-    <p className="leer" aria-live="polite">
-      {t.karte.zusammenfassung(alsStrecke(s.distanceM), dauerText(Math.round(((s.endedAt ?? s.startedAt) - s.startedAt) / 1000)), t.streifzuege.art[s.mode])}.{" "}
-      <StatusText s={s} />
-    </p>
-  );
-}
-
-function StatusText({ s }: { s: Streifzug }) {
-  const liste = useStreifzuege();
-  const aktuell = liste.find((x) => x.id === s.id) ?? s;
-  return <>{aktuell.status === "gesichert" ? t.karte.gesichert : t.karte.wirdGesichert}</>;
-}
-
-
-function LeereSeite(props: { titel: string; text: string }) {
-  return (
-    <section className="seite" aria-labelledby="seiten-titel">
-      <h1 id="seiten-titel">{props.titel}</h1>
-      <p className="leer gross">{props.text}</p>
-    </section>
-  );
 }
 
 function Profil(props: {
@@ -415,7 +224,6 @@ function Profil(props: {
   werte: Einstellungen;
   aendern: (teil: Partial<Einstellungen>) => void;
   daten: Regionen | null;
-  streifzuege: Streifzug[];
   zumImport: "overland" | "gpx" | null;
   schliessen: () => void;
 }) {
@@ -433,7 +241,7 @@ function Profil(props: {
     <div className="app">
       <section className="seite seite-voll" aria-labelledby="profil-titel">
         <button type="button" className="zurueck" onClick={props.schliessen}>
-          <IconZurueck />
+          <IconSchliessen />
           <span>{t.ich.zurueck}</span>
         </button>
         <h1 id="profil-titel">{t.ich.titel}</h1>
@@ -454,89 +262,5 @@ function Profil(props: {
         <p className="quelle">{t.ich.quelle}</p>
       </section>
     </div>
-  );
-}
-
-/**
- * Areas you have unlocked: only cities with something discovered, each as a fold-out list
- * (city → district → Stadtteil), most discovered first. Nothing about areas you have not been to.
- */
-function GebieteSeite(props: {
-  daten: Regionen | null;
-  fortschritt: Fortschritt | null;
-  einstellungen: Einstellungen;
-  gewaehlt: GebietDaten | null;
-  waehlen: (id: string) => void;
-}) {
-  const { daten, einstellungen } = props;
-  if (!daten) return <LeereSeite titel={t.gebiete.titel} text={t.karte.kmLaedt} />;
-
-  const wege = einstellungen.wegeZaehlen;
-  const gesamtM = (g: GebietDaten) => zaehlendeMeter(g, wege);
-  const gesehenM = (g: GebietDaten) => zaehlendeMeter(props.fortschritt?.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, wege);
-  const anteil = (g: GebietDaten) => prozent(gesehenM(g), gesamtM(g));
-  const entdeckt = (g: GebietDaten) => gesehenM(g) >= 1;
-  const kinder = (g: GebietDaten) => g.kinder.map((id) => daten.gebiete.get(id)!).filter(entdeckt).sort((a, b) => anteil(b) - anteil(a));
-  const viertel = (g: GebietDaten): number => (g.kinder.length === 0 ? (entdeckt(g) ? 1 : 0) : g.kinder.reduce((n, k) => n + viertel(daten.gebiete.get(k)!), 0));
-  // The area chosen on the map and all its parents start opened.
-  const offen = new Set<string>();
-  for (let g = props.gewaehlt; g; g = g.eltern ? (daten.gebiete.get(g.eltern) ?? null) : null) offen.add(g.id);
-
-  const staedte = daten.liste.map((r) => daten.gebiete.get(r.wurzel)!).filter(entdeckt).sort((a, b) => gesehenM(b) - gesehenM(a));
-  if (staedte.length === 0) return <LeereSeite titel={t.gebiete.titel} text={t.gebiete.nochNichts} />;
-
-  const wert = (g: GebietDaten) => {
-    const p = anteil(g);
-    return (
-      <>
-        <span className="gebiet-zeile-text">
-          <span className="gebiet-zeile-name">{g.name}</span>
-          {g.kinder.length > 0 && <span className="gebiet-zeile-zusatz">{t.gebiete.viertelEntdeckt(viertel(g))}</span>}
-          {/* Something discovered always shows a visible bit of yellow. */}
-          <span className="mini-balken" aria-hidden="true"><i style={{ width: `${p > 0 ? Math.max(p, 3) : 0}%` }} /></span>
-        </span>
-        <span className="gebiet-zeile-wert">
-          <b className="gebiet-prozent an">{t.gebiete.prozentKurz(prozentText(p))}</b>
-          <span>{t.gebiete.kmVon(alsKm(gesehenM(g)), alsKm(gesamtM(g)))}</span>
-        </span>
-      </>
-    );
-  };
-  const zeile = (g: GebietDaten) => (
-    <li key={g.id}>
-      <button type="button" className="gebiet-zeile" aria-current={props.gewaehlt?.id === g.id ? "true" : undefined} onClick={() => props.waehlen(g.id)}>
-        {wert(g)}
-      </button>
-    </li>
-  );
-  const ordner = (g: GebietDaten, stadt: boolean) => (
-    <details key={g.id} className={stadt ? "ordner stadt" : "ordner"} open={offen.has(g.id) || (stadt && staedte.length === 1)}>
-      <summary className="gebiet-zeile">
-        {wert(g)}
-        <span className="pfeil" aria-hidden="true" />
-      </summary>
-      <ul className="liste">{kinder(g).map((k) => (k.kinder.length ? <li key={k.id}>{ordner(k, false)}</li> : zeile(k)))}</ul>
-    </details>
-  );
-
-  return (
-    <section className="seite" aria-labelledby="gebiete-titel">
-      <h1 id="gebiete-titel">{t.gebiete.titel}</h1>
-      <p className="leise seiten-unterzeile">{t.gebiete.unterzeile}</p>
-      <div className="ordner-liste">{staedte.map((g) => ordner(g, true))}</div>
-      <p className="quelle">{t.gebiete.stand(new Date(daten.liste[0]?.stand ?? Date.now()).toLocaleDateString("de-DE"))}</p>
-    </section>
-  );
-}
-
-function Schalter(props: { label: string; hinweis: string; an: boolean; onChange: (an: boolean) => void }) {
-  return (
-    <label className="schalter-zeile">
-      <span>
-        <span className="schalter-label">{props.label}</span>
-        <span className="schalter-hinweis">{props.hinweis}</span>
-      </span>
-      <input type="checkbox" role="switch" className="schalter" checked={props.an} onChange={(e) => props.onChange(e.target.checked)} />
-    </label>
   );
 }

@@ -66,7 +66,7 @@ export function elternText(daten: Regionen, id: string): string {
     g = daten.gebiete.get(g.eltern);
     if (g) namen.push(g.name);
   }
-  return namen.join(", ");
+  return namen.join(" · ");
 }
 
 export function findeNachName(daten: Regionen, name: string): GebietDaten | undefined {

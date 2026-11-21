@@ -17,7 +17,7 @@ export interface Rueckblick {
   km: number;
 }
 
-function kuerzen(fixes: Fix[]): [number, number][] {
+export function kuerzen(fixes: Fix[]): [number, number][] {
   const schritt = Math.max(1, Math.ceil(fixes.length / 400));
   const out: [number, number][] = [];
   for (let i = 0; i < fixes.length; i += schritt) out.push([fixes[i]!.lon, fixes[i]!.lat]);

@@ -1,7 +1,6 @@
 /** All visible texts in one place, so English can follow later. */
 export const de = {
   app: { name: "Unterwegs" },
-  tabs: { karte: "Karte", gebiete: "Gebiete", streifzuege: "Streifzüge" },
   karte: {
     prozentLabel: "der Straßen entdeckt",
     kmZeile: (gesehen: string, gesamt: string) => `${gesehen} von ${gesamt} entdeckt`,
@@ -139,7 +138,58 @@ export const de = {
     keinKonto: "Gerade keine Verbindung zum Server.",
   },
   stempel: {
-    label: (gebiet: string, prozent: number) => `Meilenstein: ${gebiet} zu ${prozent} Prozent entdeckt`,
+    betreten: "BETRETEN",
+    veedel: "VEEDEL",
+    strassenKomplett: "STRASSEN KOMPLETT",
+    kmNeu: "NEU GESEHEN",
+    rundum: "RUNDUM",
+    alle: "ALLE",
+    label: (gebiet: string, art: string, stufe: number | null) =>
+      art === "prozent"
+        ? `Stempel: ${gebiet} zu ${stufe} Prozent`
+        : art === "betreten"
+          ? `Stempel: ${gebiet} betreten`
+          : art === "veedel-anzahl"
+            ? `Stempel: ${stufe} Veedel betreten`
+            : art === "km-neu"
+              ? `Stempel: ${stufe} Kilometer neu gesehen`
+              : art === "strassen-komplett"
+                ? `Stempel: ${stufe} Straßen komplett`
+                : `Stempel: ${gebiet} rundum betreten`,
+  },
+  blatt: {
+    hoeher: "Blatt höher ziehen",
+    tiefer: "Blatt tiefer ziehen",
+    kmVon: (gesehen: string, gesamt: string) => `${gesehen} von ${gesamt}`,
+    stempelkarte: "Stempelkarte",
+    betreten: "betreten",
+    noch: (km: string) => `noch ${km}`,
+    zuletzt: "Zuletzt",
+    zuletztZeile: (tag: string, strecke: string) => `${tag} · ${strecke}`,
+    keineWege: "Noch keine Wege.",
+    nochOffen: "Noch offen, nächste zuerst",
+    nochOffenLeer: "Hier ist nichts mehr offen.",
+    nochOffenLaedt: "Wird gesucht …",
+    ersterSatz: "Geh eine Straße entlang. Sie wird gelb.",
+    einrichten: "Automatisch aufzeichnen einrichten",
+    jetztAufzeichnen: "Jetzt mit offener App aufzeichnen",
+    beenden: "Aufzeichnung beenden",
+    rechnetWege: (n: number) => (n === 1 ? "rechnet 1 Weg ein …" : `rechnet ${n} Wege ein …`),
+    seit: (tag: string, wege: number, km: string) => `Seit ${tag} · ${wege} ${wege === 1 ? "Weg" : "Wege"} · ${km}`,
+    ueberspringen: "Überspringen",
+    unterwegs: (strecke: string, strassen: number) => (strassen > 0 ? `+${strecke} · ${strassen === 1 ? "1 Straße" : `${strassen} Straßen`}` : `+${strecke}`),
+    belohnung: (strecke: string, von: string, auf: string) => (von === auf ? `Letzter Weg: +${strecke} neu` : `Letzter Weg: +${strecke} neu, von ${von} auf ${auf} %`),
+  },
+  sammlung: {
+    veedel: "Veedel",
+    stempelpass: "Stempelpass",
+    mehr: "Einstellungen",
+    nochNichts: "Noch kein Veedel betreten.",
+    keineStempel: "Noch keine Stempel. Der erste kommt, sobald du ein Veedel betrittst.",
+    alsNaechstes: "Als Nächstes",
+    naechster: (was: string, km: string) => `${was} · noch ${km}`,
+    prozentStufe: (gebiet: string, stufe: number) => `${gebiet} ${stufe} %`,
+    kmStufe: (stufe: number) => `${stufe} km neu gesehen`,
   },
   gebiete: {
     titel: "Gebiete",
@@ -165,7 +215,7 @@ export const de = {
     aufKarte: "Auf der Karte",
   },
   ich: {
-    titel: "Profil",
+    titel: "Einstellungen",
     zurueck: "Zurück zur Karte",
     konto: "Konto",
     kontoAnonym: "Du nutzt Unterwegs ohne Konto. Deine Einstellungen werden schon gesichert. Ein Konto, mit dem du alles auf andere Geräte mitnimmst, kommt bald.",
