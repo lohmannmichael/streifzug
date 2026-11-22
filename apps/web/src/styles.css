@@ -504,3 +504,14 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .stempelkarte .feld-titel { position: static; font-size: var(--t-klein); font-weight: 500; color: var(--text-leise); }
 .stempelkarte .feld.voll .feld-titel { position: static; color: var(--text); }
 .status-zeile { border-top: 1px solid var(--linie); border-bottom: 1px solid var(--linie); margin-top: 8px; }
+
+/* Ways and their legs (Bauplan 3, C2) */
+.weg-zeile { padding: 0 16px; }
+.abschnitte { list-style: none; margin: 0; padding: 0 16px 10px; display: grid; gap: 12px; }
+.abschnitt-zeile { display: grid; gap: 6px; }
+.abschnitt-text { font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; }
+.umschalt-gruppe { display: flex; border: 1px solid var(--linie); border-radius: 10px; overflow: hidden; }
+.art { flex: 1; min-height: 40px; border: 0; background: none; color: var(--text); font-size: var(--t-klein); cursor: pointer; }
+.art + .art { border-left: 1px solid var(--linie); }
+.art.an { background: var(--marker); color: #151515; font-weight: 600; }
+.art.an.gefahren { background: var(--kuli); color: #fff; }

@@ -132,3 +132,34 @@ describe("a trip faster than 40 km/h once is a car", () => {
   });
 });
 
+describe("corrections (Bauplan 3, C2)", () => {
+  it("a leg recognised as driven becomes walking when Michi says so, and counts again", () => {
+    const fahrt = strecke(0, 0, 55, 180, 6, ["driving"]);
+    const legs = splitLegs(fahrt);
+    expect(legs.map((l) => l.art)).toEqual(["gefahren"]);
+    const k = { von: legs[0]!.von, bis: legs[0]!.bis, art: "rad" as const };
+    const neu = splitLegs(fahrt, [k]);
+    expect(neu.map((l) => [l.art, l.korrigiert])).toEqual([["aktiv", "rad"]]);
+    const at = (m: number): [number, number] => [6.83, 50.94 + m * M_LAT];
+    const stueck: Piece = { id: "s", kind: "street", weight: 1, lengthM: 50, coords: [at(500), at(550)], mid: at(525) };
+    expect(seenByLegs([stueck], fahrt).aktiv.has("s")).toBe(false);
+    expect(seenByLegs([stueck], fahrt, {}, [k]).aktiv.has("s")).toBe(true);
+  });
+
+  it("a walk can be marked as driven (it no longer counts)", () => {
+    const gehen = strecke(0, 0, 5, 300);
+    const l = splitLegs(gehen)[0]!;
+    expect(splitLegs(gehen, [{ von: l.von, bis: l.bis, art: "gefahren" }])[0]!.art).toBe("gefahren");
+  });
+
+  it("other legs of the same way stay as they were", () => {
+    const a = strecke(0, 0, 5, 300);
+    const h = halt(302_000, 417, 120);
+    const b = strecke(424_000, 417, 80, 600);
+    const legs = splitLegs([...a, ...h, ...b]);
+    const k = { von: legs[1]!.von, bis: legs[1]!.bis, art: "rad" as const };
+    expect(splitLegs([...a, ...h, ...b], [k]).map((l) => l.art)).toEqual(["aktiv", "aktiv"]);
+    expect(splitLegs([...a, ...h, ...b], [k])[0]!.korrigiert).toBeUndefined();
+  });
+});
+

@@ -1,4 +1,4 @@
-import { aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Piece, type PolygonGeometry } from "@streifzug/core";
+import { aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry } from "@streifzug/core";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
 
@@ -62,13 +62,24 @@ export function kachelnFuer(spuren: Fix[][]): { x: number; y: number }[] {
  * What one track covered, per kind of leg: "aktiv" (on foot, by bike; counts) and "gefahren"
  * (car, bus, train; drawn as a pen line, never counts). See packages/core/src/legs.ts.
  */
-export async function abgleichen(fixes: Fix[], locker: boolean): Promise<{ aktiv: Piece[]; gefahren: Piece[] }> {
+/** Short fingerprint of a way's corrections ("" without any), part of the key a stored result is valid for. */
+export function korrekturHash(k: readonly Korrektur[] | undefined): string {
+  if (!k?.length) return "";
+  let h = 5381;
+  for (const c of JSON.stringify(k)) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0;
+  return h.toString(36);
+}
+
+/** Key under which a stored result is valid: matching rules, track length and corrections. */
+export const gueltigFuer = (n: number, hash: string) => (hash ? `${ABGLEICH_VERSION}:${n}:${hash}` : `${ABGLEICH_VERSION}:${n}`);
+
+export async function abgleichen(fixes: Fix[], locker: boolean, korrekturen: readonly Korrektur[] = []): Promise<{ aktiv: Piece[]; gefahren: Piece[] }> {
   const alle: Piece[] = [];
   const aktivIds = new Set<string>();
   const gefahrenIds = new Set<string>();
   for (const k of kachelnFuer([fixes])) {
     const teile = await stueckeDerKachel({ z: TILE_ZOOM, ...k });
-    const r = seenByLegs(teile, fixes, locker ? { maxGapM: 60 } : {});
+    const r = seenByLegs(teile, fixes, locker ? { maxGapM: 60 } : {}, korrekturen);
     for (const p of teile) {
       alle.push(p);
       if (r.aktiv.has(p.id)) aktivIds.add(p.id);
@@ -77,9 +88,9 @@ export async function abgleichen(fixes: Fix[], locker: boolean): Promise<{ aktiv
   }
   // Corners cut by sparse points, then short white gaps between walked pieces, are closed
   // (only with points walked or cycled, never driven).
-  const zuFuss = splitLegs(fixes).filter((l) => l.art === "aktiv").flatMap((l) => l.fixes);
+  const zuFuss = splitLegs(fixes, korrekturen).filter((l) => l.art === "aktiv").flatMap((l) => l.fixes);
   // Gaps between points traced along the streets, where the way is clear (Michi, 22.11.2026).
-  for (const id of nachzeichnen(alle, aktiveFolgen(fixes), aktivIds)) aktivIds.add(id);
+  for (const id of nachzeichnen(alle, aktiveFolgen(fixes, korrekturen), aktivIds)) aktivIds.add(id);
   for (const id of eckenSchliessen(alle, aktivIds, zuFuss)) aktivIds.add(id);
   for (const id of lueckenSchliessen(alle, aktivIds)) aktivIds.add(id);
   return { aktiv: alle.filter((p) => aktivIds.has(p.id)), gefahren: alle.filter((p) => !aktivIds.has(p.id) && gefahrenIds.has(p.id)) };

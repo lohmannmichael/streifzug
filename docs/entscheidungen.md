@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: C2 Abschnitt umstellen
+- Menü → „Wege“: die Wege der letzten 30 Tage nach Tagen (wird in D4 zur Rückblicke-Liste). Tipp auf einen Weg zeigt seine Abschnitte (Uhrzeit, Strecke, Dauer, „unsicher erkannt“) mit „zu Fuß · Rad · gefahren“; „wie erkannt“ nimmt die Korrektur zurück
+- Kern: `splitLegs`, `seenByLegs`, `aktiveFolgen` nehmen Korrekturen (`{von, bis, art}` je Weg); ein Abschnitt, dessen Mitte im korrigierten Zeitraum liegt, bekommt die Art, die Korrektur gewinnt immer (Tests in `legs.test.ts`). Rohdaten bleiben unverändert
+- Speicher: `localStorage streifzug.korrekturen` und Spalte `user_state.korrekturen` (Migration `20261122150000`), beim Start zusammengeführt
+- Neu eingerechnet wird nur der korrigierte Weg: Der Schlüssel eines gespeicherten Ergebnisses enthält einen Fingerabdruck seiner Korrekturen (`gueltigFuer(n, hash)`); Wege ohne Korrektur behalten ihre Ergebnisse. Stempel werden nie zurückgenommen
+- Geprüft: Testfahrt mit 44 km/h und „driving“ (gefahren, 0 %) auf „Rad“ gestellt → sofort 0,8 %, nach Neustart 0,8 %, Korrektur im Konto, zweites Gerät nach Anmeldung 0,8 %. Testkonten und Dateien gelöscht
+
 ## 22.11.2026: Lücken über die Straßen nachzeichnen (vorgezogen, Wunsch Michi)
 - `packages/core/src/nachzeichnen.ts` (mit Tests): Zwischen zwei aufeinanderfolgenden Punkten eines Fuß-/Radwegs (15–150 m Luftlinie) sucht die App den kürzesten Weg über das Straßennetz (Dijkstra auf den Stücken). Er wird nur eingetragen, wenn er höchstens 1,3 × Luftlinie + 20 m lang ist und kein zweiter Weg, der den ersten meidet, weniger als 25 % länger ist. Ein Stück wird gelb, wenn die nachgezeichneten Wege 60 % davon abdecken. Nie über eine Autofahrt hinweg
 - Messung mit Michis Weg vom 22.11. (ausgedünnt): 10 s → 99 % (vorher 97 %), kein falsches Gelb; 15 s → 98 % (vorher 94 %), 29 m zusätzlich; 30 s → 96 %, aber rund 300 m Gelb, das es im genauen Ergebnis nicht gibt (die Linien zwischen weit entfernten Punkten schneiden Blöcke ab)

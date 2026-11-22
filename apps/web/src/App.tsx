@@ -9,12 +9,14 @@ import { useSitzung, type Sitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
 import type { OffeneStrasse } from "./daten/veedel";
 import { useAusnahmen } from "./daten/ausnahmen";
+import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, SammlungSeite, type BlattProps, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
 import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
+import { WegeSeite } from "./seiten/Wege";
 import { Stifte } from "./seiten/Stifte";
 import { Zuhause } from "./seiten/Zuhause";
 import { Karte } from "./karte/Karte";
@@ -32,6 +34,7 @@ export function App() {
   const [menueOffen, setMenueOffen] = useState(false);
   const overland = useOverlandStatus();
   const [sammlungOffen, setSammlungOffen] = useState(false);
+  const [wegeOffen, setWegeOffen] = useState(false);
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
@@ -77,11 +80,12 @@ export function App() {
   // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
   const zaehlende = streifzuege;
   const ausnahmen = useAusnahmen();
+  const korrekturen = useKorrekturen();
   const benutzer = sitzung.status === "bereit" ? sitzung.session.user.id : null;
   const zaehlen: Zaehlen = useMemo(
     // Everything counts (Bauplan: no counting switches); per leg it is decided what is aktiv.
-    () => ({ quellen: { gpx: true, overland: true }, ausnahmen }),
-    [ausnahmen],
+    () => ({ quellen: { gpx: true, overland: true }, ausnahmen, korrekturen }),
+    [ausnahmen, korrekturen],
   );
   // The pen colours live in CSS too (marker swipe behind the percentage).
   const marker = markerJetzt(einstellungen);
@@ -97,7 +101,7 @@ export function App() {
       t: s.startedAt,
       fixes: s.fixes,
       // Matched in an earlier session: no need to match again.
-      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] } : {}),
+      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes, korrekturen[s.id]) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] } : {}),
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
@@ -245,6 +249,8 @@ export function App() {
       </div>
     );
 
+  if (wegeOffen) return <WegeSeite schliessen={() => setWegeOffen(false)} />;
+
   if (sammlungOffen) return <SammlungSeite {...blattProps} schliessen={() => setSammlungOffen(false)} />;
 
   if (profilOffen)
@@ -327,6 +333,7 @@ export function App() {
               {(
                 [
                   [t.menue.staedte, () => { setTeil("veedel"); setSammlungOffen(true); }],
+                  [t.menue.wege, () => setWegeOffen(true)],
                   [t.menue.stempelpass, () => { setTeil("pass"); setSammlungOffen(true); }],
                   [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
                 ] as const

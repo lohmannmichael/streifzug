@@ -1,9 +1,9 @@
-import type { Fix, Piece } from "@streifzug/core";
+import type { Fix, Korrektur, Piece } from "@streifzug/core";
 import { pointInGeometry } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, aufStandHoeren, fragen } from "./arbeiter";
-import { ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
+import { gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
 import type { Regionen, Summe } from "./regionen";
 
 export { kachelnFuer } from "./rechnen";
@@ -36,7 +36,7 @@ export interface Spur {
 }
 
 /** Key under which a stored result is valid: same matching rules, same track. */
-export const ergebnisSchluessel = (fixes: Fix[]) => `${ABGLEICH_VERSION}:${fixes.length}`;
+export const ergebnisSchluessel = (fixes: Fix[], korrekturen?: readonly Korrektur[]) => gueltigFuer(fixes.length, korrekturHash(korrekturen));
 
 /** Pieces of the other outings (imports, Overland) that count and started in [ab, bis). Used by the logbook. */
 export async function stueckeImZeitraum(ab: number, bis: number, zaehlen: Zaehlen): Promise<Piece[]> {
@@ -48,8 +48,8 @@ export function meterJeGebiet(stuecke: Iterable<Piece>, daten: Regionen): Promis
   return meterJeGebietListe(stuecke, daten.liste);
 }
 
-// Own outings the worker already knows (id → number of fixes): they are sent without their data.
-const imWorker = new Map<string, number>();
+// Own outings the worker already knows (id → number of fixes and corrections): sent without their data.
+const imWorker = new Map<string, string>();
 
 /**
  * Keeps the progress up to date while outings are added and while recording (every 10 new fixes).
@@ -80,7 +80,7 @@ export function useFortschritt(
       id: s.id,
       n: s.fixes.length,
       t: s.t,
-      ...(imWorker.get(s.id) === s.fixes.length ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
+      ...(imWorker.get(s.id) === ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]) ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
     }));
     const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste: daten.liste });
     aktuell.current = nr;
@@ -89,7 +89,7 @@ export function useFortschritt(
     });
     void antwort.then((a) => {
       // A complete result means the worker now knows every own outing that was sent.
-      for (const sd of eigene) if (!sd.id.startsWith("live:")) imWorker.set(sd.id, sd.n);
+      for (const s of spuren) if (!s.id.startsWith("live:")) imWorker.set(s.id, ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]));
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
       setFehler(null);

@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
-import { abgleichen, ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
+import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { abgleichen, gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
 import { alleLaden, einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
@@ -29,6 +29,8 @@ export interface Zaehlen {
   quellen: Record<ImportQuelle, boolean>;
   /** "Hier komme ich nicht hin": pieces that do not count, neither seen nor in the total. */
   ausnahmen: string[];
+  /** Corrected legs per way (Bauplan 3, C2). */
+  korrekturen: Record<string, Korrektur[]>;
 }
 
 export interface ImportVorschau {
@@ -56,7 +58,9 @@ export type Anfrage =
   | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null }
   | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number }
   | { typ: "ortsName"; nr: number; punkt: [number, number] }
-  | { typ: "export"; nr: number; extra: { name: string; text: string }[] };
+  | { typ: "export"; nr: number; extra: { name: string; text: string }[] }
+  | { typ: "wegeListe"; nr: number; seit: number }
+  | { typ: "abschnitte"; nr: number; id: string; korrekturen: Korrektur[] };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
@@ -72,7 +76,29 @@ export type Antwort =
   | { typ: "ortsName"; nr: number; name: string | null }
   | { typ: "fehler"; nr: number; text: string }
   | { typ: "exportStand"; nr: number; anteil: number }
+  | { typ: "wegeListe"; nr: number; wege: WegKopf[] }
+  | { typ: "abschnitte"; nr: number; abschnitte: Abschnitt[] }
   | { typ: "exportFertig"; nr: number; zip: Uint8Array; wege: number };
+
+/** One way in the list (Bauplan 3, C2 / D4): without its points. */
+export interface WegKopf {
+  id: string;
+  startedAt: number;
+  endedAt: number;
+  distanceM: number;
+  quelle: string;
+}
+
+/** One leg of a way, as shown for correcting it. */
+export interface Abschnitt {
+  von: number;
+  bis: number;
+  /** What it counts as now: corrected, or as recognised (walking/cycling told apart by speed). */
+  art: KorrekturArt;
+  korrigiert: boolean;
+  unsicher: boolean;
+  m: number;
+}
 
 /** Walked streets outside all regions, per cell of about 5 km (a place that is not prepared yet). */
 export interface Draussen {
@@ -129,11 +155,13 @@ export function kuerzen(fixes: Fix[]): [number, number][] {
 }
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);
-const gueltig = (n: number) => `${ABGLEICH_VERSION}:${n}`;
+const gueltig = (n: number, hash = "") => gueltigFuer(n, hash);
+let korrekturenJetzt: Record<string, Korrektur[]> = {};
+const hashVon = (id: string) => korrekturHash(korrekturenJetzt[id]);
 const QUELLEN: ImportQuelle[] = ["gpx", "overland"];
 
 // Matching results per outing (own and others) and the pieces behind them.
-const jeSpur = new Map<string, { n: number; ids: string[]; gefahren: string[] }>();
+const jeSpur = new Map<string, { key: string; ids: string[]; gefahren: string[] }>();
 const stueckNachId = new Map<string, Piece>();
 
 // Other outings, loaded once from the device storage. Fixes are kept only until matched.
@@ -145,8 +173,10 @@ function andereLaden(): Promise<Map<string, Kopf>> {
     const m = new Map<string, Kopf>();
     for (const s of liste) {
       const n = s.fixes.length;
-      if (s.stueckIds && s.stueckIdsGueltig === gueltig(n)) {
-        jeSpur.set(s.id, { n, ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] });
+      // A stored result for this length (with or without corrections); whether its corrections are
+      // still the current ones is checked when calculating.
+      if (s.stueckIds && s.stueckIdsGueltig && (s.stueckIdsGueltig === gueltig(n) || s.stueckIdsGueltig.startsWith(`${gueltig(n)}:`))) {
+        jeSpur.set(s.id, { key: s.stueckIdsGueltig, ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] });
         m.set(s.id, { ...s, fixes: null, n });
       } else m.set(s.id, { ...s, n });
     }
@@ -225,9 +255,11 @@ async function offeneStrassen(regionId: string, gebietId: string, bezug: [number
 
 async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Region[]) {
   neueste = nr;
-  // Own outings: stored results first (cheap).
+  korrekturenJetzt = z.korrekturen ?? {};
+  const keyVon = (id: string, n: number) => gueltig(n, hashVon(id));
+  // Own outings: stored results first (cheap). The page sends them only if valid with the corrections.
   const fehlend: string[] = [];
-  for (const s of eigene) if (s.ids && jeSpur.get(s.id)?.n !== s.n) jeSpur.set(s.id, { n: s.n, ids: s.ids, gefahren: s.gefahren ?? [] });
+  for (const s of eigene) if (s.ids && jeSpur.get(s.id)?.key !== keyVon(s.id, s.n)) jeSpur.set(s.id, { key: keyVon(s.id, s.n), ids: s.ids, gefahren: s.gefahren ?? [] });
   const alle = await andereLaden();
   const zaehlende = [...alle.values()].filter((k) => zaehlt(k, z));
   for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) {
@@ -237,9 +269,11 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   for (const p of await stueckeFuerIds(fehlend)) stueckNachId.set(p.id, p);
 
   // Then everything that still needs matching (new outings, or after a rules change).
+  // Others whose corrections changed need their points again.
+  for (const k of zaehlende) if (jeSpur.get(k.id)?.key !== keyVon(k.id, k.n) && !k.fixes) k.fixes = (await einenLaden(k.id))?.fixes ?? null;
   const offen: { id: string; n: number; fixes: Fix[]; locker: boolean; speichern: boolean }[] = [
-    ...eigene.filter((s) => jeSpur.get(s.id)?.n !== s.n && s.fixes).map((s) => ({ id: s.id, n: s.n, fixes: s.fixes!, locker: false, speichern: !s.id.startsWith("live:") })),
-    ...zaehlende.filter((k) => jeSpur.get(k.id)?.n !== k.n && k.fixes).map((k) => ({ id: k.id, n: k.n, fixes: k.fixes!, locker: true, speichern: true })),
+    ...eigene.filter((s) => jeSpur.get(s.id)?.key !== keyVon(s.id, s.n) && s.fixes).map((s) => ({ id: s.id, n: s.n, fixes: s.fixes!, locker: false, speichern: !s.id.startsWith("live:") })),
+    ...zaehlende.filter((k) => jeSpur.get(k.id)?.key !== keyVon(k.id, k.n) && k.fixes).map((k) => ({ id: k.id, n: k.n, fixes: k.fixes!, locker: true, speichern: true })),
   ];
   let merken: { id: string; ids: string[]; gefahren: string[]; gueltig: string }[] = [];
   for (let i = 0; i < offen.length; i++) {
@@ -250,7 +284,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     // One broken outing must not stop all the others: it is skipped (and tried again next time).
     let r: Awaited<ReturnType<typeof abgleichen>>;
     try {
-      r = await abgleichen(s.fixes, s.locker);
+      r = await abgleichen(s.fixes, s.locker, korrekturenJetzt[s.id] ?? []);
     } catch (e) {
       console.warn("Weg übersprungen", s.id, e);
       continue;
@@ -258,10 +292,10 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     for (const p of [...r.aktiv, ...r.gefahren]) stueckNachId.set(p.id, p);
     const ids = r.aktiv.map((p) => p.id);
     const gefahren = r.gefahren.map((p) => p.id);
-    jeSpur.set(s.id, { n: s.n, ids, gefahren });
+    jeSpur.set(s.id, { key: keyVon(s.id, s.n), ids, gefahren });
     const kopf = alle.get(s.id);
     if (kopf) kopf.fixes = null;
-    if (s.speichern) merken.push({ id: s.id, ids, gefahren, gueltig: gueltig(s.n) });
+    if (s.speichern) merken.push({ id: s.id, ids, gefahren, gueltig: keyVon(s.id, s.n) });
     if (merken.length >= 25) {
       await ergebnisseMerken(merken);
       merken = [];
@@ -467,6 +501,23 @@ async function antworten(a: Anfrage): Promise<void> {
         if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
       }
       return senden({ typ: "wege", nr: a.nr, wege });
+    }
+    case "wegeListe": {
+      const eigene = (await alleLaden()).map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, quelle: s.quelle ?? "aufnahme" }));
+      const andereWege = [...(await andereLaden()).values()].map((k) => ({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, quelle: k.quelle ?? "" }));
+      const wege = [...eigene, ...andereWege].filter((w) => w.endedAt >= a.seit).sort((x, y) => y.startedAt - x.startedAt);
+      return senden({ typ: "wegeListe", nr: a.nr, wege });
+    }
+    case "abschnitte": {
+      const fixes = (await einenLaden(a.id))?.fixes ?? [];
+      const abschnitte = splitLegs(fixes, a.korrekturen).map((l): Abschnitt => {
+        let m = 0;
+        for (let i = 1; i < l.fixes.length; i++) m += distanceM([l.fixes[i - 1]!.lon, l.fixes[i - 1]!.lat], [l.fixes[i]!.lon, l.fixes[i]!.lat]);
+        const kmh = (m / Math.max(1, (l.bis - l.von) / 1000)) * 3.6;
+        const art: KorrekturArt = l.korrigiert ?? (l.art === "gefahren" ? "gefahren" : kmh > 11 ? "rad" : "zuFuss");
+        return { von: l.von, bis: l.bis, art, korrigiert: !!l.korrigiert, unsicher: l.unsicher, m };
+      });
+      return senden({ typ: "abschnitte", nr: a.nr, abschnitte });
     }
     case "export":
       return exportieren(a.nr, a.extra);

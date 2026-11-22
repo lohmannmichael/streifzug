@@ -9,6 +9,8 @@ import { supabase } from "./supabase";
 const STEMPEL = "streifzug.stempel";
 const AUSNAHMEN = "streifzug.ausnahmen";
 const EINSTELLUNGEN = "streifzug.einstellungen";
+const KORREKTUREN = "streifzug.korrekturen";
+type KorrekturListe = Record<string, { von: number; bis: number; art: string }[]>;
 /** Sent after server data was merged in, so the screens read it again. */
 export const KONTO_DATEN = "streifzug:konto-daten";
 
@@ -45,6 +47,7 @@ async function hochladen(): Promise<void> {
     stempel: lesen<StempelEintrag[]>(STEMPEL, []),
     ausnahmen: lesen<string[]>(AUSNAHMEN, []),
     stifte: stifteLesen(),
+    korrekturen: lesen<KorrekturListe>(KORREKTUREN, {}),
     updated_at: new Date().toISOString(),
   });
   if (error) console.warn("Kontodaten nicht gesichert, bleiben auf dem Gerät.", error.message);
@@ -54,7 +57,7 @@ async function hochladen(): Promise<void> {
 export async function kontoDatenHolen(): Promise<void> {
   const { data } = await supabase.auth.getSession();
   if (!data.session || !navigator.onLine) return;
-  const { data: zeile, error } = await supabase.from("user_state").select("stempel, ausnahmen, stifte").maybeSingle();
+  const { data: zeile, error } = await supabase.from("user_state").select("stempel, ausnahmen, stifte, korrekturen").maybeSingle();
   if (error) return;
   let geaendert = false;
   if (zeile) {
@@ -72,6 +75,19 @@ export async function kontoDatenHolen(): Promise<void> {
     const ausnahmen = [...new Set([...lesen<string[]>(AUSNAHMEN, []), ...((zeile.ausnahmen as string[]) ?? [])])].sort();
     if (ausnahmen.length !== lesen<string[]>(AUSNAHMEN, []).length) {
       localStorage.setItem(AUSNAHMEN, JSON.stringify(ausnahmen));
+      geaendert = true;
+    }
+    // Corrections: both, per way; for the same leg (same start) the device's wins.
+    const lokalK = lesen<KorrekturListe>(KORREKTUREN, {});
+    const serverK = (zeile.korrekturen as KorrekturListe | null) ?? {};
+    const k: KorrekturListe = {};
+    for (const weg of new Set([...Object.keys(serverK), ...Object.keys(lokalK)])) {
+      const je = new Map<number, { von: number; bis: number; art: string }>();
+      for (const x of [...(serverK[weg] ?? []), ...(lokalK[weg] ?? [])]) je.set(Math.round(x.von / 1000), x);
+      k[weg] = [...je.values()].sort((a, b) => a.von - b.von);
+    }
+    if (JSON.stringify(k) !== JSON.stringify(lokalK)) {
+      localStorage.setItem(KORREKTUREN, JSON.stringify(k));
       geaendert = true;
     }
     // Pens: the account's choice, where it has one.

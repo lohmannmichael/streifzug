@@ -11,10 +11,22 @@ import { MAX_ACCURACY_M, type Fix } from "./track";
 
 export type Art = "aktiv" | "gefahren";
 
+/** What Michi says a leg was (Bauplan 3, C2). Walking and cycling both count ("aktiv"). */
+export type KorrekturArt = "zuFuss" | "rad" | "gefahren";
+
+/** A correction for one leg, found again by its time (start and end of the leg). */
+export interface Korrektur {
+  von: number;
+  bis: number;
+  art: KorrekturArt;
+}
+
 export interface Leg {
   art: Art;
   /** Classified by speed alone in the 30–38 km/h band: could be a fast bike. */
   unsicher: boolean;
+  /** Set when Michi corrected this leg; then it wins over the recognition. */
+  korrigiert?: KorrekturArt;
   von: number;
   bis: number;
   fixes: Fix[];
@@ -111,7 +123,7 @@ function einstufen(fixes: Fix[], tempi: number[]): { art: Art; unsicher: boolean
   return { art: "aktiv", unsicher: false };
 }
 
-export function splitLegs(input: readonly Fix[]): Leg[] {
+export function splitLegs(input: readonly Fix[], korrekturen: readonly Korrektur[] = []): Leg[] {
   const f = saeubern(input);
   if (f.length < 2) return [];
   const tempi = glatteTempi(f);
@@ -195,6 +207,15 @@ export function splitLegs(input: readonly Fix[]): Leg[] {
       l.unsicher = false;
     }
   }
+  // Corrections win over everything (Bauplan 3, C2): a leg whose middle lies in a corrected time span.
+  for (const l of legs) {
+    const mitte = (l.von + l.bis) / 2;
+    const k = korrekturen.find((x) => mitte >= x.von - 1000 && mitte <= x.bis + 1000);
+    if (!k) continue;
+    l.art = k.art === "gefahren" ? "gefahren" : "aktiv";
+    l.unsicher = false;
+    l.korrigiert = k.art;
+  }
   return legs;
 }
 
@@ -202,8 +223,8 @@ export function splitLegs(input: readonly Fix[]): Leg[] {
  * Runs of walked or cycled points: consecutive aktiv legs together with the stops between them,
  * split wherever something was driven. Used to trace gaps along the streets.
  */
-export function aktiveFolgen(fixes: readonly Fix[]): Fix[][] {
-  const legs = splitLegs(fixes);
+export function aktiveFolgen(fixes: readonly Fix[], korrekturen: readonly Korrektur[] = []): Fix[][] {
+  const legs = splitLegs(fixes, korrekturen);
   const sortiert = [...fixes].sort((x, y) => x.t - y.t);
   const out: Fix[][] = [];
   for (let i = 0; i < legs.length; i++) {
@@ -222,7 +243,7 @@ export function aktiveFolgen(fixes: readonly Fix[]): Fix[][] {
  * What an outing covered, per kind of leg: "aktiv" (streets only, points up to 25 m inaccurate)
  * and "gefahren" (streets and motorways, 30 m to the side, points up to 50 m inaccurate).
  */
-export function seenByLegs(pieces: readonly Piece[], fixes: readonly Fix[], options: Partial<MatchOptions> = {}): { aktiv: Set<string>; gefahren: Set<string> } {
+export function seenByLegs(pieces: readonly Piece[], fixes: readonly Fix[], options: Partial<MatchOptions> = {}, korrekturen: readonly Korrektur[] = []): { aktiv: Set<string>; gefahren: Set<string> } {
   // Paths (park, Tierpark, forest) are recognised too: drawn, but they never count (only streets do).
   const strassen = pieces.filter((p) => p.kind === "street" || p.kind === "path");
   const fahrbar = pieces.filter((p) => p.kind === "street" || p.kind === "drive");
@@ -230,7 +251,7 @@ export function seenByLegs(pieces: readonly Piece[], fixes: readonly Fix[], opti
   const gefahren = new Set<string>();
   // Aktiv legs one after another (only a halt between them, nothing driven) are matched as one
   // walk, with the points of the halt: otherwise the street where you slowed down stays white.
-  const legs = splitLegs(fixes);
+  const legs = splitLegs(fixes, korrekturen);
   const sortiert = [...fixes].sort((x, y) => x.t - y.t);
   for (let i = 0; i < legs.length; i++) {
     const leg = legs[i]!;
