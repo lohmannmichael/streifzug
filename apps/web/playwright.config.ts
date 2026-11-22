@@ -23,6 +23,7 @@ export default defineConfig({
     permissions: ["geolocation"],
     geolocation: { latitude: 50.9395, longitude: 6.8285 },
     trace: "off",
+    screenshot: "only-on-failure",
   },
   projects: [{ name: "iphone" }],
   webServer: {

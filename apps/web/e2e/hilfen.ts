@@ -8,19 +8,34 @@ const GELB = [0xff, 0xe8, 0x3a];
  * canvas cannot be read directly (WebGL), the screenshot shows what a person sees.
  */
 export async function gelbePixel(page: Page, bereich?: { x: number; y: number; width: number; height: number }): Promise<number> {
+  return (await gelbSuchen(page, bereich)).anzahl;
+}
+
+/** Number of yellow pixels and the screen point of the yellow pixel nearest the middle. */
+export async function gelbSuchen(page: Page, bereich?: { x: number; y: number; width: number; height: number }): Promise<{ anzahl: number; punkt: { x: number; y: number } | null }> {
   const bild = (await page.screenshot(bereich ? { clip: bereich } : {})).toString("base64");
   return page.evaluate(
-    async ({ bild, gelb }) => {
+    async ({ bild, gelb, rahmen }) => {
       const b = await createImageBitmap(await (await fetch(`data:image/png;base64,${bild}`)).blob());
       const c = new OffscreenCanvas(b.width, b.height);
       const x = c.getContext("2d")!;
       x.drawImage(b, 0, 0);
       const d = x.getImageData(0, 0, b.width, b.height).data;
       let n = 0;
-      for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i]! - gelb[0]!) < 24 && Math.abs(d[i + 1]! - gelb[1]!) < 24 && Math.abs(d[i + 2]! - gelb[2]!) < 40) n++;
-      return n;
+      let best: { x: number; y: number; d: number } | null = null;
+      for (let i = 0; i < d.length; i += 4) {
+        if (!(Math.abs(d[i]! - gelb[0]!) < 24 && Math.abs(d[i + 1]! - gelb[1]!) < 24 && Math.abs(d[i + 2]! - gelb[2]!) < 40)) continue;
+        n++;
+        const x = (i / 4) % b.width;
+        const y = Math.floor(i / 4 / b.width);
+        const abstand = Math.hypot(x - b.width / 2, y - b.height / 2);
+        if (!best || abstand < best.d) best = { x, y, d: abstand };
+      }
+      // Screenshot pixels are device pixels; the point is in CSS pixels on the page.
+      const skala = b.width / rahmen.width;
+      return { anzahl: n, punkt: best && { x: rahmen.x + best.x / skala, y: rahmen.y + best.y / skala } };
     },
-    { bild, gelb: GELB },
+    { bild, gelb: GELB, rahmen: bereich ?? { x: 0, y: 0, width: page.viewportSize()!.width } },
   );
 }
 
@@ -93,3 +108,12 @@ export function fehlerSammeln(page: Page): string[] {
 
 /** Whether the sheet is pulled up (VoiceOver handle says so). */
 export const blattOffen = (page: Page) => page.locator(".blatt .griff");
+
+/**
+ * Brings the test ways into view: "Zu meinem Standort" (the test position lies in Weiden among
+ * them). The start view depends on which data arrives first, so yellow is counted only after this.
+ */
+export async function zuDenWegen(page: Page) {
+  await page.getByRole("button", { name: "Zu meinem Standort" }).tap();
+  await page.waitForTimeout(1500);
+}

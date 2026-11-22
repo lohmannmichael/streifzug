@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gelbePixel, ohneRueckblick, planDa, prozent, UEBER_DEM_BLATT } from "./hilfen";
+import { gelbePixel, ohneRueckblick, planDa, prozent, UEBER_DEM_BLATT, zuDenWegen } from "./hilfen";
 import { serverErsetzen } from "./server";
 
 test("Netz aus: Offline-Zeile, danach wieder normal", async ({ page, context }) => {
@@ -23,6 +23,7 @@ test("Kartendienst aus: graue Fläche, „Nochmal“ holt den Plan", async ({ pa
   server.optionen.karteAus = false;
   await page.getByRole("button", { name: "Nochmal", exact: true }).tap();
   await expect(page.getByText("Der Plan lädt gerade nicht. Deine Wege sind sicher.")).toBeHidden();
+  await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT), { timeout: 20_000 }).toBeGreaterThan(1500);
 });
 

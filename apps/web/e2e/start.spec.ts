@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { fehlerSammeln, gelbePixel, ohneRueckblick, planDa, prozent, UEBER_DEM_BLATT } from "./hilfen";
+import { fehlerSammeln, gelbePixel, ohneRueckblick, planDa, prozent, UEBER_DEM_BLATT, zuDenWegen } from "./hilfen";
 import { serverErsetzen } from "./server";
 
 // Weiden with the three test ways and the car ride (fixed data, fixed recorded street tiles).
@@ -27,6 +27,7 @@ test("Start mit Wegen: Gelb auf dem Plan, Prozent stimmt", async ({ page }) => {
   await page.goto("/");
   await planDa(page);
   await expect(prozent(page)).toHaveAttribute("aria-label", WEIDEN_PROZENT);
+  await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeGreaterThan(GELB_MINDESTENS);
   expect(fehler).toEqual([]);
 });
@@ -37,5 +38,6 @@ test("Karte lädt verzögert: Gelb ist danach trotzdem da (Fehler vom 20.11.)", 
   await page.goto("/");
   // The ways are calculated before the map style arrives.
   await expect(prozent(page)).toHaveAttribute("aria-label", WEIDEN_PROZENT);
+  await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT), { timeout: 20_000 }).toBeGreaterThan(GELB_MINDESTENS);
 });

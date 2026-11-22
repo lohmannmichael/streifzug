@@ -1,5 +1,19 @@
 # Entscheidungen
 
+## 22.11.2026: E2 Karte aufgeteilt
+- `karte/Karte.tsx` (775 Zeilen) in Teile mit je einer Aufgabe, Code dabei nur verschoben:
+  - `aufbau.ts`: Karte bauen, Stil laden, graue Fläche bei Ausfall (47 Zeilen)
+  - `ebenen.ts`: eigene Ebenen (Gelb, Rot, Rückblick-Spur, Standort), Stifte, Schraffur-Bilder (126)
+  - `gebiete.ts`: Gebietsgrenzen, Namen, Schraffur nach Prozent (186)
+  - `tippen.ts` und `Schild.tsx`: Tippen auf Viertel und Straße, das Straßenschild (40 und 64)
+  - `kamera.ts`: zum Gebiet fahren, Box einpassen, „Bewegung reduzieren“ (50)
+  - `zeichenMoment.ts`: Textmarker-Strich bei neuen Straßen, „+25 m“ (89); `rueckblick.ts` unverändert
+  - `Karte.tsx` verbindet die Teile mit dem Zustand der App (260 Zeilen, Plan: „etwa 250“)
+- Neue Oberflächentests für das Tippen: herausgezoomt ein Viertel wählen; nah dran auf eine gelbe Straße tippen, Schild erscheint, Ziehen schließt es. Zuerst gegen den alten Stand laufen lassen
+- Dabei gefunden: Das Straßenschild erschien im alten Stand nach dem Tippen oft nicht, sondern erst, wenn sich in der App zufällig etwas anderes änderte (das Schild-Element entstand erst nach dem Zeichnen, ohne neues Zeichnen danach). Mit dem eigenen Teil `Schild.tsx` erscheint es sofort
+- Tests robuster: Gelb wird erst nach „Zu meinem Standort“ gezählt, weil der Startausschnitt davon abhängt, ob Ortsdaten oder Kartenstil zuerst ankommen (einmal in 42 Läufen stand die Karte im Osten von Weiden ohne Testwege). Bei Fehlern speichert der Test ein Bildschirmfoto
+- Geprüft: 14 Oberflächentests, 3 × alle hintereinander grün; Gegenprobe „Gelb aus“ wieder rot
+
 ## 22.11.2026: E1 Oberflächentests
 - Playwright (`apps/web/e2e/`, Version 1.63 wie der Browser in der Claude-Umgebung), iPhone-13-Größe mit Touch, gebaute App (`vite preview`), Service Worker im Test aus
 - Kein echtes Konto, kein Netz: `e2e/server.ts` ersetzt Supabase (Anmeldung, Tabellen, Storage) durch einen kleinen Nachbau im Speicher und liefert die Testwege als Overland-Punkte, also über denselben Weg wie im Alltag. Kartenstil, Kacheln und Schriften kommen aus `e2e/daten/openfreemap/` (aufgenommen, 1,9 MB); Kacheln unter Zoom 12 werden nicht aufgenommen (je mehrere 100 kB), dort bleibt der Plan papierweiß, Gelb, Schraffur und Grenzen werden trotzdem gezeichnet
