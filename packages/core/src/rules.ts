@@ -55,6 +55,20 @@ export function classifyWay(tags: OsmTags, options: RuleOptions): WayKind | null
   return null;
 }
 
+/**
+ * Ways that never count but are drawn like paths once walked (Michi, 22.11.2026): tracks
+ * (Wirtschaftswege in parks, woods, fields) always, service roads only from `NEBENWEG_ZUFAHRT_MIN_M`
+ * on, so driveways and parking aisles stay out. Returns the minimum length, or null.
+ */
+export function nebenwegMindestlaenge(tags: OsmTags): number | null {
+  if (tags.area === "yes" || isClosed(tags)) return null;
+  if (tags.highway === "track") return 0;
+  if (tags.highway === "service") return NEBENWEG_ZUFAHRT_MIN_M;
+  return null;
+}
+
+export const NEBENWEG_ZUFAHRT_MIN_M = 100;
+
 function isClosed(tags: OsmTags): boolean {
   if (tags.access !== "private" && tags.access !== "no") return false;
   const openOnFoot = tags.foot !== undefined && ALLOWED.has(tags.foot);

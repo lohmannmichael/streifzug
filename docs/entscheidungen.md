@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: Wirtschafts- und lange Zufahrtswege werden gezeichnet
+- Michi (Bild Müngersdorf, 21:29): „Den Weg, den ich nachgezeichnet hab, ist nicht drin.“ Mit seinem OK die Overland-Punkte der Fahrt (9:26–9:31) nur lesend geholt: angekommen, als Rad erkannt, 0–4 m neben den Wegen der Karte. Die Strecke lief über einen Fußweg (schmal gelb), dann einen Wirtschaftsweg (`track`) und einen Zufahrtsweg (`service`). Die letzten beiden beachtete die App gar nicht (Regel aus Fassung 2: zählen nie)
+- Michi: „Ja, so bauen“. Neu: Wirtschaftswege werden wie Parkwege schmal gelb gezeichnet; Zufahrtswege nur, wenn die Linie mindestens 100 m lang ist (Hofeinfahrten und Parkplatzgassen bleiben weg). Gesperrte (privat, kein Zugang) nicht. Beide zählen weiter nicht, Prozente und Stempel unverändert
+- Die neuen Linien werden je Kachel hinten angehängt, die Kennungen aller anderen Stücke bleiben gleich (gespeicherte Ergebnisse, „Hier komme ich nicht hin“). Test dafür in `pieces.test.ts`
+- `ABGLEICH_VERSION` 10: alle Wege werden einmal im Hintergrund neu eingerechnet
+- Geprüft mit Michis Fahrt: im Park 845 m gelb statt 205 m, gezählte Straßenmeter gleich (2.202 m)
+
 ## 22.11.2026: F7 Stempel für Orte und Länder
 - Neu: Jeder Ort mit gegangenen Metern bekommt einen Stempel „betreten“ (Rechteck mit doppeltem Rahmen, damit er sich vom Viertel-Stempel unterscheidet), auch Orte ohne Daten („Wird vorbereitet“). Jedes Land bekommt einen Einreise-Stempel (abgerundetes Rechteck, „EINREISE“, Länderkürzel, blau)
 - Datum auf beiden: der Tag des ersten Wegs dort, nicht der Tag des Stempelns. Dafür rechnet der Hintergrund je Gebiet das erste Datum mit (`seit`)

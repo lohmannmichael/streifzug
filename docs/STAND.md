@@ -9,7 +9,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Blatt mit zwei Höhen, Pass oben rechts (Orte, Stempel, Rückblicke, Einstellungen), Stempel mit Tinten-Filter
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (nur Gelb)
 - Nach einem Flug: weiter Sprung nach mindestens 10 Min. Pause gilt als neuer Anfang, nicht als Ausreißer
-- Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit (`ABGLEICH_VERSION` 9)
+- Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit, Wirtschaftswege und Zufahrten ab 100 m schmal gelb (`ABGLEICH_VERSION` 10)
 - Oberflächentests (E1): 19 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
 - Öffnen zeigt sofort den letzten Stand (E3, Gerätedatenbank `streifzug-stand`); Messung mit einem Jahr Daten: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`

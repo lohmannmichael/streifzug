@@ -1,4 +1,4 @@
-import { classifyWay, type OsmTags, type RuleOptions, type WayKind } from "./rules";
+import { classifyWay, nebenwegMindestlaenge, type OsmTags, type RuleOptions, type WayKind } from "./rules";
 
 /** Properties of a feature in the OpenMapTiles "transportation" layer. */
 export interface OmtTransportation {
@@ -42,4 +42,10 @@ export function omtToTags(p: OmtTransportation): OsmTags | null {
 export function classifyOmt(p: OmtTransportation, options: RuleOptions): WayKind | null {
   const tags = omtToTags(p);
   return tags ? classifyWay(tags, options) : null;
+}
+
+/** Minimum length from which a track or service road is drawn as a path, or null (see rules.ts). */
+export function nebenwegOmt(p: OmtTransportation): number | null {
+  const tags = omtToTags(p);
+  return tags ? nebenwegMindestlaenge(tags) : null;
 }

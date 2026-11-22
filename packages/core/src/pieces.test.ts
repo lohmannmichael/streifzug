@@ -45,3 +45,41 @@ describe("piecesFromTile", () => {
     expect(p.reduce((s, x) => s + x.lengthM, 0)).toBeCloseTo(30, 0);
   });
 });
+
+describe("Wirtschafts- und lange Zufahrtswege (Michi, 22.11.2026)", () => {
+  it("draws tracks as paths (never counted)", () => {
+    const p = piecesFromTile(tile, [{ props: { class: "track" }, lines: [gerade(0, 50)] }]);
+    expect(p.map((x) => x.kind)).toEqual(["path", "path"]);
+  });
+
+  it("draws service roads only from 100 m on, so driveways stay out", () => {
+    const kurz = piecesFromTile(tile, [{ props: { class: "service" }, lines: [gerade(0, 60)] }]);
+    expect(kurz).toEqual([]);
+    const lang = piecesFromTile(tile, [{ props: { class: "service" }, lines: [gerade(0, 120)] }]);
+    expect(lang.length).toBeGreaterThan(0);
+    expect(lang.every((x) => x.kind === "path")).toBe(true);
+  });
+
+  it("leaves out closed tracks and service roads", () => {
+    const p = piecesFromTile(tile, [
+      { props: { class: "track", access: "private" }, lines: [gerade(0, 50)] },
+      { props: { class: "service", access: "no" }, lines: [gerade(100, 150)] },
+    ]);
+    expect(p).toEqual([]);
+  });
+
+  it("keeps the ids of all other pieces when such ways are added (stored ids stay valid)", () => {
+    const vorher = piecesFromTile(tile, [
+      { props: { class: "minor" }, lines: [gerade(0, 50)] },
+      { props: { class: "path", subclass: "footway" }, lines: [gerade(200, 50)] },
+    ]);
+    const nachher = piecesFromTile(tile, [
+      { props: { class: "track" }, lines: [gerade(100, 50)] },
+      { props: { class: "minor" }, lines: [gerade(0, 50)] },
+      { props: { class: "service" }, lines: [gerade(300, 150)] },
+      { props: { class: "path", subclass: "footway" }, lines: [gerade(200, 50)] },
+    ]);
+    const ids = (ps: typeof vorher) => ps.filter((x) => x.coords[0]![1] < mitte[1] + 250 * MY && (x.coords[0]![1] < mitte[1] + 50 * MY || x.coords[0]![1] > mitte[1] + 150 * MY)).map((x) => x.id);
+    expect(ids(nachher)).toEqual(ids(vorher));
+  });
+});
