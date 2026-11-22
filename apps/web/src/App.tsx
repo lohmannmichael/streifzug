@@ -6,13 +6,12 @@ import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Forts
 import { useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import";
 import { useOnline } from "./daten/netz";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
-import { useSitzung, type Sitzung } from "./daten/supabase";
+import { useSitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
-import type { OffeneStrasse } from "./daten/veedel";
 import { useAusnahmen } from "./daten/ausnahmen";
 import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
-import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
+import { markerJetzt, useEinstellungen } from "./einstellungen";
 import { Blatt, type BlattProps, type Hoehe } from "./seiten/Blatt";
 import { StempelSeite } from "./seiten/Stempel";
 import { OrteSeite } from "./seiten/Orte";
@@ -36,7 +35,6 @@ export function App() {
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   // One past day from "Rückblicke" (Bauplan 3, D4).
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; bis: number; nr: number } | null>(null);
-  const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
@@ -223,8 +221,6 @@ export function App() {
             setPass("einstellungen");
           },
     position: position,
-    offen: offen?.name ?? null,
-    offenZeigen: setOffen,
     waehlen: (id: string) => waehlen(id),
     fremdeOrte: fremdeOrte,
     zahlVorher: rueckblick && !aufzeichnung.aktiv ? zahlVorher : null,
@@ -283,7 +279,6 @@ export function App() {
           // Pass closes, the plan goes to the whole place, the sheet shows it (Bauplan 3, D2).
           setPass(null);
           setHoehe(1);
-          setOffen(null);
           waehlen(wurzel);
         }}
       />
@@ -350,7 +345,6 @@ export function App() {
             // A tap on the quarter already shown puts the sheet down (Bauplan 3, B3).
             if (id === gebiet?.id && sprung === undefined) setHoehe(1);
             waehlen(id, sprung);
-            setOffen(null);
           }}
           springen={springen.current}
           spur={aufzeichnung.fixes}
@@ -369,7 +363,6 @@ export function App() {
             if (zahlVorher !== null) setHochzaehlen((alt) => ({ von: zahlVorher, nr: (alt?.nr ?? 0) + 1 }));
             rueckblickBeenden();
           }}
-          offen={offen?.linien ?? null}
           erstesMal={erstesMal}
           stifte={stifte}
         />

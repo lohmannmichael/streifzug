@@ -65,7 +65,7 @@ async function einen(s: Streifzug, userId: string): Promise<boolean> {
  * The other way round: own outings that are on the server but not on this device (new phone, or
  * the phone cleared the app's storage) are fetched back.
  */
-export async function zurueckholen(): Promise<number> {
+async function zurueckholen(): Promise<number> {
   const { data } = await supabase.auth.getSession();
   if (!data.session || !navigator.onLine) return 0;
   const { data: zeilen, error } = await supabase.from("tracks").select("id, started_at, ended_at, mode, distance_m, file_key");

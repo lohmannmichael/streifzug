@@ -1,46 +1,16 @@
-import { faelligeStempel, naechsteStempel, stempelUmstellen, type Gruppe, type Naechster, type Stand, type Stempel } from "@streifzug/core";
-import { useEffect, useMemo, useState } from "react";
-import type { Etikett, KurzWeg, OffeneStrasse } from "./abgleich.worker";
-import { ANDERE_GEAENDERT, fragen } from "./arbeiter";
+import { faelligeStempel, stempelUmstellen, type Gruppe, type Stand, type Stempel } from "@streifzug/core";
+import { useEffect, useState } from "react";
+import type { Etikett, KurzWeg } from "./abgleich.worker";
+import { fragen } from "./arbeiter";
 import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 import type { Fortschritt } from "./fortschritt";
 import { gesamtMeter, zaehlendeMeter, type Regionen } from "./regionen";
 
-export type { Etikett, OffeneStrasse } from "./abgleich.worker";
+export type { Etikett } from "./abgleich.worker";
 
 /** Newest other outings (Overland, GPX), shortened, from the background worker. */
 export async function letzteWege(anzahl: number): Promise<KurzWeg[]> {
   return (await fragen<"wege">({ typ: "letzteWege", anzahl }).antwort).wege;
-}
-
-/** "Noch offen": named streets of a quarter with open meters, nearest first. */
-export function useOffeneStrassen(daten: Regionen | null, gebietId: string | null, bezug: [number, number] | null, stand: unknown, aktiv: boolean) {
-  const [liste, setListe] = useState<OffeneStrasse[] | null>(null);
-  const schluessel = bezug ? `${bezug[0].toFixed(3)},${bezug[1].toFixed(3)}` : "";
-  useEffect(() => {
-    const regionId = gebietId ? daten?.gebiete.get(gebietId)?.regionId : undefined;
-    if (!aktiv || !regionId || !gebietId) return;
-    let lebt = true;
-    setListe(null);
-    void fragen<"offen">({ typ: "offen", regionId, gebietId, bezug }).antwort.then((a) => lebt && setListe(a.strassen));
-    return () => {
-      lebt = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [daten, gebietId, schluessel, stand, aktiv]);
-  return liste;
-}
-
-/** Last five outings (own and others) for "Zuletzt". */
-export function useLetzteWege(eigene: KurzWeg[]): KurzWeg[] {
-  const [andere, setAndere] = useState<KurzWeg[]>([]);
-  useEffect(() => {
-    const laden = () => void letzteWege(5).then(setAndere);
-    laden();
-    window.addEventListener(ANDERE_GEAENDERT, laden);
-    return () => window.removeEventListener(ANDERE_GEAENDERT, laden);
-  }, []);
-  return useMemo(() => [...eigene, ...andere].sort((a, b) => b.endedAt - a.endedAt).slice(0, 5), [eigene, andere]);
 }
 
 /* Stamps given so far (Bauplan 6.5: never taken away). Kept on the device. */
@@ -109,7 +79,7 @@ export function useGesetzteStempel(): GesetzterStempel[] {
  * Stamps: given ones from the device; newly earned ones are laid into the passport right away
  * for now (Phase 2). Stamping by hand with sound comes in Phase 3 (Bauplan 5.2).
  */
-export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; naechste: Naechster[] } {
+export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[] } {
   const [gesetzt, setGesetzt] = useState<GesetzterStempel[]>(lesen);
   // Stamps from the account (another phone, or after signing in) come in here.
   useEffect(() => {
@@ -139,7 +109,7 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; 
     kontoDatenGeaendert();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stand]);
-  return { gesetzt, naechste: stand ? naechsteStempel(stand) : [] };
+  return { gesetzt };
 }
 
 /** The street at a tapped point (within radiusM), for the label. */

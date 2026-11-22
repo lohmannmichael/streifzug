@@ -7,7 +7,7 @@ import { zeigeBox } from "./kamera";
  * once; the new streets turn yellow one after another in the order they were walked (3–7 s).
  * Tap skips. Afterwards the map zooms to the quarter and the number counts up.
  */
-export interface RueckblickDaten {
+interface RueckblickDaten {
   wege: LonLat[][];
   /** Everything first walked since this time counts as new. */
   seit: number;
@@ -15,7 +15,7 @@ export interface RueckblickDaten {
   bis?: number | undefined;
 }
 
-export interface RueckblickKontext {
+interface RueckblickKontext {
   /** All seen ("aktiv") street pieces with the time each was first walked. */
   entdeckt: readonly Piece[];
   erstesMal: ReadonlyMap<string, number>;

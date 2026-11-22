@@ -1,6 +1,6 @@
 import type { Fix, Mode } from "@streifzug/core";
 
-export type Quelle = "aufnahme" | ImportQuelle;
+type Quelle = "aufnahme" | ImportQuelle;
 /** Outings that come from elsewhere: imported files or Overland (automatic background recording). */
 export type ImportQuelle = "gpx" | "overland";
 
@@ -56,7 +56,7 @@ async function auftrag<T>(modus: IDBTransactionMode, fn: (s: IDBObjectStore) => 
  * by the background worker only, so the page never freezes.
  */
 const EIGENE = () => IDBKeyRange.upperBound("g", true);
-export const importBereich = (quelle: ImportQuelle | "google") => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
+const importBereich = (quelle: ImportQuelle | "google") => IDBKeyRange.bound(`${quelle}:`, `${quelle}:\uffff`);
 
 export const speichern = (s: Streifzug) => auftrag("readwrite", (st) => st.put(s)).then(() => undefined);
 /** Own outings only (recorded in Streifzug). */
@@ -86,7 +86,7 @@ export async function vieleSpeichern(liste: Streifzug[]): Promise<void> {
 }
 
 /** Lets other parts of the app (list, map) know that something changed. */
-export const AENDERUNG = "streifzug-aenderung";
+const AENDERUNG = "streifzug-aenderung";
 export const melden = () => window.dispatchEvent(new Event(AENDERUNG));
 
 /** Keeps matching results with their outings, in one transaction (does not notify: nothing visible changes). */

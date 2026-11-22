@@ -1,16 +1,14 @@
-import { naechsteStempel, VEEDEL_PROZENT, type Naechster } from "@streifzug/core";
+import { VEEDEL_PROZENT } from "@streifzug/core";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
-import type { KurzWeg } from "../daten/import";
 import { alsKm, alsStrecke, elternText, viertelWort, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { FremderOrt } from "../daten/orte";
 import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
-import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
+import { standAus, useStempel, type GesetzterStempel } from "../daten/veedel";
 import { t } from "../texte/de";
 import { betretene } from "./Orte";
-import { PassUnterseite } from "./Pass";
 import { Stempel } from "../ui/Stempel";
 
 export type Hoehe = 1 | 2;
@@ -18,7 +16,7 @@ export type Hoehe = 1 | 2;
 const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
 const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
 /** "Montag" within the last week, otherwise "12. November". */
-export function seitText(zeit: number): string {
+function seitText(zeit: number): string {
   const tage = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(zeit).setHours(0, 0, 0, 0)) / 86400_000);
   return tage === 0 ? "heute" : tage === 1 ? "gestern" : tage < 6 ? wochentag.format(zeit) : tagMonat.format(zeit);
 }
@@ -47,8 +45,6 @@ export interface BlattProps {
   overland: OverlandStatus;
   einstellungen: (ziel?: "overland") => void;
   position: [number, number] | null;
-  offen: string | null;
-  offenZeigen: (s: OffeneStrasse | null) => void;
   waehlen: (id: string) => void;
   /** Walked places without a region yet ("wird vorbereitet"). */
   fremdeOrte: FremderOrt[];

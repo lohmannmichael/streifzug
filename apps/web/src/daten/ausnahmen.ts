@@ -8,7 +8,7 @@ import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 const KEY = "streifzug.ausnahmen";
 const GEAENDERT = "streifzug:ausnahmen";
 
-export function ausnahmenLesen(): string[] {
+function ausnahmenLesen(): string[] {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? "[]") as string[];
   } catch {

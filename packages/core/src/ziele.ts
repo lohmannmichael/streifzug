@@ -1,15 +1,4 @@
 import type { LonLat } from "./geo";
-import type { Piece } from "./pieces";
-
-/** Shares (percent) that earn a stamp in an area. */
-export const MILESTONES = [1, 5, 10, 25, 50, 75, 100] as const;
-
-/** The highest milestone passed when an area's share went from `before` to `after` (percent), or null. */
-export function milestoneReached(before: number, after: number): number | null {
-  let hit: number | null = null;
-  for (const m of MILESTONES) if (before < m && after >= m) hit = m;
-  return hit;
-}
 
 const M_PER_DEG_LAT = 111_195;
 
@@ -51,35 +40,3 @@ export function nameNear(p: LonLat, lines: readonly NamedLine[], maxM = 15): str
   return best;
 }
 
-export interface Spot {
-  piece: Piece;
-  distanceM: number;
-}
-
-/**
- * "Weißer Fleck in der Nähe": the nearest piece that counts and has not been seen,
- * within `maxM` of a point. Paths only count with the paths switch.
- */
-export function nearestUnseen(pieces: readonly Piece[], seen: ReadonlySet<string>, p: LonLat, options: { maxM?: number; paths?: boolean } = {}): Spot | null {
-  const maxM = options.maxM ?? 1500;
-  let best: Spot | null = null;
-  for (const piece of pieces) {
-    if (seen.has(piece.id) || (piece.kind === "path" && !options.paths)) continue;
-    const d = distanceToLineM(p, piece.coords);
-    if (d <= maxM && (!best || d < best.distanceM)) best = { piece, distanceM: d };
-  }
-  return best;
-}
-
-/** For outings in chronological order: which of the pieces each one saw were seen for the first time. */
-export function newPerOuting(outings: readonly { id: string; seen: Iterable<string> }[]): Map<string, Set<string>> {
-  const known = new Set<string>();
-  const result = new Map<string, Set<string>>();
-  for (const o of outings) {
-    const fresh = new Set<string>();
-    for (const id of o.seen) if (!known.has(id)) fresh.add(id);
-    for (const id of fresh) known.add(id);
-    result.set(o.id, fresh);
-  }
-  return result;
-}

@@ -38,11 +38,6 @@ export interface Spur {
 /** Key under which a stored result is valid: same matching rules, same track. */
 export const ergebnisSchluessel = (fixes: Fix[], korrekturen?: readonly Korrektur[]) => gueltigFuer(fixes.length, korrekturHash(korrekturen));
 
-/** Pieces of the other outings (imports, Overland) that count and started in [ab, bis). Used by the logbook. */
-export async function stueckeImZeitraum(ab: number, bis: number, zaehlen: Zaehlen): Promise<Piece[]> {
-  return (await fragen<"stuecke">({ typ: "zeitraum", ab, bis, zaehlen }).antwort).stuecke;
-}
-
 /** Seen meters per area id (all levels). */
 export function meterJeGebiet(stuecke: Iterable<Piece>, daten: Regionen): Promise<Map<string, Summe>> {
   return meterJeGebietListe(stuecke, daten.liste);

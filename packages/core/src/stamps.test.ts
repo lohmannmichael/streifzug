@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { besteStempel, faelligeStempel, fehlendeMeter, naechsteStempel, stempelUmstellen, verdienteStempel, type Stand, type Stempel } from "./stamps";
+import { besteStempel, faelligeStempel, stempelUmstellen, verdienteStempel, type Stand, type Stempel } from "./stamps";
 
 const stand = (over: Partial<Stand> = {}): Stand => ({
   veedel: [
@@ -48,26 +48,6 @@ describe("faelligeStempel", () => {
     const f = faelligeStempel(stand(), new Set(["betreten:weiden", "prozent:weiden:10"])).map((x) => x.id);
     expect(f).toContain("prozent:weiden:25");
     expect(f).not.toContain("prozent:weiden:10");
-  });
-});
-
-describe("naechsteStempel", () => {
-  it("lists the two stamps with the least missing meters", () => {
-    const n = naechsteStempel(stand());
-    expect(n.map((x) => x.id)).toEqual(["prozent:junkersdorf:10", "prozent:weiden:50"]);
-    expect(n[0]!.restM).toBeCloseTo(4_100, 0);
-  });
-});
-
-describe("fehlendeMeter", () => {
-  it("gives the missing meters per step, 0 when reached", () => {
-    expect(fehlendeMeter({ id: "w", aktivM: 7_800, gesamtM: 28_300 })).toEqual([
-      { stufe: 10, restM: 0 },
-      { stufe: 25, restM: 0 },
-      { stufe: 50, restM: 6_350 },
-      { stufe: 75, restM: 13_425 },
-      { stufe: 100, restM: 20_500 },
-    ]);
   });
 });
 

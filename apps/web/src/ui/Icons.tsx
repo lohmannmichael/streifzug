@@ -9,16 +9,6 @@ export function IconStandort() {
   );
 }
 
-export function IconMehr() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-      <circle cx="5.5" cy="12" r="1.7" fill="currentColor" />
-      <circle cx="12" cy="12" r="1.7" fill="currentColor" />
-      <circle cx="18.5" cy="12" r="1.7" fill="currentColor" />
-    </svg>
-  );
-}
-
 export function IconSchliessen() {
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">

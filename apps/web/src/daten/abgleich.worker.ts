@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
-import { abgleichen, gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
+import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
 import { alleLaden, einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
@@ -55,7 +55,6 @@ export type Anfrage =
   | { typ: "overlandAbholen"; nr: number; url: string; schluessel: string; jwt: string; seit: string | null; liste: Region[] }
   | { typ: "wegeSeit"; nr: number; seit: number }
   | { typ: "letzteWege"; nr: number; anzahl: number }
-  | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null }
   | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number }
   | { typ: "ortsName"; nr: number; punkt: [number, number] }
   | { typ: "export"; nr: number; extra: { name: string; text: string }[] }
@@ -71,7 +70,6 @@ export type Antwort =
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
   | { typ: "ok"; nr: number }
   | { typ: "wege"; nr: number; wege: KurzWeg[] }
-  | { typ: "offen"; nr: number; strassen: OffeneStrasse[] }
   | { typ: "etikett"; nr: number; etikett: Etikett | null }
   | { typ: "ortsName"; nr: number; name: string | null }
   | { typ: "fehler"; nr: number; text: string }
@@ -125,15 +123,6 @@ export interface Etikett {
   /** Open meters of this street nearby (same name). */
   restM: number;
   ausnahme: boolean;
-}
-
-/** A named street in a quarter that is not walked completely yet ("Noch offen", Bauplan 3.2). */
-export interface OffeneStrasse {
-  name: string;
-  restM: number;
-  /** Distance from the reference point (own position or quarter middle) to its nearest open piece. */
-  abstandM: number;
-  linien: [number, number][][];
 }
 
 /** An outing reduced for the replay on opening the app (at most ~400 points). */
@@ -218,39 +207,6 @@ async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etik
   const zustand = zuletztGesehen.has(p.id) ? "aktiv" : ersteGefahren.has(p.id) ? "gefahren" : "offen";
   const zeit = zustand === "aktiv" ? (ersteAktiv.get(p.id) ?? null) : zustand === "gefahren" ? (ersteGefahren.get(p.id) ?? null) : null;
   return { id: p.id, name, coords: p.coords.map((c) => [c[0], c[1]] as [number, number]), zustand, zeit, restM, ausnahme: zuletztAusnahmen.has(p.id) };
-}
-
-/** Named streets of a quarter with open meters, nearest first (at most 12). */
-async function offeneStrassen(regionId: string, gebietId: string, bezug: [number, number] | null): Promise<OffeneStrasse[]> {
-  const flaeche = (await ladeFlaechen(regionId)).find((f) => f.id === gebietId);
-  if (!flaeche) return [];
-  const [w, s, o, n] = flaeche.bbox;
-  const a = tileFor([w, n], TILE_ZOOM);
-  const b = tileFor([o, s], TILE_ZOOM);
-  if ((b.x - a.x + 1) * (b.y - a.y + 1) > 64) return [];
-  const jeName = new Map<string, { gesamt: number; offen: number; linien: [number, number][][]; abstand: number }>();
-  const mitte: [number, number] = bezug ?? [(w + o) / 2, (s + n) / 2];
-  for (let x = a.x; x <= b.x; x++)
-    for (let y = a.y; y <= b.y; y++)
-      for (const p of await stueckeDerKachel({ z: TILE_ZOOM, x, y })) {
-        if (p.kind !== "street" || !pointInGeometry(p.mid, flaeche.geometry)) continue;
-        const name = await strassenName(p);
-        if (!name) continue;
-        const e = jeName.get(name) ?? { gesamt: 0, offen: 0, linien: [], abstand: Infinity };
-        const m = p.lengthM * p.weight;
-        e.gesamt += m;
-        if (!zuletztGesehen.has(p.id)) {
-          e.offen += m;
-          e.linien.push(p.coords.map((c) => [c[0], c[1]] as [number, number]));
-          e.abstand = Math.min(e.abstand, distanceToLineM(mitte, p.coords));
-        }
-        jeName.set(name, e);
-      }
-  return [...jeName]
-    .filter(([, e]) => e.offen >= 10)
-    .map(([name, e]) => ({ name, restM: e.offen, abstandM: e.abstand, linien: e.linien }))
-    .sort((x, y) => x.abstandM - y.abstandM)
-    .slice(0, 12);
 }
 
 async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Region[]) {
@@ -363,7 +319,7 @@ function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {
 
 let wartend: Streifzug[] = [];
 
-async function importLesen(nr: number, dateien: File[], liste: Region[]) {
+async function importLesen(nr: number, dateien: File[], _liste: Region[]) {
   try {
     const fixes: Fix[] = [];
     // No spread here: tens of thousands of points would overflow the call stack.
@@ -387,7 +343,7 @@ async function importLesen(nr: number, dateien: File[], liste: Region[]) {
 }
 
 /** New points from the Overland receiver, appended to the last outing if it just continues. */
-async function overlandAbholen(nr: number, url: string, schluessel: string, jwt: string, seit: string | null, liste: Region[]) {
+async function overlandAbholen(nr: number, url: string, schluessel: string, jwt: string, seit: string | null, _liste: Region[]) {
   try {
     const neu: Fix[] = [];
     let ab = seit;
@@ -527,8 +483,6 @@ async function antworten(a: Anfrage): Promise<void> {
       return senden({ typ: "ortsName", nr: a.nr, name: await ortsName(a.punkt) });
     case "etikett":
       return senden({ typ: "etikett", nr: a.nr, etikett: await etikettAn(a.punkt, a.radiusM) });
-    case "offen":
-      return senden({ typ: "offen", nr: a.nr, strassen: await offeneStrassen(a.regionId, a.gebietId, a.bezug) });
   }
 }
 

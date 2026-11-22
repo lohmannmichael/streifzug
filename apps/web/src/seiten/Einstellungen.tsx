@@ -12,7 +12,7 @@ import { Konto } from "./Konto";
 import { aufzeichnungText, useRandWischen, ZurueckZumPass } from "./Pass";
 import { Stifte } from "./Stifte";
 
-export type EinstellungsSeite = "stifte" | "aufzeichnung" | "konto" | "ueber" | "gpx";
+type EinstellungsSeite = "stifte" | "aufzeichnung" | "konto" | "ueber" | "gpx";
 
 /**
  * Settings (Bauplan 3, D5, section 3.7): four rows, each with its own page. "Alte Wege importieren"

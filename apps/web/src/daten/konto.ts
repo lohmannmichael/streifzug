@@ -9,7 +9,7 @@ import { supabase } from "./supabase";
  * service, no code; one confirmation link, then a password). The anonymous account gets the
  * address, so its id and all its data stay the same. Signing in on another phone needs no mail.
  */
-export type KontoZustand =
+type KontoZustand =
   | { art: "laedt" }
   | { art: "anonym" }
   | { art: "wartet"; mail: string }

@@ -102,7 +102,7 @@ export function betretene(daten: Regionen, f: Fortschritt | null, g: GebietDaten
  * Mini plan without map tiles (like the old logbook): the yellow of a place, fitted into the box.
  * Very many pieces are thinned out so the drawing stays light.
  */
-export function MiniPlan(props: { gelb: Piece[]; rot: Piece[]; groesse?: number }) {
+function MiniPlan(props: { gelb: Piece[]; rot: Piece[]; groesse?: number }) {
   const g = props.groesse ?? 64;
   const pfade = useMemo(() => {
     const alle = [...props.gelb, ...props.rot];

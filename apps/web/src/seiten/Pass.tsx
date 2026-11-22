@@ -29,7 +29,7 @@ export function orteMitWegen(daten: Regionen, f: Fortschritt | null, fremde: Fre
 }
 
 /** Short words for a stamp ("Weiden 25 %"). */
-export function stempelKurz(s: GesetzterStempel, name: string, wort: string): string {
+function stempelKurz(s: GesetzterStempel, name: string, wort: string): string {
   if (s.art === "prozent") return `${name} ${s.stufe} %`;
   if (s.art === "betreten") return `${name} ${t.pass.betreten}`;
   if (s.art === "veedel-anzahl") return s.id.endsWith(":alle") ? t.pass.alleViertel(name, wort) : `${name} ${t.pass.viertelAnzahl(s.stufe ?? 0, wort)}`;

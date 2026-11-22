@@ -86,18 +86,18 @@ async function verbindungPruefen(): Promise<boolean> {
 }
 export const overlandZuletzt = () => Number(localStorage.getItem(OVERLAND_ZULETZT) ?? 0) || null;
 /** Time of the newest point received from Overland (null if none yet). */
-export const overlandLetzterPunkt = () => {
+const overlandLetzterPunkt = () => {
   const t = Date.parse(localStorage.getItem(OVERLAND_SEIT) ?? "");
   return Number.isNaN(t) ? null : t;
 };
 /** After this long without a point, the sheet says so (Bauplan 3, C1; Michi: 3 hours, not 24). */
-export const STILL_MS = 3 * 3600_000;
+const STILL_MS = 3 * 3600_000;
 
 /**
  * Time without points that counts: only daytime (7–22 h). At night you usually don't move, so a
  * last point at 22 h shows no line in the morning before you set off (Michi, 22.11.2026).
  */
-export function wachZeitSeit(t: number, jetzt = Date.now()): number {
+function wachZeitSeit(t: number, jetzt = Date.now()): number {
   let summe = 0;
   for (let x = t; x < jetzt; ) {
     const d = new Date(x);

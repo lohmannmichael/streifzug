@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { hochladen } from "./hochladen";
 import { alleLaden, melden, speichern, type Streifzug } from "./speicher";
 
-export type GpsZustand = "suche" | "gut" | "schwach" | "verweigert" | "fehler";
+type GpsZustand = "suche" | "gut" | "schwach" | "verweigert" | "fehler";
 
 export interface Aufzeichnung {
   aktiv: boolean;

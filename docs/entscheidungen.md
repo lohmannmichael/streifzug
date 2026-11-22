@@ -1,5 +1,14 @@
 # Entscheidungen
 
+## 22.11.2026: D8 Altes entfernt (Michi: „Alles bei D“, mit den Empfehlungen aus der Tabelle)
+- Texte der alten Reiter „Gebiete“ und „Streifzüge“ und rund 30 weitere ungenutzte Texte (`texte/de.ts`) entfernt; der Text „Im Hintergrund zeichnet erst die iPhone-App auf“ war schon weg
+- „Noch offen“ samt Berechnung im Hintergrund (`offeneStrassen`), Karten-Ebene und Blatt-Anschluss entfernt; „Weißer Fleck“ (`nearestUnseen`) und die alten Logbuch-Helfer (`milestoneReached`, `newPerOuting`) aus `ziele.ts` samt Tests. `ziele.ts` bleibt für `nameNear` und `distanceToLineM`. „Als Nächstes“ (`naechsteStempel`, `fehlendeMeter`) samt Tests entfernt
+- „Losziehen“: wie empfohlen behalten, nur noch unter Einstellungen → Aufzeichnung als „Jetzt mit offener App aufzeichnen“ (Ersatz, falls Overland ausfällt)
+- Nebel: keine Reste mehr (nur die Papierfarbe heißt noch `--nebel`)
+- Zuhause-Zone: Tabelle `privacy_zones` und ihre zwei Funktionen gelöscht (Migration `20261122200000_zuhause_zone_weg.sql`); vorher geprüft: leer, keine Spalte verweist darauf. Sicherheits-Check ohne neue Hinweise
+- Ungenutzter Code: Das Prüfwerkzeug `knip` durfte in dieser Umgebung nicht ungeprüft geladen werden. Stattdessen: TypeScript mit `--noUnusedLocals --noUnusedParameters` (ohne Befund) und ein eigenes Skript, das jeden Export auf Verwendung in anderen Dateien prüft. Ergebnis: sechs ungenutzte Funktionen gelöscht, 23 Exporte, die nur in ihrer eigenen Datei gebraucht werden, ohne `export`. Im Kern bleiben öffentliche Funktionen, die nur Tests nutzen
+- Geprüft: Pass, Orte, Stempel, Rückblicke, Einstellungen im Browser durchgeklickt; 184 Tests (vorher 195, die Tests der entfernten Funktionen sind mit weg)
+
 ## 22.11.2026: D7 Wörter
 - `regionen/koeln.json` hat `wortViertel` („Veedel“), `region.ts` reicht es in `index.json` durch; fehlt es, gilt „Viertel“. Hilfsfunktion `viertelWort(daten, gebietId)` in `daten/regionen.ts`
 - Texte innerhalb eines Orts bekommen das Wort als Parameter (Orte-Zeile, „N Veedel betreten“ im Blatt, Stempel-Kurztext, Achteck-Stempel in Großbuchstaben), alle anderen sagen „Viertel“

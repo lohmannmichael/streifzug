@@ -39,7 +39,7 @@ export const FARBEN = {
   },
 };
 
-export type Farben = typeof FARBEN.hell;
+type Farben = typeof FARBEN.hell;
 
 const QUELLE = "openmaptiles";
 const LINIE: ExpressionSpecification = ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false];

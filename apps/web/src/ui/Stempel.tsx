@@ -17,7 +17,7 @@ const TINTE: Record<StempelDaten["art"], string> = {
   "km-neu": "#c42b22",
 };
 
-export interface StempelProps {
+interface StempelProps {
   stempel: StempelDaten;
   /** Name of the area the stamp belongs to (quarter, district or city). */
   gebietName: string;

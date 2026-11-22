@@ -83,15 +83,6 @@ export async function strassenName(piece: Piece): Promise<string | null> {
   return nameNear(piece.mid, (await ladeKachel({ z, x, y })).namen);
 }
 
-/** Pieces of the tile around a point and its eight neighbours (about 4 km square). */
-export async function stueckeUm(punkt: LonLat): Promise<Piece[]> {
-  const mitte = tileFor(punkt, TILE_ZOOM);
-  const teile = await Promise.all(
-    [-1, 0, 1].flatMap((dx) => [-1, 0, 1].map((dy) => stueckeDerKachel({ z: TILE_ZOOM, x: mitte.x + dx, y: mitte.y + dy }))),
-  );
-  return teile.flat();
-}
-
 /**
  * Name of the town or city at a point (OpenMapTiles layer "place", zoom-10 tile), in German
  * where the map has it. For places that have no region yet ("Lissabon wird vorbereitet").

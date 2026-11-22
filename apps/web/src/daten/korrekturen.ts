@@ -7,12 +7,12 @@ import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
  * in the account (`user_state.korrekturen`); the raw points stay untouched. Only the corrected way
  * is calculated again (its stored result carries a fingerprint of its corrections).
  */
-export type Korrekturen = Record<string, Korrektur[]>;
+type Korrekturen = Record<string, Korrektur[]>;
 
 const KEY = "streifzug.korrekturen";
 const GEAENDERT = "streifzug:korrekturen";
 
-export function korrekturenLesen(): Korrekturen {
+function korrekturenLesen(): Korrekturen {
   try {
     return (JSON.parse(localStorage.getItem(KEY) ?? "{}") as Korrekturen) ?? {};
   } catch {

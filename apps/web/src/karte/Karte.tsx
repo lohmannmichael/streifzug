@@ -9,7 +9,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 // MapLibre looks for its worker next to its own file; after bundling it lives elsewhere.
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { distanceM, lineLengthM, sliceLine, type Fix, type LonLat, type Piece } from "@streifzug/core";
+import { distanceM, type Fix, type LonLat, type Piece } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { zeigeBox } from "./kamera";
@@ -35,7 +35,6 @@ const MARKER_BREITE = strassenBreite(4);
 // Duration of the highlighter stroke over a newly seen street, and of the glow afterwards.
 const ZEICHNEN_MS = 700;
 const GLANZ_MS = 1400;
-const SCHRIFT = ["Noto Sans Regular"];
 
 
 type FeatureSammlung = { type: "FeatureCollection"; features: { properties: Record<string, unknown>; geometry: { coordinates: unknown } }[] };
@@ -204,7 +203,7 @@ function boxVon(geo: { coordinates: unknown }): [number, number, number, number]
   return Number.isFinite(w) ? [w, s, e, n] : undefined;
 }
 
-export interface KartenProps {
+interface KartenProps {
   daten: Regionen | null;
   gewaehlt: string | null;
   gewaehltName: string;
@@ -230,8 +229,6 @@ export interface KartenProps {
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { wege: LonLat[][]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
-  /** "Noch offen", tapped: the open pieces of one street, shown as a dashed black line. */
-  offen: LonLat[][] | null;
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
@@ -306,8 +303,6 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": 1 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
   // A tapped open street: black dashes along its middle (Bauplan 4.5).
-  karte.addSource("offen", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "offen", type: "line", source: "offen", layout: { "line-cap": "butt", "line-join": "round" }, paint: { "line-color": "#151515", "line-width": 1.6, "line-dasharray": [3, 2] } }, vorSchrift);
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
   // The live track is a thin ink line; what it unlocks turns yellow underneath.
@@ -590,21 +585,6 @@ export function Karte(props: KartenProps) {
     schild.current.marker.setLngLat(etikett.punkt).addTo(karte);
   }, [etikett]);
 
-  // Show a tapped open street, and bring it into view above the sheet.
-  useEffect(() => {
-    const karte = karteRef.current;
-    if (!karte?.getSource("offen")) return;
-    const linien = props.offen ?? [];
-    setzeDaten(karte, "offen", { type: "FeatureCollection", features: linien.map((l) => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: l } })) });
-    if (linien.length === 0) return;
-    let w = Infinity, s = Infinity, o = -Infinity, n = -Infinity;
-    for (const l of linien)
-      for (const [x, y] of l) {
-        w = Math.min(w, x); o = Math.max(o, x); s = Math.min(s, y); n = Math.max(n, y);
-      }
-    const h = karte.getContainer().clientHeight;
-    zeigeBox(karte, [[w, s], [o, n]], { top: 60, bottom: h * 0.6, left: 40, right: 40 }, { maxZoom: 17, duration: ruhig() ? 0 : 600 });
-  }, [props.offen]);
 
   return (
     <>

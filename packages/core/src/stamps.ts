@@ -93,29 +93,6 @@ export function faelligeStempel(s: Stand, vergeben: ReadonlySet<string>): Stempe
   return verdienteStempel(s).filter((x) => !vergeben.has(x.id));
 }
 
-export interface Naechster extends Stempel {
-  /** Meters still missing. */
-  restM: number;
-}
-
-/** The stamps with the smallest missing distance ("Als Nächstes", Bauplan 3.2). */
-export function naechsteStempel(s: Stand, anzahl = 2): Naechster[] {
-  const kandidaten: Naechster[] = [];
-  for (const v of s.veedel) {
-    if (v.aktivM <= 0 || v.gesamtM <= 0) continue;
-    const stufe = VEEDEL_PROZENT.find((x) => prozent(v) < x);
-    if (stufe !== undefined) kandidaten.push({ id: `prozent:${v.id}:${stufe}`, art: "prozent", gebietId: v.id, stufe, restM: (stufe / 100) * v.gesamtM - v.aktivM });
-  }
-  const km = KM_NEU.find((x) => s.aktivKmGesamt < x);
-  if (km !== undefined) kandidaten.push({ id: `km-neu:${km}`, art: "km-neu", gebietId: null, stufe: km, restM: (km - s.aktivKmGesamt) * 1000 });
-  return kandidaten.sort((a, b) => a.restM - b.restM).slice(0, anzahl);
-}
-
-/** Missing meters to each percent step of one Veedel (for the stamp card; 0 when reached). */
-export function fehlendeMeter(v: VeedelStand): { stufe: number; restM: number }[] {
-  return VEEDEL_PROZENT.map((stufe) => ({ stufe, restM: Math.max(0, (stufe / 100) * v.gesamtM - v.aktivM) }));
-}
-
 /**
  * What the passport shows (Bauplan 3, D3): per Veedel only the highest percent stamp, and
  * "betreten" only while no percent stamp is reached. All given stamps stay stored.
