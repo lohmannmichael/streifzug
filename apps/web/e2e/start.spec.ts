@@ -41,3 +41,37 @@ test("Karte lädt verzögert: Gelb ist danach trotzdem da (Fehler vom 20.11.)", 
   await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT), { timeout: 20_000 }).toBeGreaterThan(GELB_MINDESTENS);
 });
+
+test("Öffnen zeigt sofort den letzten Stand, auch wenn Straßendaten nicht kommen (E3)", async ({ page }) => {
+  const server = await serverErsetzen(page);
+  await ohneRueckblick(page);
+  await page.goto("/");
+  await expect(prozent(page)).toHaveAttribute("aria-label", WEIDEN_PROZENT);
+  // Into the background: the state is saved.
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  // Wait until the state with the ways is stored on the device.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<number>((ok) => {
+            const req = indexedDB.open("streifzug-stand");
+            req.onsuccess = () => {
+              const g = req.result.transaction("stand").objectStore("stand").get("letzter");
+              g.onsuccess = () => ok(g.result?.stand?.stuecke?.length ?? 0);
+              g.onerror = () => ok(0);
+            };
+            req.onerror = () => ok(0);
+          }),
+      ),
+    )
+    .toBeGreaterThan(0);
+  server.optionen.strassenAus = true;
+  await page.reload();
+  await expect(prozent(page)).toHaveAttribute("aria-label", WEIDEN_PROZENT, { timeout: 5000 });
+  await zuDenWegen(page);
+  await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeGreaterThan(GELB_MINDESTENS);
+});

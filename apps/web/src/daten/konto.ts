@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { useCallback, useEffect, useState } from "react";
 import { quelleLoeschen } from "./import";
 import { alleLaden, loeschen, speichern } from "./speicher";
+import { standVergessen } from "./stand";
 import { supabase } from "./supabase";
 
 /**
@@ -108,6 +109,7 @@ export async function abmelden(): Promise<string | null> {
   for (const s of eigene) await loeschen(s.id);
   await quelleLoeschen("overland");
   for (const k of Object.keys(localStorage)) if (k.startsWith("streifzug.")) localStorage.removeItem(k);
+  await standVergessen();
   await supabase.auth.signOut({ scope: "local" });
   location.replace("/");
   return null;

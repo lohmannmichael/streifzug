@@ -5,6 +5,7 @@ import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, aufStandHoeren, fragen } from "./arbeiter";
 import { gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
 import type { Regionen, Summe } from "./regionen";
+import { standLaden, standMerken } from "./stand";
 
 export { kachelnFuer } from "./rechnen";
 export type { Zaehlen } from "./abgleich.worker";
@@ -55,8 +56,18 @@ export function useFortschritt(
   spuren: Spur[],
   zaehlen: Zaehlen,
   daten: Regionen | null,
-): { fortschritt: Fortschritt | null; rechnet: { fertig: number; gesamt: number } | null; fehler: string | null; nochmal: () => void } {
+): { fortschritt: Fortschritt | null; vorlaeufig: boolean; rechnet: { fertig: number; gesamt: number } | null; fehler: string | null; nochmal: () => void } {
   const [fortschritt, setFortschritt] = useState<Fortschritt | null>(null);
+  // Until the worker is done, the last stored state is shown (Bauplan 3, E3).
+  const [vorlaeufig, setVorlaeufig] = useState(false);
+  const echtDa = useRef(false);
+  useEffect(() => {
+    void standLaden().then((stand) => {
+      if (!stand || echtDa.current) return;
+      setFortschritt(stand);
+      setVorlaeufig(true);
+    });
+  }, []);
   const [rechnet, setRechnet] = useState<{ fertig: number; gesamt: number } | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [andereStand, setAndereStand] = useState(0);
@@ -92,7 +103,11 @@ export function useFortschritt(
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
       setFehler(a.uebersprungen.length ? `${a.uebersprungen.length} übersprungen (Straßendaten nicht geladen)` : null);
-      setFortschritt({ stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen });
+      const f: Fortschritt = { stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen };
+      echtDa.current = true;
+      setFortschritt(f);
+      setVorlaeufig(false);
+      standMerken(f);
     }).catch((e: unknown) => {
       if (nr !== aktuell.current) return;
       setRechnet(null);
@@ -102,7 +117,7 @@ export function useFortschritt(
     // Recalculate only when the set of outings changes or the live track grows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schluessel, daten]);
-  return { fortschritt, rechnet, fehler, nochmal: () => setVersuch((n) => n + 1) };
+  return { fortschritt, vorlaeufig, rechnet, fehler, nochmal: () => setVersuch((n) => n + 1) };
 }
 
 /** The smallest area (Stadtteil) that contains a point, or null outside all regions. */

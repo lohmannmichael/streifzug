@@ -1,5 +1,14 @@
 # Entscheidungen
 
+## 22.11.2026: E3 Tempo mit einem Jahr Daten
+- Frage 1 (Plan): Die App rechnet beim Öffnen nur neue Wege, das Ergebnis je Weg liegt auf dem Gerät (`stueckIds` mit Schlüssel aus `ABGLEICH_VERSION`, Punktzahl, Korrekturen). Bei einer neuen `ABGLEICH_VERSION` wird jeder Weg einmal neu gerechnet, im Hintergrund mit „N neue Wege werden eingerechnet …“, die App bleibt bedienbar
+- Datensatz: `e2e/werkzeuge/jahr-erzeugen.ts`, 365 Tage × 3 Wege auf echten Straßen zwischen Lövenich und Lindenthal (15 Kacheln), 1.088 Wege, 384.818 Punkte (Datei 30 MB, nicht im Repo). Messung: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`, Chrome mit vierfach gebremster CPU, Weiden kommt auf 55 %
+- Vorher: Öffnen bis zur richtigen Zahl 4,1–4,7 s (Ziel 2 s verfehlt). Ursache: Angezeigt wurde erst, wenn der Hintergrund alle Wege des Jahres aus dem Speicher geladen und zusammengezählt hatte
+- Neu (Plan-Punkt 5, Ergebnis zwischenspeichern): Der letzte berechnete Stand (gelbe und rote Stücke mit erstem Datum, Meter je Gebiet) liegt in einer eigenen Gerätedatenbank `streifzug-stand`, je Konto. Beim Öffnen erscheint er sofort, der Hintergrund rechnet danach nur Neues dazu. Gesichert sofort, höchstens alle 5 s, und beim Wechsel in den Hintergrund. Der Rückblick wartet auf das echte Ergebnis. Abmelden löscht den Stand
+- Nachher (gebremst): Plan 0,9 s, richtige Zahl 0,9 s, Gelb nach spätestens 1 s, ein neuer Tag (3 Wege) 1,0–1,2 s nach dem Öffnen eingerechnet, Hintergrund fertig nach rund 5,5 s (blockiert nichts). Alles neu rechnen: rund 105 s. Speicher der Seite 17–34 MB. Ziele erreicht
+- Neuer Oberflächentest: Nach dem Neuladen steht der letzte Stand auch dann da, wenn die Straßendaten nicht kommen
+- Für später: Der Hintergrund lädt beim Öffnen weiterhin alle Punkte aller Wege in den Speicher (rund 5 s gebremst). Erst nötig, wenn Jahre zusammenkommen
+
 ## 22.11.2026: Reihenfolge nach E2 (Michi: „so wie du denkst“)
 - Erst Flug-Korrektur, dann E3, E4, danach F7 und F3 (klein, sichtbar), dann F1, F2, zuletzt F4, F5, F6. Weicht von der Reihenfolge in Fassung 3 ab (F1 zuerst)
 - Aufwand grob: Etappe E mit Flug-Korrektur 5–6 Std., Etappe F 15–20 Std.

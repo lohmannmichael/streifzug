@@ -37,7 +37,7 @@ function zufall(saat: number) {
   };
 }
 
-async function kanten(punkt: LonLat): Promise<{ kanten: Kante[]; bei: (fx: number, fy: number) => LonLat; innen: (p: LonLat) => boolean }> {
+export async function kanten(punkt: LonLat): Promise<{ kanten: Kante[]; bei: (fx: number, fy: number) => LonLat; innen: (p: LonLat) => boolean }> {
   const tile = tileFor(punkt, 14);
   const vorlage = ((await (await fetch("https://tiles.openfreemap.org/planet")).json()) as { tiles: string[] }).tiles[0]!;
   const url = vorlage.replace("{z}", "14").replace("{x}", String(tile.x)).replace("{y}", String(tile.y));
@@ -62,7 +62,7 @@ async function kanten(punkt: LonLat): Promise<{ kanten: Kante[]; bei: (fx: numbe
 }
 
 /** A walk along the street network from the node nearest `start`, about `laenge` metres long. */
-function spaziergang(netz: { kanten: Kante[]; innen: (p: LonLat) => boolean }, start: LonLat, laenge: number, klassen: string[], saat: number): LonLat[] {
+export function spaziergang(netz: { kanten: Kante[]; innen: (p: LonLat) => boolean }, start: LonLat, laenge: number, klassen: string[], saat: number): LonLat[] {
   const r = zufall(saat);
   const nachbarn = new Map<string, { nach: string; b: LonLat; id: number }[]>();
   netz.kanten.forEach((k, id) => {
@@ -135,7 +135,7 @@ function spaziergang(netz: { kanten: Kante[]; innen: (p: LonLat) => boolean }, s
   return weg;
 }
 
-interface Punkt {
+export interface Punkt {
   /** Minutes before now. */
   vorMin: number;
   lon: number;
@@ -146,7 +146,7 @@ interface Punkt {
 }
 
 /** GPS fixes every 5 s along a line at the given speed, with a little noise (±3 m). */
-function punkte(linie: LonLat[], startVorMin: number, tempo: number, motion: string, saat: number): Punkt[] {
+export function punkte(linie: LonLat[], startVorMin: number, tempo: number, motion: string, saat: number): Punkt[] {
   const r = zufall(saat);
   const out: Punkt[] = [];
   const schritt = tempo * 5;
@@ -175,7 +175,7 @@ function punkte(linie: LonLat[], startVorMin: number, tempo: number, motion: str
   return out;
 }
 
-const KLEIN = ["minor", "service", "tertiary", "secondary"];
+export const KLEIN = ["minor", "service", "tertiary", "secondary"];
 const GROSS = ["primary", "secondary", "trunk"];
 
 async function main() {
@@ -194,4 +194,5 @@ async function main() {
   writeFileSync(new URL("../daten/wege.json", import.meta.url), JSON.stringify(wege, null, 0) + "\n");
 }
 
-void main();
+// Only when run directly (the year data set reuses the helpers above).
+if (process.argv[1]?.endsWith("wege-erzeugen.ts")) void main();

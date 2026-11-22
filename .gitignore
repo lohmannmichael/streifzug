@@ -11,3 +11,4 @@ docs/export/anhang/
 docs/export/*.zip
 apps/web/test-results/
 apps/web/playwright-report/
+apps/web/e2e/daten/jahr.json

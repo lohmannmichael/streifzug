@@ -91,7 +91,7 @@ export function App() {
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
-  const { fortschritt, rechnet, fehler: rechenFehler, nochmal: nochmalRechnen } = useFortschritt(spuren, zaehlen, daten);
+  const { fortschritt, vorlaeufig, rechnet, fehler: rechenFehler, nochmal: nochmalRechnen } = useFortschritt(spuren, zaehlen, daten);
   const online = useOnline();
   // Back online after a failed calculation: try again by itself.
   useEffect(() => {
@@ -135,12 +135,13 @@ export function App() {
     if (rbBereit === rueckblick.nr || rbAngebot === rueckblick.nr) return;
     // Never before the progress is there and fully calculated (after an update everything is
     // matched again, which takes a while on the phone).
-    if (!fortschritt || rechnet || rechenFehler) return;
+    // The stored last state does not have the new ways yet: wait for the real result.
+    if (!fortschritt || vorlaeufig || rechnet || rechenFehler) return;
     const los = () => (Date.now() - geoeffnetAm.current > 8000 ? setRbAngebot(rueckblick.nr) : setRbBereit(rueckblick.nr));
     if (fortschritt.erstesMal.some((t) => t >= rueckblick.seit)) return los();
     const warten = window.setTimeout(los, 2500);
     return () => window.clearTimeout(warten);
-  }, [rueckblick, fortschritt, rechnet, rechenFehler, rbBereit, rbAngebot]);
+  }, [rueckblick, fortschritt, vorlaeufig, rechnet, rechenFehler, rbBereit, rbAngebot]);
   // The share before the new ways: the number stays there during the replay and counts up afterwards (Nr. 6).
   const [zahlVorher, setZahlVorher] = useState<number | null>(null);
   const [hochzaehlen, setHochzaehlen] = useState<{ von: number; nr: number } | null>(null);
