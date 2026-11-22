@@ -14,7 +14,8 @@ import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
-import { Blatt, OrteSeite, StempelSeite, type BlattProps, type Hoehe } from "./seiten/Blatt";
+import { Blatt, StempelSeite, type BlattProps, type Hoehe } from "./seiten/Blatt";
+import { OrteSeite } from "./seiten/Orte";
 import { PassSeite, useRandWischen, ZurueckZumPass, type PassTeil } from "./seiten/Pass";
 import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
@@ -269,8 +270,8 @@ export function App() {
     );
 
   const zumPass = () => setPass("start");
-  if (pass === "start" && daten)
-    return (
+  const seite =
+    pass === "start" && daten ? (
       <PassSeite
         daten={daten}
         fortschritt={fortschritt}
@@ -284,12 +285,25 @@ export function App() {
         }}
         schliessen={() => setPass(null)}
       />
-    );
-  if (pass === "orte") return <OrteSeite {...blattProps} zurueck={zumPass} schliessen={() => setPass(null)} />;
-  if (pass === "stempel") return <StempelSeite {...blattProps} zurueck={zumPass} />;
-  if (pass === "rueckblicke") return <WegeSeite zurueck={zumPass} />;
-  if (pass === "einstellungen")
-    return (
+    ) : pass === "orte" && daten ? (
+      <OrteSeite
+        daten={daten}
+        fortschritt={fortschritt}
+        fremdeOrte={fremdeOrte}
+        zurueck={zumPass}
+        oeffnen={(wurzel) => {
+          // Pass closes, the plan goes to the whole place, the sheet shows it (Bauplan 3, D2).
+          setPass(null);
+          setHoehe(1);
+          setOffen(null);
+          waehlen(wurzel);
+        }}
+      />
+    ) : pass === "stempel" ? (
+      <StempelSeite {...blattProps} zurueck={zumPass} />
+    ) : pass === "rueckblicke" ? (
+      <WegeSeite zurueck={zumPass} />
+    ) : pass === "einstellungen" ? (
       <Profil
         sitzung={sitzung}
         werte={einstellungen}
@@ -308,13 +322,15 @@ export function App() {
           [t.zustand.netz, online ? t.zustand.online : t.zustand.offline],
         ]}
       />
-    );
+    ) : null;
 
   // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
   const abspielen =
     einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => w.coords), seit: rueckblick.seit, nr: rueckblick.nr } : null);
+  // Pages of the Pass lie over the plan; the plan stays as it is underneath (Bauplan 3, D2).
   return (
-    <div className="app">
+    <>
+    <div className="app" aria-hidden={seite ? true : undefined}>
       <main className="inhalt">
         <Karte
           daten={daten}
@@ -358,6 +374,8 @@ export function App() {
         <Blatt {...blattProps} />
       </main>
     </div>
+    {seite && <div className="ueber-plan">{seite}</div>}
+    </>
   );
 }
 

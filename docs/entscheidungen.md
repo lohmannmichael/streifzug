@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: D2 Orte
+- Seite `seiten/Orte.tsx` nach `Orte.png` ohne „Reisen“: „Zuhause“ = Ort mit den meisten gelben Metern, dann „Weitere Orte“, am Ende „Wird vorbereitet“. Je Ort Mini-Plan (SVG ohne Kartenkacheln, das Gelb und Rot des Orts eingepasst), Name, „N Veedel · zuletzt neu …“ (Datum des zuletzt neu gelb gewordenen Stücks; wann man zuletzt dort war, weiß die App je Ort nicht), Prozent
+- Tipp auf einen Ort: Pass schließt, der Plan zeigt den ganzen Ort über dem Blatt (`fitBounds` auf die Ortsgrenze), das Blatt zeigt den Ort. Gilt auch für Bezirke
+- Blatt für einen Ort oder Bezirk: Name, Prozent, Kilometer, darunter „N Veedel betreten“ zum Aufklappen, nach Bezirken gruppiert; Tipp auf ein Veedel wählt es. Der alte Städte-Baum ist weg
+- Pass-Seiten liegen jetzt über dem Plan, statt ihn abzubauen. Vorher baute jede Seite (auch Einstellungen) beim Schließen die Karte neu auf; der Plan sprang dabei zurück auf den Start
+- Fehler behoben: MapLibre rechnet beim Einpassen (`fitBounds`) den Abstand vom letzten Sprung zusätzlich ein. Dann „passte“ das Gebiet nicht und die Karte blieb ohne Meldung stehen. Betraf auch Rückblick-Ende und „offene Straße“. Jetzt überall `zeigeBox` (`karte/kamera.ts`), das nur den fehlenden Abstand übergibt
+- Geprüft: Testweg in Freising plus Overland-Daten in Köln → beide Orte, Köln als Zuhause; Tipp auf Freising fährt von Köln nach Freising, Veedel-Liste aufklappen, Neustift gewählt
+
 ## 22.11.2026: D1 Pass mit vier Bereichen
 - Oben rechts statt „…“ ein Knopf mit kleinem Heft (eigenes Zeichen, nicht entworfen). Er öffnet „Dein Pass“ (`seiten/Pass.tsx`) nach `Pass-kurz.png`: Schließen, drei Zahlen, vier Zeilen mit kleinem Bild
 - Zahlen: Kilometer in Gelb = alle gelben Stücke (Straßen gewichtet, Wege, auch außerhalb der Orte mit Daten); Orte = Orte mit mindestens einem Meter plus Orte „wird vorbereitet“; Länder = Länderkürzel der Orte. Dafür hat jede Region jetzt `land` (`regionen/<id>.json`, `index.json`; `finden.py` schreibt es, `region.ts` reicht es durch, fehlt es, gilt DE)

@@ -1,5 +1,6 @@
 import { freigabeZeiten, planeRueckblick, type LonLat, type Piece, type ReplayArt, type ReplayWeg } from "@streifzug/core";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { zeigeBox } from "./kamera";
 
 /**
  * Replay on opening (Michi, 21.11.2026: no pen, only the yellow). The plan shows all new ways at
@@ -65,7 +66,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
   const ende = () => {
     if (aus) return;
     stopp();
-    if (k.veedel) karte.fitBounds(k.veedel, { padding: { top: 60, bottom: k.untenFrei + 20, left: 30, right: 30 }, maxZoom: 16, duration: ruhig() ? 0 : 1200 });
+    if (k.veedel) zeigeBox(karte, k.veedel, { top: 60, bottom: k.untenFrei + 20, left: 30, right: 30 }, { maxZoom: 16, duration: ruhig() ? 0 : 1200 });
     zeiten.push(window.setTimeout(fertig, ruhig() ? 0 : 1200));
   };
   const tippen = (e: Event) => {
@@ -81,7 +82,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
     zeiten.push(window.setTimeout(ende, 300));
     return stopp;
   }
-  karte.fitBounds([[w, s], [o, n]], { padding: { top: 70, bottom: k.untenFrei + 30, left: 40, right: 40 }, maxZoom: 16.5, duration: 0 });
+  zeigeBox(karte, [[w, s], [o, n]], { top: 70, bottom: k.untenFrei + 30, left: 40, right: 40 }, { maxZoom: 16.5, duration: 0 });
 
   if (ruhig()) {
     k.zeichnen(k.aktuell());

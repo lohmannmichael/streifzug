@@ -244,6 +244,17 @@ export const de = {
     unsicher: "unsicher erkannt",
     keineAbschnitte: "Dieser Weg hat keine Abschnitte (zu wenig Bewegung).",
   },
+  orte: {
+    titel: "Orte",
+    zuhause: "Zuhause",
+    weitere: "Weitere Orte",
+    vorbereitet: "Wird vorbereitet",
+    vorbereitetText: (km: string) => `wird vorbereitet · ${km} gegangen`,
+    nochNichts: "Noch kein Ort. Sobald du irgendwo unterwegs warst, steht er hier.",
+    unterzeile: (viertel: number, zuletzt: string | null) => `${viertel} Veedel${zuletzt ? ` · zuletzt neu ${zuletzt}` : ""}`,
+    viertelZeile: (n: number) => `${n} Veedel betreten`,
+    keineViertel: "Noch kein Veedel betreten.",
+  },
   pass: {
     titel: "Dein Pass",
     titelKurz: "Pass",

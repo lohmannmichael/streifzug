@@ -13,6 +13,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { distanceM, lineLengthM, sliceLine, type Fix, type LonLat, type Piece } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { zeigeBox } from "./kamera";
 import { ausnahmeSetzen } from "../daten/ausnahmen";
 import { etikettAn, type Etikett } from "../daten/veedel";
 import { rueckblickAbspielen } from "./rueckblick";
@@ -165,9 +166,20 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
 
 /** Moves the map to an area unless it is already visible above the sheet. */
 async function zeigeGebiet(karte: MapLibreMap, daten: Regionen, id: string) {
-  const regionId = daten.gebiete.get(id)?.regionId;
-  if (!regionId) return;
-  const { namen } = await ladeRegion(regionId, daten);
+  const g = daten.gebiete.get(id);
+  const regionId = g?.regionId;
+  if (!g || !regionId) return;
+  const { gebiete, namen } = await ladeRegion(regionId, daten);
+  // A place or district (Bauplan 3, D2): show all of it above the sheet.
+  if (g.kinder.length > 0) {
+    const flaeche = gebiete.features.find((f) => f.properties.id === id);
+    const box = flaeche ? boxVon(flaeche.geometry) : g.eltern === null ? daten.liste.find((r) => r.id === regionId)?.bbox : undefined;
+    if (box) {
+      const h = karte.getContainer().clientHeight;
+      zeigeBox(karte, [[box[0], box[1]], [box[2], box[3]]], { top: 70, bottom: h * 0.5, left: 24, right: 24 }, { duration: ruhig() ? 0 : 900 });
+      return;
+    }
+  }
   const punkt = namen.features.find((f) => f.properties.id === id)?.geometry.coordinates as [number, number] | undefined;
   if (!punkt) return;
   const oben = karte.unproject([0, 0]).lat;
@@ -176,6 +188,21 @@ async function zeigeGebiet(karte: MapLibreMap, daten: Regionen, id: string) {
   const ziel = { center: punkt, zoom: Math.max(karte.getZoom(), 13), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } };
   if (ruhig()) karte.jumpTo(ziel);
   else karte.easeTo({ ...ziel, duration: 600 });
+}
+
+/** Bounding box of a (multi)polygon. */
+function boxVon(geo: { coordinates: unknown }): [number, number, number, number] | undefined {
+  let [w, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  const gehen = (x: unknown): void => {
+    if (Array.isArray(x) && typeof x[0] === "number") {
+      w = Math.min(w, x[0] as number);
+      e = Math.max(e, x[0] as number);
+      s = Math.min(s, x[1] as number);
+      n = Math.max(n, x[1] as number);
+    } else if (Array.isArray(x)) for (const y of x) gehen(y);
+  };
+  gehen(geo.coordinates);
+  return Number.isFinite(w) ? [w, s, e, n] : undefined;
 }
 
 export interface KartenProps {
@@ -579,7 +606,7 @@ export function Karte(props: KartenProps) {
         w = Math.min(w, x); o = Math.max(o, x); s = Math.min(s, y); n = Math.max(n, y);
       }
     const h = karte.getContainer().clientHeight;
-    karte.fitBounds([[w, s], [o, n]], { padding: { top: 60, bottom: h * 0.6, left: 40, right: 40 }, maxZoom: 17, duration: ruhig() ? 0 : 600 });
+    zeigeBox(karte, [[w, s], [o, n]], { top: 60, bottom: h * 0.6, left: 40, right: 40 }, { maxZoom: 17, duration: ruhig() ? 0 : 600 });
   }, [props.offen]);
 
   return (

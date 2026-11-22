@@ -550,3 +550,27 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .pfeil { flex: none; color: var(--text-leise); font-size: 1.25rem; }
 .pass h1, .seite h1#unterseite-titel { font-family: var(--schrift-zahl); font-weight: 800; letter-spacing: -0.01em; }
 .seite h1#unterseite-titel { margin-bottom: 16px; }
+
+/* Pages of the Pass lie over the plan (the map stays mounted underneath). */
+.ueber-plan { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; background: var(--nebel); }
+.ueber-plan > .app { height: auto; min-height: 100%; }
+
+/* Orte (Bauplan 3, D2, picture Orte.png) */
+.orte-zeilen { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--linie); }
+.orte-zeilen > li { border-bottom: 1px solid var(--linie); }
+.ort-zeile { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 84px; padding: 10px 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.mini-plan { flex: none; border: 1px solid var(--linie); }
+.ort-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; color: var(--text-leise); font-size: var(--t-klein); }
+.ort-text b { color: var(--text); font-family: var(--schrift-zahl); font-size: var(--t-gross); font-weight: 700; }
+.ort-prozent { flex: none; font-family: var(--schrift-zahl); font-size: var(--t-gross); font-weight: 700; font-variant-numeric: tabular-nums; }
+.ort-vorbereitet { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 56px; padding: 14px 0; }
+.ort-vorbereitet b { font-family: var(--schrift-zahl); font-size: var(--t-gross); }
+.ort-vorbereitet span { color: var(--text-leise); font-size: var(--t-klein); text-align: right; }
+
+/* A place in the sheet: its Veedel to unfold, by district. */
+.viertel-liste { margin-top: 8px; border-top: 1px solid var(--linie); }
+.viertel-liste > summary { list-style: none; cursor: pointer; }
+.viertel-liste > summary::-webkit-details-marker { display: none; }
+.viertel-liste[open] > summary .wert { transform: rotate(90deg); }
+.viertel-liste .bezirk { margin: 14px 0 2px; font-size: var(--t-klein); font-weight: 600; }
+.viertel-zeile { padding-left: 12px; }

@@ -9,6 +9,7 @@ import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
+import { betretene } from "./Orte";
 import { PassUnterseite } from "./Pass";
 import { Stempel } from "../ui/Stempel";
 
@@ -350,8 +351,51 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
         ))}
       {a.aktiv && <p className="zeile-text leise">{t.karte.hinweisOffen}</p>}
 
-      {istVeedel && <Stempelkarte gebiet={gebiet} daten={daten} gesehen={props.gesehen} gesamt={props.gesamt} gesetzt={props.gesetzt} />}
+      {istVeedel ? (
+        <Stempelkarte gebiet={gebiet} daten={daten} gesehen={props.gesehen} gesamt={props.gesamt} gesetzt={props.gesetzt} />
+      ) : (
+        <ViertelListe gebiet={gebiet} daten={daten} fortschritt={props.fortschritt} gewaehltVeedel={props.waehlen} />
+      )}
     </>
+  );
+}
+
+/**
+ * A place or district in the sheet (Bauplan 3, D2): the entered Veedel to unfold, grouped by
+ * district, most seen first. A tap on a Veedel chooses it.
+ */
+function ViertelListe(props: { gebiet: GebietDaten; daten: Regionen; fortschritt: Fortschritt | null; gewaehltVeedel: (id: string) => void }) {
+  const { daten, fortschritt: f } = props;
+  const anteil = (g: GebietDaten) => prozent(gesehenM(f, g), gesamtM(g));
+  const betreten = (g: GebietDaten) => gesehenM(f, g) >= 1;
+  const kinder = (g: GebietDaten) => g.kinder.map((id) => daten.gebiete.get(id)!).filter(betreten).sort((x, y) => anteil(y) - anteil(x));
+  const anzahl = betretene(daten, f, props.gebiet);
+  const zeile = (v: GebietDaten) => (
+    <li key={v.id}>
+      <button type="button" className="zeile-knopf viertel-zeile" onClick={() => props.gewaehltVeedel(v.id)}>
+        <span>{v.name}</span>
+        <span className="wert">{prozentText(anteil(v))} %</span>
+      </button>
+    </li>
+  );
+  if (anzahl === 0) return <p className="zeile-text leise">{t.orte.keineViertel}</p>;
+  return (
+    <details className="viertel-liste">
+      <summary className="zeile-knopf">
+        <span>{t.orte.viertelZeile(anzahl)}</span>
+        <span className="wert" aria-hidden="true">›</span>
+      </summary>
+      {kinder(props.gebiet).map((k) =>
+        k.kinder.length ? (
+          <div key={k.id}>
+            <h3 className="bezirk">{k.name} <span className="leise">{prozentText(anteil(k))} %</span></h3>
+            <ul className="zeilen">{kinder(k).map(zeile)}</ul>
+          </div>
+        ) : (
+          <ul key={k.id} className="zeilen">{zeile(k)}</ul>
+        ),
+      )}
+    </details>
   );
 }
 
@@ -396,25 +440,6 @@ function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten)
   return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
 }
 
-/** Places (until D2: cities with their Veedel), a page of the Pass. */
-export function OrteSeite(props: BlattProps & { zurueck: () => void; schliessen: () => void }) {
-  const { daten } = props;
-  abzugJetzt = props.fortschritt?.abzug;
-  if (!daten) return null;
-  return (
-    <PassUnterseite titel={t.pass.orteTitel} zurueck={props.zurueck} klasse="sammlung-seite">
-      <VeedelBaum
-        {...props}
-        daten={daten}
-        waehlen={(id) => {
-          props.waehlen(id);
-          props.schliessen();
-        }}
-      />
-    </PassUnterseite>
-  );
-}
-
 /** Stamps (until D3: all of them, newest first), a page of the Pass. */
 export function StempelSeite(props: BlattProps & { zurueck: () => void }) {
   const { daten } = props;
@@ -425,76 +450,6 @@ export function StempelSeite(props: BlattProps & { zurueck: () => void }) {
     <PassUnterseite titel={t.pass.stempelTitel} zurueck={props.zurueck} klasse="sammlung-seite">
       <Stempelpass daten={daten} gesetzt={gesetzt} naechste={stand ? naechsteStempel(stand) : []} />
     </PassUnterseite>
-  );
-}
-
-/** City → district → Veedel, only what has been entered, most seen first. */
-function VeedelBaum(props: BlattProps & { daten: Regionen }) {
-  const { daten, fortschritt: f } = props;
-  const anteil = (g: GebietDaten) => prozent(gesehenM(f, g), gesamtM(g));
-  const betreten = (g: GebietDaten) => gesehenM(f, g) >= 1;
-  const kinder = (g: GebietDaten) => g.kinder.map((id) => daten.gebiete.get(id)!).filter(betreten).sort((x, y) => anteil(y) - anteil(x));
-  const staedte = daten.liste.map((r) => daten.gebiete.get(r.wurzel)!).filter(betreten).sort((x, y) => gesehenM(f, y) - gesehenM(f, x));
-  const vorbereitet = props.fremdeOrte.length > 0 && (
-    <>
-      <h2 className="abschnitt-titel">{t.sammlung.vorbereitet}</h2>
-      <ul className="zeilen">
-        {props.fremdeOrte.map((o) => (
-          <li key={o.name} className="zeile">
-            <span>{o.name}</span>
-            <span className="wert">{t.sammlung.gegangen(alsKm(o.m))}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="zeile-text leise klein">{t.sammlung.vorbereitetHinweis}</p>
-    </>
-  );
-  if (staedte.length === 0) return vorbereitet || <p className="zeile-text leise">{t.sammlung.nochNichts}</p>;
-
-  const inhalt = (g: GebietDaten) => {
-    const p = anteil(g);
-    return (
-      <>
-        <span className="baum-name">
-          {g.name}
-          {g.kinder.length > 0 && <small>{t.sammlung.veedelAnzahl(betreteneVeedel(daten, f, g), alsKm(gesehenM(f, g)))}</small>}
-        </span>
-        <span className="mini-balken" aria-hidden="true"><i style={{ width: `${p > 0 ? Math.max(p, 2) : 0}%` }} /></span>
-        <span className="wert">{prozentText(p)} %</span>
-      </>
-    );
-  };
-  const ordner = (g: GebietDaten, tiefe: number) => (
-    <details key={g.id} className="baum-ordner">
-      <summary className={`baum-zeile tiefe-${tiefe}`}>{inhalt(g)}</summary>
-      <ul className="zeilen">
-        {kinder(g).map((k) =>
-          k.kinder.length ? (
-            <li key={k.id}>{ordner(k, tiefe + 1)}</li>
-          ) : (
-            <li key={k.id}>
-              <button
-                type="button"
-                className={`baum-zeile tiefe-${tiefe + 1}`}
-                aria-current={props.gebiet?.id === k.id ? "true" : undefined}
-                onClick={() => {
-                  props.waehlen(k.id);
-                  props.setHoehe(2);
-                }}
-              >
-                {inhalt(k)}
-              </button>
-            </li>
-          ),
-        )}
-      </ul>
-    </details>
-  );
-  return (
-    <>
-      <div className="baum">{staedte.map((g) => ordner(g, 0))}</div>
-      {vorbereitet}
-    </>
   );
 }
 
