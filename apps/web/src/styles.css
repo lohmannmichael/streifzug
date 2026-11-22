@@ -275,7 +275,7 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .radius { display: grid; gap: 2px; }
 .radius select { font: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; border: 1px solid var(--linie); border-radius: 10px; background: var(--flaeche); color: var(--text); }
 
-/* Bauplan 4.3: Veedel name and percent in Archivo (narrowed), plain UI in the system font. */
+/* Bauplan 4.3: quarter name and percent in Archivo (narrowed), plain UI in the system font. */
 .gebiet { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 90%; font-size: 2rem; letter-spacing: -0.01em; }
 .zahl { font-family: var(--schrift-zahl); font-weight: 700; font-stretch: 88%; font-size: var(--t-zahl); }
 .ober { font-size: var(--t-klein); }
@@ -567,7 +567,7 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .ort-vorbereitet b { font-family: var(--schrift-zahl); font-size: var(--t-gross); }
 .ort-vorbereitet span { color: var(--text-leise); font-size: var(--t-klein); text-align: right; }
 
-/* A place in the sheet: its Veedel to unfold, by district. */
+/* A place in the sheet: its quarter to unfold, by district. */
 .viertel-liste { margin-top: 8px; border-top: 1px solid var(--linie); }
 .viertel-liste > summary { list-style: none; cursor: pointer; }
 .viertel-liste > summary::-webkit-details-marker { display: none; }

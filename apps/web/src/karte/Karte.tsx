@@ -90,7 +90,7 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
       },
       unterStrassen,
     );
-    // Zoomed out, every entered Veedel is hatched in highlighter colour, denser with more seen (Bauplan 4.5).
+    // Zoomed out, every entered quarter is hatched in highlighter colour, denser with more seen (Bauplan 4.5).
     karte.addLayer(
       {
         id: `schraffur-${region.id}`,
@@ -109,7 +109,7 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
         id: `linie-${region.id}`,
         type: "line",
         source: `gebiete-${region.id}`,
-        // Veedel border: dash-dot, 1.1 px (Bauplan 4.2); districts a little stronger.
+        // quarter border: dash-dot, 1.1 px (Bauplan 4.2); districts a little stronger.
         paint: {
           "line-color": linie,
           "line-width": ["case", ["get", "blatt"], 1.1, 1.6],
@@ -134,7 +134,7 @@ async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regio
       filter: ["==", ["get", "blatt"], true] as FilterSpecification,
       minzoom: 9.6,
       maxzoom: 16.5,
-      // The Veedel name stands large, widely spaced and pale across the area, as on printed plans.
+      // The quarter name stands large, widely spaced and pale across the area, as on printed plans.
       layout: {
         // Zoomed out, entered areas show their share under the name.
         "text-field": [
@@ -553,7 +553,7 @@ export function Karte(props: KartenProps) {
         zeichnen: (stuecke) => setzeDaten(karte, "entdeckt", linienSammlung(stuecke)),
         aktuell: () => entdecktRef.current,
         untenFrei: Math.min(blatt, karte.getContainer().clientHeight * 0.4),
-        // A past day ends where its ways are, not at the chosen Veedel.
+        // A past day ends where its ways are, not at the chosen quarter.
         veedel: rb.bis === undefined ? veedelRahmen(gewaehltRef.current, datenRef.current) : null,
       },
       () => rbEnde.current(),

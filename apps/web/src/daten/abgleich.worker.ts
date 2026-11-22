@@ -127,11 +127,11 @@ export interface Etikett {
   ausnahme: boolean;
 }
 
-/** A named street in a Veedel that is not walked completely yet ("Noch offen", Bauplan 3.2). */
+/** A named street in a quarter that is not walked completely yet ("Noch offen", Bauplan 3.2). */
 export interface OffeneStrasse {
   name: string;
   restM: number;
-  /** Distance from the reference point (own position or Veedel middle) to its nearest open piece. */
+  /** Distance from the reference point (own position or quarter middle) to its nearest open piece. */
   abstandM: number;
   linien: [number, number][][];
 }
@@ -220,7 +220,7 @@ async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etik
   return { id: p.id, name, coords: p.coords.map((c) => [c[0], c[1]] as [number, number]), zustand, zeit, restM, ausnahme: zuletztAusnahmen.has(p.id) };
 }
 
-/** Named streets of a Veedel with open meters, nearest first (at most 12). */
+/** Named streets of a quarter with open meters, nearest first (at most 12). */
 async function offeneStrassen(regionId: string, gebietId: string, bezug: [number, number] | null): Promise<OffeneStrasse[]> {
   const flaeche = (await ladeFlaechen(regionId)).find((f) => f.id === gebietId);
   if (!flaeche) return [];
@@ -495,7 +495,7 @@ async function antworten(a: Anfrage): Promise<void> {
       return senden({ typ: "wege", nr: a.nr, wege });
     }
     case "letzteWege": {
-      // The newest other outings (Overland, GPX), for "Zuletzt" in the Veedel sheet.
+      // The newest other outings (Overland, GPX), for "Zuletzt" in the quarter sheet.
       const neueste = [...(await andereLaden()).values()].sort((x, y) => (y.endedAt ?? y.startedAt) - (x.endedAt ?? x.startedAt)).slice(0, a.anzahl);
       const wege: KurzWeg[] = [];
       for (const k of neueste) {

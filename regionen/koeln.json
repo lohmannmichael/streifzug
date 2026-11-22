@@ -10,5 +10,9 @@
     ]
   },
   "tiefe": 2,
-  "land": "DE"
+  "land": "DE",
+  "wortViertel": {
+    "eins": "Veedel",
+    "viele": "Veedel"
+  }
 }

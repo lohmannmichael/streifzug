@@ -146,8 +146,9 @@ async function main() {
     const w = Object.entries(s.gebiete as Record<string, { rang: number; strasse_m: number }>).find(([, g]) => g.rang === 0)!;
     const box = eintrag.name === id ? wurzel.bbox : (JSON.parse(await readFile(`${AUSGABE}/index.json`, "utf8").catch(() => "[]")) as { id: string; bbox: number[] }[]).find((r) => r.id === eintrag.name)?.bbox;
     // Country code from regionen/<id>.json (for "Länder" in the Pass), "DE" when missing.
-    const land = (JSON.parse(await readFile(`regionen/${eintrag.name}.json`, "utf8").catch(() => "{}")) as { land?: string }).land ?? "DE";
-    regionen.push({ id: eintrag.name, name: s.name, wurzel: w[0], bbox: box?.map((v) => Math.round(v * 1e4) / 1e4), stand: s.stand, land });
+    // Country code and the local word for "Viertel" ("Veedel" in Köln) from regionen/<id>.json.
+    const konf = JSON.parse(await readFile(`regionen/${eintrag.name}.json`, "utf8").catch(() => "{}")) as { land?: string; wortViertel?: { eins: string; viele: string } };
+    regionen.push({ id: eintrag.name, name: s.name, wurzel: w[0], bbox: box?.map((v) => Math.round(v * 1e4) / 1e4), stand: s.stand, land: konf.land ?? "DE", ...(konf.wortViertel ? { wortViertel: konf.wortViertel } : {}) });
   }
   regionen.sort((a, b) => a.name.localeCompare(b.name, "de"));
   await writeFile(`${AUSGABE}/index.json`, JSON.stringify(regionen, null, 1));

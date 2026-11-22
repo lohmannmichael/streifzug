@@ -56,7 +56,7 @@ export function App() {
   // An outing watched live counts as seen (no replay of it on the next opening).
   useEffect(() => {
     if (!aufzeichnung.aktiv && warAktivFuerRueckblick.current) alsGesehenMerken();
-    // Unterwegs-Modus: small sheet while recording, the Veedel (with what was added) afterwards.
+    // Unterwegs-Modus: small sheet while recording, the quarter (with what was added) afterwards.
     if (aufzeichnung.aktiv) setHoehe(1);
     else if (warAktivFuerRueckblick.current) setHoehe(2);
     warAktivFuerRueckblick.current = aufzeichnung.aktiv;
@@ -347,7 +347,7 @@ export function App() {
           gewaehlt={gebiet?.id ?? null}
           gewaehltName={gebiet?.name ?? ""}
           onWaehlen={(id, sprung) => {
-            // A tap on the Veedel already shown puts the sheet down (Bauplan 3, B3).
+            // A tap on the quarter already shown puts the sheet down (Bauplan 3, B3).
             if (id === gebiet?.id && sprung === undefined) setHoehe(1);
             waehlen(id, sprung);
             setOffen(null);

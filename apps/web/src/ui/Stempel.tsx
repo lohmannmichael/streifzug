@@ -4,7 +4,7 @@ import { t } from "../texte/de";
 
 const datumKurz = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 
-/** Ink by kind (Bauplan 4.6): Veedel percent blue, entered black, exploring red. */
+/** Ink by kind (Bauplan 4.6): quarter percent blue, entered black, exploring red. */
 const TINTE: Record<StempelDaten["art"], string> = {
   prozent: "#24388f",
   betreten: "#1c1c1c",
@@ -19,21 +19,23 @@ const TINTE: Record<StempelDaten["art"], string> = {
 
 export interface StempelProps {
   stempel: StempelDaten;
-  /** Name of the area the stamp belongs to (Veedel, district or city). */
+  /** Name of the area the stamp belongs to (quarter, district or city). */
   gebietName: string;
   /** Name of the city above it, for "KÖLN-WEIDEN". */
   stadtName?: string | undefined;
   datum: number;
   groesse?: number;
   drehung?: number;
+  /** The place's word for its quarters (the Kölsch word in Köln), for counts (Bauplan 3, D7). */
+  viertelWort?: string;
 }
 
 /**
  * A rubber stamp drawn in SVG, with ink: a noise filter roughens the edges and a second, coarse
- * noise makes the ink uneven (30–100 %). Four shapes: circle (Veedel percent), rectangle with a
- * date line (Veedel entered), octagon (number of Veedel), circle with text around (the rest).
+ * noise makes the ink uneven (30–100 %). Four shapes: circle (quarter percent), rectangle with a
+ * date line (quarter entered), octagon (number of quarter), circle with text around (the rest).
  */
-export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 120, drehung = 0 }: StempelProps) {
+export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 120, drehung = 0, viertelWort = "Viertel" }: StempelProps) {
   const id = useId().replace(/:/g, "");
   const farbe = TINTE[s.art];
   const seed = [...s.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 997, 3);
@@ -69,9 +71,9 @@ export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 12
       </>
     );
   } else if (s.art === "veedel-anzahl" || s.art === "orte-anzahl" || s.art === "laender-anzahl") {
-    // Octagon: a number of Veedel (per place, the last step "ALLE"), places or countries.
+    // Octagon: a number of quarter (per place, the last step "ALLE"), places or countries.
     const alle = s.id.endsWith(":alle");
-    const wort = s.art === "orte-anzahl" ? t.stempel.orte : s.art === "laender-anzahl" ? t.stempel.laender : t.stempel.veedel;
+    const wort = s.art === "orte-anzahl" ? t.stempel.orte : s.art === "laender-anzahl" ? t.stempel.laender : viertelWort.toUpperCase();
     form = (
       <>
         <polygon points="38,6 82,6 114,38 114,82 82,114 38,114 6,82 6,38" fill="none" stroke={farbe} strokeWidth="4" />
@@ -108,7 +110,7 @@ export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 12
       height={groesse}
       viewBox="0 0 120 120"
       role="img"
-      aria-label={t.stempel.label(gebietName, s.art, s.stufe)}
+      aria-label={t.stempel.label(gebietName, s.art, s.stufe, viertelWort)}
       style={{ transform: `rotate(${drehung}deg)` }}
     >
       <defs>

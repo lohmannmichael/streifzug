@@ -137,20 +137,19 @@ export const de = {
   },
   stempel: {
     betreten: "BETRETEN",
-    veedel: "VEEDEL",
     orte: "ORTE",
     laender: "LÄNDER",
     strassenKomplett: "STRASSEN KOMPLETT",
     kmNeu: "NEU GESEHEN",
     rundum: "RUNDUM",
     alle: "ALLE",
-    label: (gebiet: string, art: string, stufe: number | null) =>
+    label: (gebiet: string, art: string, stufe: number | null, wort: string) =>
       art === "prozent"
         ? `Stempel: ${gebiet} zu ${stufe} Prozent`
         : art === "betreten"
           ? `Stempel: ${gebiet} betreten`
           : art === "veedel-anzahl"
-            ? `Stempel: ${stufe} Veedel betreten`
+            ? `Stempel: ${stufe} ${wort} betreten`
             : art === "orte-anzahl"
               ? `Stempel: ${stufe} Orte`
               : art === "laender-anzahl"
@@ -166,8 +165,6 @@ export const de = {
     tiefer: "Blatt tiefer ziehen",
     kmVon: (gesehen: string, gesamt: string) => `${gesehen} von ${gesamt}`,
     stempelkarte: "Stempelkarte",
-    uebersicht: "Deine Städte und Veedel",
-    uebersichtWert: (staedte: number, veedel: number) => `${staedte} ${staedte === 1 ? "Stadt" : "Städte"} · ${veedel} Veedel`,
     betreten: "betreten",
     noch: (km: string) => `noch ${km}`,
     zuletzt: "Zuletzt",
@@ -259,7 +256,7 @@ export const de = {
   stempelSeite: {
     sonder: "Sonderstempel",
     sonderLeer: "Hier landen Stempel für Kilometer, Orte und Länder.",
-    keine: "Noch keine Stempel. Der erste kommt, sobald du ein Veedel betrittst.",
+    keine: "Noch keine Stempel. Der erste kommt, sobald du ein Viertel betrittst.",
     seite: (n: number, von: number) => `Seite ${n} von ${von}`,
   },
   orte: {
@@ -269,9 +266,10 @@ export const de = {
     vorbereitet: "Wird vorbereitet",
     vorbereitetText: (km: string) => `wird vorbereitet · ${km} gegangen`,
     nochNichts: "Noch kein Ort. Sobald du irgendwo unterwegs warst, steht er hier.",
-    unterzeile: (viertel: number, zuletzt: string | null) => `${viertel} Veedel${zuletzt ? ` · zuletzt neu ${zuletzt}` : ""}`,
-    viertelZeile: (n: number) => `${n} Veedel betreten`,
-    keineViertel: "Noch kein Veedel betreten.",
+    unterzeile: (viertel: number, wort: string, zuletzt: string | null) => `${viertel} ${wort}${zuletzt ? ` · zuletzt neu ${zuletzt}` : ""}`,
+    viertelZeile: (n: number, wort: string) => `${n} ${wort} betreten`,
+    keineViertel: (wort: string) => `Noch kein ${wort} betreten.`,
+    vorbereitetHinweis: "Deine Wege dort sind gespeichert und gelb. Prozente und Stempel kommen, sobald der Ort aufgenommen ist.",
   },
   pass: {
     titel: "Dein Pass",
@@ -285,7 +283,7 @@ export const de = {
     orteText: "Jeden Ort ansehen, auch wenn du woanders bist",
     stempelTitel: "Stempel",
     stempelText: (n: number, letzter: string) => `${n} Stempel · zuletzt ${letzter}`,
-    keineStempel: "Der erste kommt, sobald du ein Veedel betrittst",
+    keineStempel: "Der erste kommt, sobald du ein Viertel betrittst",
     rueckblickeTitel: "Rückblicke",
     rueckblickeText: (tag: string, n: number) => `Zuletzt ${tag} · ${n} ${n === 1 ? "Weg" : "Wege"}`,
     keineWege: "Jeden Tag nochmal ablaufen",
@@ -298,8 +296,8 @@ export const de = {
     gestern: "gestern",
     betreten: "betreten",
     rundum: "rundum",
-    veedelAnzahl: (n: number) => `${n} Veedel`,
-    alleVeedel: (ort: string) => `${ort} alle Veedel`,
+    viertelAnzahl: (n: number, wort: string) => `${n} ${wort}`,
+    alleViertel: (ort: string, wort: string) => `${ort} alle ${wort}`,
     orteAnzahl: (n: number) => `${n} Orte`,
     laenderAnzahl: (n: number) => `${n} Länder`,
     kmNeu: (n: number) => `${n} km neu`,
@@ -322,21 +320,6 @@ export const de = {
     ausgenommen: "zählt nicht: hier kommst du nicht hin",
     nichtHin: "Hier komme ich nicht hin",
     zaehltDoch: "Zählt doch wieder",
-  },
-  sammlung: {
-    veedel: "Städte",
-    stempelpass: "Stempelpass",
-    mehr: "Einstellungen",
-    nochNichts: "Noch kein Veedel betreten.",
-    keineStempel: "Noch keine Stempel. Der erste kommt, sobald du ein Veedel betrittst.",
-    alsNaechstes: "Als Nächstes",
-    veedelAnzahl: (n: number, km: string) => `${n} Veedel · ${km}`,
-    vorbereitet: "Wird vorbereitet",
-    gegangen: (km: string) => `${km} gegangen`,
-    vorbereitetHinweis: "Deine Wege dort sind gespeichert und gelb. Prozente und Stempel kommen, sobald der Ort aufgenommen ist.",
-    naechster: (was: string, km: string) => `${was} · noch ${km}`,
-    prozentStufe: (gebiet: string, stufe: number) => `${gebiet} ${stufe} %`,
-    kmStufe: (stufe: number) => `${stufe} km neu gesehen`,
   },
   gebiete: {
     titel: "Gebiete",

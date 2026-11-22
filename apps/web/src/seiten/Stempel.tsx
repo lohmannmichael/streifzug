@@ -2,7 +2,7 @@ import { besteStempel } from "@streifzug/core";
 import { useMemo, useRef, useState } from "react";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { FremderOrt } from "../daten/orte";
-import type { Regionen } from "../daten/regionen";
+import { viertelWort, type Regionen } from "../daten/regionen";
 import { useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
 import { t } from "../texte/de";
 import { Stempel } from "../ui/Stempel";
@@ -10,7 +10,7 @@ import { orteMitWegen, PassUnterseite } from "./Pass";
 
 /**
  * Stamp passport (Bauplan 3, D3, picture Stempelpass.png): first page special stamps (km, places,
- * countries), then one page per place. Per Veedel only the best stamp; all stay stored.
+ * countries), then one page per place. Per quarter only the best stamp; all stay stored.
  */
 export function StempelSeite(props: { daten: Regionen; fortschritt: Fortschritt | null; fremdeOrte: FremderOrt[]; zurueck: () => void }) {
   const { daten } = props;
@@ -77,7 +77,7 @@ export function StempelSeite(props: { daten: Regionen; fortschritt: Fortschritt 
                     // Slightly offset, alternating left and right, like stamped by hand.
                     style={{ transform: `translate(${(x.x - 0.5) * 24 + (j % 2 ? 6 : -6)}px, ${((x.y * 7) % 1) * 18 - 9}px)` }}
                   >
-                    <Stempel stempel={x} gebietName={name(x.gebietId)} stadtName={x.gebietId && x.art === "prozent" ? stadt(daten, x.gebietId) : undefined} datum={x.gestempeltAm} groesse={x.art === "prozent" ? 150 : 124} drehung={x.drehung} />
+                    <Stempel stempel={x} gebietName={name(x.gebietId)} stadtName={x.gebietId && x.art === "prozent" ? stadt(daten, x.gebietId) : undefined} datum={x.gestempeltAm} groesse={x.art === "prozent" ? 150 : 124} drehung={x.drehung} viertelWort={viertelWort(daten, x.gebietId).viele} />
                   </div>
                 ))}
               </section>

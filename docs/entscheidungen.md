@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 22.11.2026: D7 Wörter
+- `regionen/koeln.json` hat `wortViertel` („Veedel“), `region.ts` reicht es in `index.json` durch; fehlt es, gilt „Viertel“. Hilfsfunktion `viertelWort(daten, gebietId)` in `daten/regionen.ts`
+- Texte innerhalb eines Orts bekommen das Wort als Parameter (Orte-Zeile, „N Veedel betreten“ im Blatt, Stempel-Kurztext, Achteck-Stempel in Großbuchstaben), alle anderen sagen „Viertel“
+- Alte Texte ohne Verwendung entfernt (Reiter „Städte · Stempelpass“, „Deine Städte und Veedel“); Kommentare im Code sagen „quarter“
+- Geprüft: Suche nach „Veedel“ in `apps/web/src` findet nichts; Orte zeigt „Köln 6 Veedel“ und „Freising 1 Viertel“, Blatt Freising „1 Viertel betreten“
+
 ## 22.11.2026: D6 Quellenhinweis
 - Das „i“ oben links (MapLibre-Quellenangabe) ist weg. Stattdessen eine kleine graue Zeile direkt über dem Blatt, die mit ihm wandert (in beiden Höhen sichtbar), Tippfläche 44 px hoch; ein Tipp öffnet Einstellungen → Über mit allen Quellen
 - Text „© OpenStreetMap · OpenMapTiles“ statt nur „© OpenStreetMap“: Die Kacheln von OpenFreeMap folgen dem OpenMapTiles-Schema, dessen Lizenz die Nennung verlangt. Volle Angaben (OpenFreeMap, Overture) unter Über

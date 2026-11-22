@@ -5,7 +5,7 @@ import { ANDERE_GEAENDERT, fragen } from "../daten/arbeiter";
 import type { Fortschritt } from "../daten/fortschritt";
 import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { FremderOrt } from "../daten/orte";
-import { alsStrecke, zaehlendeMeter, type Regionen } from "../daten/regionen";
+import { alsStrecke, viertelWort, zaehlendeMeter, type Regionen } from "../daten/regionen";
 import { useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
 import { t } from "../texte/de";
 import { IconSchliessen, IconZurueck } from "../ui/Icons";
@@ -29,10 +29,10 @@ export function orteMitWegen(daten: Regionen, f: Fortschritt | null, fremde: Fre
 }
 
 /** Short words for a stamp ("Weiden 25 %"). */
-export function stempelKurz(s: GesetzterStempel, name: string): string {
+export function stempelKurz(s: GesetzterStempel, name: string, wort: string): string {
   if (s.art === "prozent") return `${name} ${s.stufe} %`;
   if (s.art === "betreten") return `${name} ${t.pass.betreten}`;
-  if (s.art === "veedel-anzahl") return s.id.endsWith(":alle") ? t.pass.alleVeedel(name) : `${name} ${t.pass.veedelAnzahl(s.stufe ?? 0)}`;
+  if (s.art === "veedel-anzahl") return s.id.endsWith(":alle") ? t.pass.alleViertel(name, wort) : `${name} ${t.pass.viertelAnzahl(s.stufe ?? 0, wort)}`;
   if (s.art === "orte-anzahl") return t.pass.orteAnzahl(s.stufe ?? 0);
   if (s.art === "laender-anzahl") return t.pass.laenderAnzahl(s.stufe ?? 0);
   if (s.art === "km-neu") return t.pass.kmNeu(s.stufe ?? 0);
@@ -95,11 +95,11 @@ export function PassSeite(props: {
             <span>{t.pass.orteText}</span>
           </PassZeile>
           <PassZeile
-            bild={letzter ? <Stempel stempel={letzter} gebietName={letzterName} datum={letzter.gestempeltAm} groesse={64} drehung={letzter.drehung} /> : <BildStempelLeer />}
+            bild={letzter ? <Stempel stempel={letzter} gebietName={letzterName} datum={letzter.gestempeltAm} groesse={64} drehung={letzter.drehung} viertelWort={viertelWort(daten, letzter.gebietId).viele} /> : <BildStempelLeer />}
             titel={t.pass.stempelTitel}
             onClick={() => props.oeffnen("stempel")}
           >
-            <span>{letzter ? t.pass.stempelText(besteStempel(gesetzt).length, stempelKurz(letzter, letzterName)) : t.pass.keineStempel}</span>
+            <span>{letzter ? t.pass.stempelText(besteStempel(gesetzt).length, stempelKurz(letzter, letzterName, viertelWort(daten, letzter.gebietId).viele)) : t.pass.keineStempel}</span>
           </PassZeile>
           <PassZeile bild={<BildRueckblick />} titel={t.pass.rueckblickeTitel} onClick={() => props.oeffnen("rueckblicke")}>
             <span>{letzterWeg ? t.pass.rueckblickeText(tagText(letzterWeg.startedAt), wege!.filter((w) => tagText(w.startedAt) === tagText(letzterWeg.startedAt)).length) : t.pass.keineWege}</span>

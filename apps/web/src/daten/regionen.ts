@@ -22,6 +22,20 @@ export interface Region {
   stand: string;
   /** Country code, e.g. "DE". */
   land?: string;
+  /** The local word for a quarter, e.g. the Kölsch word in Köln (Bauplan 3, D7); missing: "Viertel". */
+  wortViertel?: { eins: string; viele: string };
+}
+
+export interface ViertelWort {
+  eins: string;
+  viele: string;
+}
+const VIERTEL: ViertelWort = { eins: "Viertel", viele: "Viertel" };
+
+/** The word for the quarters of the place an area belongs to (the Kölsch word in Köln, else "Viertel"). */
+export function viertelWort(daten: Regionen | null, gebietId: string | null | undefined): ViertelWort {
+  const regionId = gebietId ? daten?.gebiete.get(gebietId)?.regionId : undefined;
+  return daten?.liste.find((r) => r.id === regionId)?.wortViertel ?? VIERTEL;
 }
 
 export interface Regionen {

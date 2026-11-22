@@ -72,7 +72,7 @@ function strassenEbenen(f: Farben): LayerSpecification[] {
       minzoom: 11,
       filter,
       layout: { "line-cap": "round", "line-join": "round" },
-      // Zoomed far out the streets fade and the hatched Veedel take over (Bauplan 4.5).
+      // Zoomed far out the streets fade and the hatched quarter take over (Bauplan 4.5).
       paint: { "line-color": farbe, "line-width": breite(istHaupt, rand), "line-opacity": ["interpolate", ["linear"], ["zoom"], 11.4, 0, 12.4, 1] },
     }) as LayerSpecification;
   return [

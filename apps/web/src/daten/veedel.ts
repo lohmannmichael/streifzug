@@ -13,7 +13,7 @@ export async function letzteWege(anzahl: number): Promise<KurzWeg[]> {
   return (await fragen<"wege">({ typ: "letzteWege", anzahl }).antwort).wege;
 }
 
-/** "Noch offen": named streets of a Veedel with open meters, nearest first. */
+/** "Noch offen": named streets of a quarter with open meters, nearest first. */
 export function useOffeneStrassen(daten: Regionen | null, gebietId: string | null, bezug: [number, number] | null, stand: unknown, aktiv: boolean) {
   const [liste, setListe] = useState<OffeneStrasse[] | null>(null);
   const schluessel = bezug ? `${bezug[0].toFixed(3)},${bezug[1].toFixed(3)}` : "";
@@ -65,7 +65,7 @@ function lesen(): GesetzterStempel[] {
   } catch {
     return [];
   }
-  // Old Veedel counts belong to Köln now; written back once, the account gets it with the next upload.
+  // Old quarter counts belong to Köln now; written back once, the account gets it with the next upload.
   if (koelnWurzel && liste.some((s) => /^veedel-anzahl:\d+$/.test(s.id))) {
     liste = stempelUmstellen(liste, koelnWurzel);
     localStorage.setItem(STEMPEL, JSON.stringify(liste));
@@ -74,7 +74,7 @@ function lesen(): GesetzterStempel[] {
   return liste;
 }
 
-/** Progress as the stamp rules need it: Veedel (smallest areas), districts, cities, km. */
+/** Progress as the stamp rules need it: quarter (smallest areas), districts, cities, km. */
 export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte = 0): Stand {
   koelnWurzel ??= daten.liste.find((r) => r.id === "koeln")?.wurzel ?? null;
   const veedel = [...daten.gebiete.values()]

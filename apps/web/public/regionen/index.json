@@ -49,7 +49,11 @@
    51.085
   ],
   "stand": "2026-11-19",
-  "land": "DE"
+  "land": "DE",
+  "wortViertel": {
+   "eins": "Veedel",
+   "viele": "Veedel"
+  }
  },
  {
   "id": "new-york",

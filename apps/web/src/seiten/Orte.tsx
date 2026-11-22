@@ -2,7 +2,7 @@ import type { Piece } from "@streifzug/core";
 import { useMemo } from "react";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { FremderOrt } from "../daten/orte";
-import { alsKm, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Region, type Regionen } from "../daten/regionen";
+import { alsKm, gesamtMeter, viertelWort, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Region, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { orteMitWegen, PassUnterseite, tagText } from "./Pass";
 
@@ -50,7 +50,7 @@ export function OrteSeite(props: {
               </li>
             ))}
           </ul>
-          <p className="zeile-text leise klein">{t.sammlung.vorbereitetHinweis}</p>
+          <p className="zeile-text leise klein">{t.orte.vorbereitetHinweis}</p>
         </>
       )}
     </PassUnterseite>
@@ -83,7 +83,7 @@ function OrtZeile(props: { region: Region; daten: Regionen; fortschritt: Fortsch
         <MiniPlan gelb={imOrt.gelb} rot={imOrt.rot} />
         <span className="ort-text">
           <b>{r.name}</b>
-          <span>{t.orte.unterzeile(viertel, imOrt.zuletzt ? tagText(imOrt.zuletzt) : null)}</span>
+          <span>{t.orte.unterzeile(viertel, viertelWort(daten, r.wurzel).viele, imOrt.zuletzt ? tagText(imOrt.zuletzt) : null)}</span>
         </span>
         <span className="ort-prozent">{prozentText(anteil)} %</span>
         <span className="pfeil" aria-hidden="true">›</span>

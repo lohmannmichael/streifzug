@@ -40,7 +40,7 @@ Ergebnis: `apps/web/public/regionen/<id>/{gebiete.geojson,namen.geojson,summen.j
 }
 ```
 
-`name` ist der Anzeigename, `wurzel.name` der Overture-Name zum Finden. Overture-Ebenen: `country` > `region` (Bundesland, US-Bundesstaat) > `county` (Kreis, kreisfreie Stadt) > `localadmin` > `locality` (Gemeinde, Stadt) > `borough` > `macrohood`/`neighborhood` (Stadtteil, Viertel).
+`name` ist der Anzeigename, `wurzel.name` der Overture-Name zum Finden. `land` ist das Länderkürzel (für die Zahl „Länder“ im Pass, schreibt `finden.py` selbst). Optional `"wortViertel": { "eins": "Veedel", "viele": "Veedel" }` für ein eigenes Wort (Köln); fehlt es, sagt die App „Viertel“. Overture-Ebenen: `country` > `region` (Bundesland, US-Bundesstaat) > `county` (Kreis, kreisfreie Stadt) > `localadmin` > `locality` (Gemeinde, Stadt) > `borough` > `macrohood`/`neighborhood` (Stadtteil, Viertel).
 
 ## 3. Typische Fälle
 

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
-import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
+import { alsKm, alsStrecke, elternText, viertelWort, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { FremderOrt } from "../daten/orte";
 import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
@@ -90,8 +90,8 @@ function useAngezeigt(p: number, vorher: number | null, hoch: { von: number; nr:
 }
 
 /**
- * The sheet over the plan (Bauplan 3.2), three heights: 1 name and percent, 2 the Veedel
- * (numbers, stamp card, last ways, open streets), 3 the collection (Veedel and stamp passport).
+ * The sheet over the plan (Bauplan 3.2), three heights: 1 name and percent, 2 the quarter
+ * (numbers, stamp card, last ways, open streets), 3 the collection (quarter and stamp passport).
  */
 export function Blatt(props: BlattProps) {
   const { hoehe, setHoehe, gebiet, daten, aufzeichnung: a } = props;
@@ -303,7 +303,7 @@ export function Blatt(props: BlattProps) {
 
       {gebiet && daten && (
         <div ref={inhaltRef} className="blatt-inhalt" aria-hidden={hoehe === 1}>
-          <VeedelInhalt
+          <ViertelInhalt
             {...props}
             gebiet={gebiet}
             daten={daten}
@@ -317,9 +317,9 @@ export function Blatt(props: BlattProps) {
   );
 }
 
-function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[] }) {
+function ViertelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[] }) {
   const { gebiet, daten, aufzeichnung: a } = props;
-  const istVeedel = gebiet.kinder.length === 0;
+  const istViertel = gebiet.kinder.length === 0;
   const vorherM = props.vorher ? zaehlendeMeter(props.vorher.proGebiet.get(gebiet.id) ?? LEER, false) : null;
   const neuM = vorherM !== null && a.letzter ? props.gesehen - vorherM : 0;
 
@@ -358,20 +358,20 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
         ))}
       {a.aktiv && <p className="zeile-text leise">{t.karte.hinweisOffen}</p>}
 
-      {istVeedel ? (
+      {istViertel ? (
         <Stempelkarte gebiet={gebiet} daten={daten} gesehen={props.gesehen} gesamt={props.gesamt} gesetzt={props.gesetzt} />
       ) : (
-        <ViertelListe gebiet={gebiet} daten={daten} fortschritt={props.fortschritt} gewaehltVeedel={props.waehlen} />
+        <ViertelListe gebiet={gebiet} daten={daten} fortschritt={props.fortschritt} viertelWaehlen={props.waehlen} />
       )}
     </>
   );
 }
 
 /**
- * A place or district in the sheet (Bauplan 3, D2): the entered Veedel to unfold, grouped by
- * district, most seen first. A tap on a Veedel chooses it.
+ * A place or district in the sheet (Bauplan 3, D2): the entered quarter to unfold, grouped by
+ * district, most seen first. A tap on a quarter chooses it.
  */
-function ViertelListe(props: { gebiet: GebietDaten; daten: Regionen; fortschritt: Fortschritt | null; gewaehltVeedel: (id: string) => void }) {
+function ViertelListe(props: { gebiet: GebietDaten; daten: Regionen; fortschritt: Fortschritt | null; viertelWaehlen: (id: string) => void }) {
   const { daten, fortschritt: f } = props;
   const anteil = (g: GebietDaten) => prozent(gesehenM(f, g), gesamtM(g));
   const betreten = (g: GebietDaten) => gesehenM(f, g) >= 1;
@@ -379,17 +379,18 @@ function ViertelListe(props: { gebiet: GebietDaten; daten: Regionen; fortschritt
   const anzahl = betretene(daten, f, props.gebiet);
   const zeile = (v: GebietDaten) => (
     <li key={v.id}>
-      <button type="button" className="zeile-knopf viertel-zeile" onClick={() => props.gewaehltVeedel(v.id)}>
+      <button type="button" className="zeile-knopf viertel-zeile" onClick={() => props.viertelWaehlen(v.id)}>
         <span>{v.name}</span>
         <span className="wert">{prozentText(anteil(v))} %</span>
       </button>
     </li>
   );
-  if (anzahl === 0) return <p className="zeile-text leise">{t.orte.keineViertel}</p>;
+  const wort = viertelWort(daten, props.gebiet.id);
+  if (anzahl === 0) return <p className="zeile-text leise">{t.orte.keineViertel(wort.eins)}</p>;
   return (
     <details className="viertel-liste">
       <summary className="zeile-knopf">
-        <span>{t.orte.viertelZeile(anzahl)}</span>
+        <span>{t.orte.viertelZeile(anzahl, anzahl === 1 ? wort.eins : wort.viele)}</span>
         <span className="wert" aria-hidden="true">›</span>
       </summary>
       {kinder(props.gebiet).map((k) =>
@@ -424,7 +425,7 @@ function Stempelkarte(props: { gebiet: GebietDaten; daten: Regionen; gesehen: nu
           return (
             <li key={f.id} className={s ? "feld voll" : "feld"}>
               <span className="feld-kreis">
-                {s && <Stempel stempel={s} gebietName={gebiet.name} stadtName={stadt} datum={s.gestempeltAm} groesse={56} drehung={s.drehung} />}
+                {s && <Stempel stempel={s} gebietName={gebiet.name} stadtName={stadt} datum={s.gestempeltAm} groesse={56} drehung={s.drehung} viertelWort={viertelWort(props.daten, gebiet.id).viele} />}
               </span>
               <span className="feld-titel">{f.titel}</span>
             </li>
@@ -441,10 +442,5 @@ function stadtName(daten: Regionen, id: string): string | undefined {
   return g?.name;
 }
 
-/** Number of entered Veedel below an area. */
-function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten): number {
-  if (g.kinder.length === 0) return gesehenM(f, g) >= 1 ? 1 : 0;
-  return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
-}
 
 

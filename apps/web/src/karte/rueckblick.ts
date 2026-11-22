@@ -5,7 +5,7 @@ import { zeigeBox } from "./kamera";
 /**
  * Replay on opening (Michi, 21.11.2026: no pen, only the yellow). The plan shows all new ways at
  * once; the new streets turn yellow one after another in the order they were walked (3–7 s).
- * Tap skips. Afterwards the map zooms to the Veedel and the number counts up.
+ * Tap skips. Afterwards the map zooms to the quarter and the number counts up.
  */
 export interface RueckblickDaten {
   wege: LonLat[][];
@@ -25,7 +25,7 @@ export interface RueckblickKontext {
   aktuell: () => readonly Piece[];
   /** Free space at the bottom (sheet). */
   untenFrei: number;
-  /** Bounds of the chosen Veedel, for the closing zoom. */
+  /** Bounds of the chosen quarter, for the closing zoom. */
   veedel: [[number, number], [number, number]] | null;
 }
 
@@ -65,7 +65,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
     // Always end with the latest state, never with the snapshot from the start.
     k.zeichnen(k.aktuell());
   };
-  /** End (also when skipped): all new streets yellow, zoom to the whole Veedel, then the number. */
+  /** End (also when skipped): all new streets yellow, zoom to the whole quarter, then the number. */
   const ende = () => {
     if (aus) return;
     stopp();
