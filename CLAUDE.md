@@ -35,7 +35,8 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 
 ## Befehle
 
-- `npm install` einmal, dann `npm run dev` (Web-App lokal), `npm test` (Tests), `npm run check` (Typen, Tests, Build wie in der GitHub-Prüfung)
+- `npm install` einmal, dann `npm run dev` (Web-App lokal), `npm test` (Tests), `npm run check` (Typen, Tests, Build und Oberflächentests wie in der GitHub-Prüfung)
+- `npm run e2e`: Oberflächentests (Playwright, `apps/web/e2e/`, braucht vorher `npm run build`). Server und Kartendienst werden im Test ersetzt, kein echtes Konto. Fehlen aufgenommene Kartenkacheln (neue Testwege): `AUFNEHMEN=1 npm run e2e`; Testwege neu erzeugen: `npx tsx apps/web/e2e/werkzeuge/wege-erzeugen.ts`
 - `npm run region -- "<Ortsname>"`: neuen Ort finden und aufnehmen; `npm run region -- <id>`: bestehende Region neu berechnen. Ablauf, Prüfung und Grenzen: Skill `region-hinzufuegen`
 
 ## Regeln

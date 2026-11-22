@@ -1,5 +1,18 @@
 # Entscheidungen
 
+## 22.11.2026: E1 Oberflächentests
+- Playwright (`apps/web/e2e/`, Version 1.63 wie der Browser in der Claude-Umgebung), iPhone-13-Größe mit Touch, gebaute App (`vite preview`), Service Worker im Test aus
+- Kein echtes Konto, kein Netz: `e2e/server.ts` ersetzt Supabase (Anmeldung, Tabellen, Storage) durch einen kleinen Nachbau im Speicher und liefert die Testwege als Overland-Punkte, also über denselben Weg wie im Alltag. Kartenstil, Kacheln und Schriften kommen aus `e2e/daten/openfreemap/` (aufgenommen, 1,9 MB); Kacheln unter Zoom 12 werden nicht aufgenommen (je mehrere 100 kB), dort bleibt der Plan papierweiß, Gelb, Schraffur und Grenzen werden trotzdem gezeichnet
+- Testdatensatz `e2e/daten/wege.json`, einmal aus echten Straßen erzeugt (`e2e/werkzeuge/wege-erzeugen.ts`): zwei Wege zu Fuß und einer mit dem Rad in Weiden, eine Autofahrt (50 km/h), ein Weg in Freising. Weiden ergibt damit 9,8 %
+- 12 Abläufe: erster Start leer; Start mit Wegen (Gelb sichtbar, 9,8 %); Karte lädt 6 s verzögert; Blatt tippen, schnell wischen, langsam ziehen, aus dem Inhalt herunterziehen; Pass → Orte → Freising; Rückblick mit Überspringen und Endstand; Netz aus; Kartendienst aus mit „Nochmal“; Einrechnen schlägt fehl mit „Nochmal versuchen“. Gelb wird am Bildschirmfoto gezählt (Pixel in Textmarker-Farbe über dem Blatt)
+- In `npm run check` und in der GitHub-Prüfung; schlägt sie fehl, liegt der Bericht als Anhang „oberflaechentests“ am Lauf
+- Probe: Gelb absichtlich mit Breite 0 gezeichnet → 3 Tests rot. 36 Läufe hintereinander (3 × alle) grün
+- Gefundene und behobene Fehler in der App:
+  - „Nochmal“ bei „Der Plan lädt gerade nicht“ tat nichts: MapLibre wartet mit unserem Stil-Umbau (`transformStyle`) auf den alten, gescheiterten Stil und fragte nie neu an. Jetzt baut „Nochmal“ die Karte neu auf
+  - Gebietsgrenzen und Schraffur fehlten manchmal ganz: Kamen die Ortsdaten an, während noch Kacheln luden, hielt die App die Karte für „nicht fertig“ (`isStyleLoaded()` ist auch dann falsch) und zeichnete sie nie. Jetzt zählt nur, ob der Stil da ist. Dasselbe galt für die graue Fläche: Eine einzelne fehlende Kachel während des Ladens (Funkloch) konnte sie fälschlich zeigen
+  - Blatt: Das Tempo eines Wischs wurde gemessen, wann die Seite die Bewegung verarbeitet hat, nicht wann der Finger sie gemacht hat. Rechnet die Karte gerade, sah ein schneller Wisch langsam aus. Jetzt zählt die Zeit der Berührung selbst (`event.timeStamp`)
+- Beobachtung, nicht geändert: Punkte, die vom letzten Punkt aus schneller als 50 m/s erreicht wären, verwirft die App (`cleanFixes`). Kommen Punkte vom Morgen in Köln und vom Nachmittag nach einem Flug in einem Rutsch an, können die ersten Stunden am Zielort verloren gehen (Köln → Lissabon: rund 10 Stunden). Frage an Michi in `docs/STAND.md`
+
 ## 22.11.2026: Zwei Fahrbahnen zählen ganz, wenn eine gegangen ist
 - Michi: „Bei größeren Straßen, wenn ich sie in eine Richtung gefahren bin, dann zählt es.“ Auf welcher Seite der Strich liegt, ist egal
 - Bisher: jede Fahrbahn zählt halb, die andere nur, wenn sie innerhalb der 20 m Abgleich-Abstand lag (an der Aachener Straße mit Straßenbahn dazwischen oft nicht)

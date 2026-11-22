@@ -9,3 +9,5 @@ __pycache__/
 .region-cache/
 docs/export/anhang/
 docs/export/*.zip
+apps/web/test-results/
+apps/web/playwright-report/

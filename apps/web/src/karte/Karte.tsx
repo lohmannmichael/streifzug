@@ -362,7 +362,13 @@ export function Karte(props: KartenProps) {
   const dunkelRef = useRef(false);
   // Map service unreachable (Bauplan 3, C3): grey area with a sentence and "Nochmal".
   const [kaputt, setKaputt] = useState(false);
+  // "Nochmal" builds the map anew: MapLibre waits for a failed style forever before it takes a
+  // new one (transformStyle), so setStyle alone never asked again (found by the browser tests).
+  const [versuch, setVersuch] = useState(0);
   const pruefUhr = useRef(0);
+  // Whether the current map has its style. MapLibre's isStyleLoaded() is also false while tiles
+  // load, so areas that arrived then were never drawn (found by the browser tests).
+  const stilDa = useRef(false);
   // Drawing moment: ids already shown, and the running animation.
   const bekannt = useRef<Set<string> | null>(null);
   const animation = useRef<{ bild: number; ende: () => void } | null>(null);
@@ -385,20 +391,15 @@ export function Karte(props: KartenProps) {
     });
     karteRef.current = karte;
     // The style must arrive within 12 s; a failed style request shows the grey area at once.
-    const pruefen = () => {
-      window.clearTimeout(pruefUhr.current);
-      pruefUhr.current = window.setTimeout(() => !karte.isStyleLoaded() && setKaputt(true), 12_000);
-    };
-    pruefen();
-    (karte as unknown as { nochmal: () => void }).nochmal = () => {
-      setKaputt(false);
-      pruefen();
-      karte.setStyle(STIL_ADRESSE, { diff: false });
-    };
+    // Only the style counts: a single missing tile later (dead spot) leaves the plan as it is.
+    stilDa.current = false;
+    window.clearTimeout(pruefUhr.current);
+    pruefUhr.current = window.setTimeout(() => !stilDa.current && setKaputt(true), 12_000);
     karte.on("error", () => {
-      if (!karte.isStyleLoaded()) setKaputt(true);
+      if (!stilDa.current) setKaputt(true);
     });
     karte.on("style.load", () => {
+      stilDa.current = true;
       window.clearTimeout(pruefUhr.current);
       setKaputt(false);
     });
@@ -451,12 +452,12 @@ export function Karte(props: KartenProps) {
       karte.remove();
       karteRef.current = null;
     };
-  }, []);
+  }, [versuch]);
 
   // Draw regions once their data has arrived.
   useEffect(() => {
     const karte = karteRef.current;
-    if (karte && props.daten && karte.isStyleLoaded())
+    if (karte && props.daten && stilDa.current)
       void gebieteZeichnen(karte, dunkelRef.current, props.daten, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
   }, [props.daten]);
 
@@ -592,7 +593,10 @@ export function Karte(props: KartenProps) {
       {kaputt && (
         <div className="karte-fehler" role="alert">
           <p>{t.karte.laedtNicht}</p>
-          <button type="button" className="text-knopf" onClick={() => (karteRef.current as unknown as { nochmal?: () => void } | null)?.nochmal?.()}>
+          <button type="button" className="text-knopf" onClick={() => {
+              setKaputt(false);
+              setVersuch((v) => v + 1);
+            }}>
             {t.karte.nochmal}
           </button>
         </div>

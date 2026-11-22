@@ -126,14 +126,14 @@ export function Blatt(props: BlattProps) {
   const tief = Math.max(0, masse.halb - masse.klein);
   const [zug, setZug] = useState<number | null>(null);
   const start = useRef<{ y: number; t: number; basis: number; letzteY: number; letzteT: number; v: number } | null>(null);
-  const beginnen = (y: number) => {
-    const jetzt = performance.now();
+  // Times come from the touch itself (event.timeStamp), not from when the page got round to it:
+  // while the map draws, events arrive late and a quick flick looked slow (found by the browser tests).
+  const beginnen = (y: number, jetzt: number) => {
     start.current = { y, t: jetzt, basis: hoehe === 1 ? tief : 0, letzteY: y, letzteT: jetzt, v: 0 };
   };
-  const bewegen = (y: number) => {
+  const bewegen = (y: number, jetzt: number) => {
     const s0 = start.current;
     if (!s0) return;
-    const jetzt = performance.now();
     if (jetzt - s0.letzteT > 8) {
       s0.v = (y - s0.letzteY) / (jetzt - s0.letzteT);
       s0.letzteY = y;
@@ -142,14 +142,14 @@ export function Blatt(props: BlattProps) {
     if (Math.abs(y - s0.y) > 4) setZug(Math.min(tief, Math.max(0, s0.basis + y - s0.y)));
   };
   /** Ends a pull; true if it was one (not a tap). */
-  const enden = (y: number) => {
+  const enden = (y: number, jetzt: number) => {
     const s0 = start.current;
     start.current = null;
     setZug(null);
     if (!s0) return false;
     const weg = y - s0.y;
     // Speed: of the last part of the move, or of the whole move when it was short (a flick).
-    const dauer = performance.now() - s0.t;
+    const dauer = Math.max(1, jetzt - s0.t);
     const v = dauer < 300 && Math.abs(weg / dauer) > Math.abs(s0.v) ? weg / dauer : s0.v;
     if (Math.abs(weg) <= 4 && Math.abs(v) < 0.5) return false;
     setHoehe(Math.abs(v) > 0.5 ? (v > 0 ? 1 : 2) : s0.basis + weg > tief / 2 ? 1 : 2);
@@ -173,17 +173,17 @@ export function Blatt(props: BlattProps) {
       if (!zieht) {
         if (y - y0 > 6 && el.scrollTop <= 0) {
           zieht = true;
-          beginnen(y0);
+          beginnen(y0, e.timeStamp);
         } else if (y0 - y > 6) {
           y0 = null;
           return;
         } else return;
       }
       e.preventDefault();
-      bewegen(y);
+      bewegen(y, e.timeStamp);
     };
     const schluss = (e: TouchEvent) => {
-      if (zieht) enden(e.changedTouches[0]!.clientY);
+      if (zieht) enden(e.changedTouches[0]!.clientY, e.timeStamp);
       y0 = null;
       zieht = false;
     };
@@ -233,11 +233,11 @@ export function Blatt(props: BlattProps) {
         onPointerDown={(e) => {
           gezogen.current = false;
           if ((e.target as HTMLElement).closest("button:not(.griff)")) return;
-          beginnen(e.clientY);
+          beginnen(e.clientY, e.timeStamp);
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        onPointerMove={(e) => bewegen(e.clientY)}
-        onPointerUp={(e) => (gezogen.current = enden(e.clientY))}
+        onPointerMove={(e) => bewegen(e.clientY, e.timeStamp)}
+        onPointerUp={(e) => (gezogen.current = enden(e.clientY, e.timeStamp))}
         onPointerCancel={() => {
           start.current = null;
           setZug(null);
