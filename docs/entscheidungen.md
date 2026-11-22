@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: A2 Konto mit Mail und Passwort (statt Mail-Code)
+- Michi: einfacher Login ohne zusätzlichen Dienst. Ablauf: Mail-Adresse eintragen → eine Bestätigungs-Mail mit Link (öffnet Safari, das ist in Ordnung, der Link bestätigt nur) → zurück in der App ein Passwort festlegen. Das anonyme Konto bekommt die Adresse, Nutzer-ID und alle Daten bleiben. Auf neuen Geräten: Mail + Passwort, keine Mail nötig; das iPhone füllt das Passwort per Face ID aus. Mail-Bestätigung in Supabase bleibt eingeschaltet (keine Sicherheits-Einstellung geändert)
+- Anmelden auf einem Gerät mit eigenen Wegen: Frage „übernehmen?“ (ja: werden ins Konto hochgeladen; nein: nur vom Gerät entfernt). Overland-Wege des vorigen Kontos werden vom Gerät entfernt und kommen vom Konto neu
+- Abmelden mit Rückfrage, nur wenn kein Weg mehr ungesichert ist; im Konto bleibt alles
+- Neu: Tabelle `user_state` (Stempel, Ausnahmen, Stiftfarben je Konto, RLS), beim Start zusammengeführt (nichts geht verloren), Änderungen gehen nach 2 s hoch (Migration `20261122120000_user_state.sql`)
+- Hochladen eigener Wege läuft jetzt auch 4 s nach dem Start (vorher erst nach einer Minute, wenn die Anmeldung beim ersten Versuch noch nicht fertig war)
+- Geprüft mit zwei Browser-Profilen (der Mail-Versand im Test simuliert): ID unverändert, zweites Profil sieht Weg, Ausnahmen und Prozent; falsches Passwort zeigt deutschen Satz. Testkonten und Testdatei gezielt gelöscht
+
 ## 22.11.2026: Antworten zu Fassung 3
 - Rückblick (F1): nur Gelb, keine Tintenlinie, kein Stift. Je Weg einzeln und näher heran bleibt
 - Nie dunkler bei oft Gegangenem; „Trampelpfade“ im Backlog ist damit verworfen

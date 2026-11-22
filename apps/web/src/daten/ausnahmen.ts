@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 
 /**
  * "Hier komme ich nicht hin" (Bauplan 3.2): street pieces that do not count for you, e.g. a
@@ -21,6 +22,7 @@ export function ausnahmeSetzen(id: string, an: boolean) {
   else alle.delete(id);
   localStorage.setItem(KEY, JSON.stringify([...alle].sort()));
   window.dispatchEvent(new Event(GEAENDERT));
+  kontoDatenGeaendert();
 }
 
 export function useAusnahmen(): string[] {
@@ -28,7 +30,11 @@ export function useAusnahmen(): string[] {
   useEffect(() => {
     const neu = () => setListe(ausnahmenLesen());
     window.addEventListener(GEAENDERT, neu);
-    return () => window.removeEventListener(GEAENDERT, neu);
+    window.addEventListener(KONTO_DATEN, neu);
+    return () => {
+      window.removeEventListener(GEAENDERT, neu);
+      window.removeEventListener(KONTO_DATEN, neu);
+    };
   }, []);
   return liste;
 }

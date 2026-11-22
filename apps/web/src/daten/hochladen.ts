@@ -1,5 +1,6 @@
 import { decodeTrack, encodeTrack, type EncodedTrack } from "@streifzug/core";
 import { alleLaden, einenLaden, melden, speichern, type Streifzug } from "./speicher";
+import { kontoDatenHolen } from "./kontoDaten";
 import { kontoWeg, supabase } from "./supabase";
 
 const MODUS = { foot: "foot", bike: "bike", car: "car" } as const;
@@ -95,7 +96,11 @@ export function hochladenEinrichten() {
   void navigator.storage?.persist?.();
   void hochladen();
   // A little later (the sign-in may still be running): fetch back what is missing here.
-  window.setTimeout(() => void zurueckholen(), 4000);
+  window.setTimeout(() => {
+    void hochladen();
+    void zurueckholen();
+    void kontoDatenHolen();
+  }, 4000);
   window.addEventListener("online", () => void hochladen());
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void hochladen();

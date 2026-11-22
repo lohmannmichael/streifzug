@@ -13,6 +13,7 @@ import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
+import { Konto } from "./seiten/Konto";
 import { Stifte } from "./seiten/Stifte";
 import { Zuhause } from "./seiten/Zuhause";
 import { Karte } from "./karte/Karte";
@@ -28,6 +29,7 @@ export function App() {
   const [hoehe, setHoehe] = useState<Hoehe>(1);
   const [teil, setTeil] = useState<SammlungTeil>("veedel");
   const [menueOffen, setMenueOffen] = useState(false);
+  const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   const [profilOffen, setProfilOffen] = useState(false);
@@ -182,6 +184,27 @@ export function App() {
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daten]);
+
+  // Opened from the confirmation link (in Safari): say where to go on.
+  if (safariHinweis)
+    return (
+      <div className="app">
+        <section className="seite seite-voll" aria-labelledby="bestaetigt-titel">
+          <h1 id="bestaetigt-titel">{t.konto.safariTitel}</h1>
+          <p className="leer gross">{t.konto.safariText}</p>
+          <button
+            type="button"
+            className="datei-knopf"
+            onClick={() => {
+              history.replaceState(null, "", "/");
+              setSafariHinweis(false);
+            }}
+          >
+            {t.konto.safariWeiter}
+          </button>
+        </section>
+      </div>
+    );
 
   if (profilOffen)
     return (
@@ -353,8 +376,6 @@ function Profil(props: {
     if (props.zumImport === "overland") overlandRef.current?.scrollIntoView({ block: "start" });
   }, [props.zumImport]);
   const { werte, aendern } = props;
-  const kontoText =
-    props.sitzung.status === "bereit" ? t.ich.kontoAnonym : props.sitzung.status === "offline" ? t.ich.kontoOffline : t.ich.kontoLaedt;
   return (
     <div className="app">
       <section className="seite seite-voll" aria-labelledby="profil-titel">
@@ -363,6 +384,14 @@ function Profil(props: {
           <span>{t.ich.zurueck}</span>
         </button>
         <h1 id="profil-titel">{t.ich.titel}</h1>
+        <h2>{t.ich.konto}</h2>
+        {props.sitzung.status === "offline" ? (
+          <div className="gruppe">
+            <p className="zeile-text">{t.ich.kontoOffline}</p>
+          </div>
+        ) : (
+          <Konto />
+        )}
         <h2>{t.stifte.titel}</h2>
         <Stifte werte={werte} aendern={aendern} />
         <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
@@ -371,10 +400,6 @@ function Profil(props: {
         <Zuhause userId={userId} />
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
         <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
-        <h2>{t.ich.konto}</h2>
-        <div className="gruppe">
-          <p className="zeile-text">{kontoText}</p>
-        </div>
         <h2>{t.ich.daten}</h2>
         <div className="gruppe">
           <p className="zeile-text">{t.ich.datenHinweis}</p>

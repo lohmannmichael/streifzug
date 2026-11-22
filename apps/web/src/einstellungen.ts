@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { KONTO_DATEN, kontoDatenGeaendert } from "./daten/kontoDaten";
 import { supabase, type Sitzung } from "./daten/supabase";
 
 export interface Einstellungen {
@@ -67,6 +68,13 @@ export function useEinstellungen(sitzung: Sitzung) {
   aktuell.current = werte;
   const userId = sitzung.status === "bereit" ? sitzung.session.user.id : null;
 
+  // Pen colours from the account (another phone, or after signing in).
+  useEffect(() => {
+    const neu = () => setWerte(lesen());
+    window.addEventListener(KONTO_DATEN, neu);
+    return () => window.removeEventListener(KONTO_DATEN, neu);
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
     let aktiv = true;
@@ -92,6 +100,7 @@ export function useEinstellungen(sitzung: Sitzung) {
       aktuell.current = neu;
       setWerte(neu);
       localStorage.setItem(KEY, JSON.stringify(neu));
+      kontoDatenGeaendert();
       if (!userId) return;
       // Supabase queries only run when awaited or then'd.
       supabase

@@ -15,7 +15,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 ## Etappen (Fassung 3)
 | Etappe | Schritte | Stand |
 |---|---|---|
-| A Sichern | A1 Repo bereinigen · A2 Konto per Mail-Code · A3 Exportieren | A1 erledigt (22.11.), A2 wartet auf Entscheidung Mail-Versand |
+| A Sichern | A1 Repo bereinigen · A2 Konto (Mail + Passwort) · A3 Exportieren | A1 erledigt, A2 gebaut (22.11.), wartet auf Michis Prüfung am iPhone |
 | B Blatt | B1 Inhalt kürzen · B2 zwei Höhen, folgt dem Finger · B3 Herunterziehen aus dem Inhalt | offen |
 | C Vertrauen | C1 Statuszeile Aufzeichnung · C2 Abschnitt umstellen · C3 Fehler und Wartezustände · C4 Zuhause-Zone entfernen | offen |
 | D Aufbau | D1 Pass · D2 Orte · D3 Stempel · D4 Rückblicke · D5 Einstellungen · D6 Quellenhinweis · D7 Wörter · D8 Altes entfernen | offen |
@@ -23,7 +23,6 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | F Neues | F1–F7 | offen |
 
 ## Offene Fragen an Michi
-- A2: Michi will einen einfachen Login ohne Mail-Dienst → Vorschlag Mail + Passwort ohne Bestätigungs-Mail (Supabase: Bestätigung ausschalten). Wartet auf Michis ausdrückliches Ja zur Einstellung
 
 ## Zu Beginn jeder Sitzung
 - `select name, meters, first_seen from region_wishes` prüfen und Orte mit `npm run region` aufnehmen

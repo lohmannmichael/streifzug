@@ -2,6 +2,7 @@ import { faelligeStempel, naechsteStempel, type Gruppe, type Naechster, type Sta
 import { useEffect, useMemo, useState } from "react";
 import type { Etikett, KurzWeg, OffeneStrasse } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, fragen } from "./arbeiter";
+import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 import type { Fortschritt } from "./fortschritt";
 import { gesamtMeter, zaehlendeMeter, type Regionen } from "./regionen";
 
@@ -84,6 +85,12 @@ export function standAus(daten: Regionen, f: Fortschritt): Stand {
  */
 export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; naechste: Naechster[] } {
   const [gesetzt, setGesetzt] = useState<GesetzterStempel[]>(lesen);
+  // Stamps from the account (another phone, or after signing in) come in here.
+  useEffect(() => {
+    const neu = () => setGesetzt(lesen());
+    window.addEventListener(KONTO_DATEN, neu);
+    return () => window.removeEventListener(KONTO_DATEN, neu);
+  }, []);
   useEffect(() => {
     if (!stand) return;
     const vorhanden = new Set(gesetzt.map((s) => s.id));
@@ -101,6 +108,7 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; 
     const alle = [...gesetzt, ...dazu];
     localStorage.setItem(STEMPEL, JSON.stringify(alle));
     setGesetzt(alle);
+    kontoDatenGeaendert();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stand]);
   return { gesetzt, naechste: stand ? naechsteStempel(stand) : [] };
