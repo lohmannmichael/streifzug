@@ -203,7 +203,7 @@ button { font: inherit; color: inherit; }
 }
 
 /* Keep the expanded map credits clear of the profile button. */
-.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib { max-width: calc(100vw - 120px); }
+
 
 .karte { overflow: hidden; }
 
@@ -594,3 +594,6 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 /* Einstellungen (Bauplan 3, D5): four rows without pictures. */
 .pass-zeile.kurz { min-height: 72px; }
 .gruppe > .zeile-knopf.innen { padding: 0 16px; }
+
+/* Map credits (Bauplan 3, D6): small grey line above the sheet, 44 px tall touch area. */
+.quelle-zeile { position: absolute; left: 8px; top: -44px; z-index: 1; height: 44px; display: flex; align-items: flex-end; padding: 0 8px 7px; border: 0; background: none; color: var(--text-leise); font-size: 11px; letter-spacing: 0.01em; text-shadow: 0 0 3px var(--nebel), 0 0 6px var(--nebel); cursor: pointer; }

@@ -1,5 +1,4 @@
 import {
-  AttributionControl,
   Map as MapLibreMap,
   Marker,
   ScaleControl,
@@ -409,10 +408,7 @@ export function Karte(props: KartenProps) {
       setKaputt(false);
     });
     karte.touchZoomRotate.disableRotation();
-    karte.addControl(new AttributionControl({ compact: true }), "top-left");
     karte.addControl(new ScaleControl({ unit: "metric", maxWidth: 90 }), "bottom-left");
-    // Credits start folded to the (i) button; tapping it shows them (allowed by the OSM attribution guidelines).
-    karte.once("load", () => box.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
 
     // Runs after every style load (also after switching light/dark). Seen streets and area shares
     // may have arrived before the style; draw them now so nothing gets lost.

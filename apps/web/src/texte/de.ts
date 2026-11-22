@@ -2,6 +2,7 @@
 export const de = {
   app: { name: "Unterwegs" },
   karte: {
+    quelleKurz: "© OpenStreetMap · OpenMapTiles",
     laedtNicht: "Der Plan lädt gerade nicht. Deine Wege sind sicher.",
     nochmal: "Nochmal",
     prozentLabel: "der Straßen entdeckt",

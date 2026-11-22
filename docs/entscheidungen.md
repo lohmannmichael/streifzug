@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 22.11.2026: D6 Quellenhinweis
+- Das „i“ oben links (MapLibre-Quellenangabe) ist weg. Stattdessen eine kleine graue Zeile direkt über dem Blatt, die mit ihm wandert (in beiden Höhen sichtbar), Tippfläche 44 px hoch; ein Tipp öffnet Einstellungen → Über mit allen Quellen
+- Text „© OpenStreetMap · OpenMapTiles“ statt nur „© OpenStreetMap“: Die Kacheln von OpenFreeMap folgen dem OpenMapTiles-Schema, dessen Lizenz die Nennung verlangt. Volle Angaben (OpenFreeMap, Overture) unter Über
+- Geprüft: Zeile endet genau an der Blattkante (klein und halb), Tipp öffnet „Über“
+
 ## 22.11.2026: D5 Einstellungen
 - `seiten/Einstellungen.tsx` statt der langen Profilseite: Startseite mit vier Zeilen (Stifte, Aufzeichnung, Konto, Über), je eine Unterseite mit „‹ Einstellungen“ zurück, Wischen vom linken Rand geht auch
 - Aufzeichnung: Overland-Status, Anleitung, Verbindung trennen; darunter „Jetzt mit offener App aufzeichnen“ (Empfehlung D8: „Losziehen“ bleibt als Ersatz, falls Overland ausfällt, nur noch hier). Die Statuszeile im Blatt führt direkt hierher

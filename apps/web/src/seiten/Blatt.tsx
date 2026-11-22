@@ -56,6 +56,8 @@ export interface BlattProps {
   zahlVorher: number | null;
   /** The calculation failed: shown instead of the district line, so it can be reported. */
   rechenFehler: string | null;
+  /** Opens Einstellungen → Über (map credits). */
+  quelle: () => void;
   nochmalRechnen: () => void;
   online: boolean;
   /** The replay waits for a tap (calculating took longer than 8 s). */
@@ -225,6 +227,10 @@ export function Blatt(props: BlattProps) {
       aria-labelledby="gebiet-name"
       style={{ transform: `translateY(${zug ?? (hoehe === 1 ? tief : 0)}px)` }}
     >
+      {/* Map credits (Bauplan 3, D6): a small grey line just above the sheet, moving with it. */}
+      <button type="button" className="quelle-zeile" onClick={props.quelle}>
+        {t.karte.quelleKurz}
+      </button>
       <div
         ref={kopfRef}
         className="blatt-zug"

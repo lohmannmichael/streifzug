@@ -38,7 +38,7 @@ export function App() {
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; bis: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
-  const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | null>(null);
+  const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
   const [einstellungen, aendern] = useEinstellungen(sitzung);
   const daten = useRegionen();
@@ -230,6 +230,10 @@ export function App() {
     zahlVorher: rueckblick && !aufzeichnung.aktiv ? zahlVorher : null,
     hochzaehlen: hochzaehlen,
     rechenFehler: rechenFehler,
+    quelle: () => {
+      setImportZeigen("ueber");
+      setPass("einstellungen");
+    },
   };
 
   // Opened from the confirmation link (in Safari): say where to go on.
@@ -309,7 +313,7 @@ export function App() {
         aendern={aendern}
         daten={daten}
         overland={overland}
-        start={importZeigen === "overland" ? "aufzeichnung" : importZeigen === "gpx" ? "gpx" : null}
+        start={importZeigen === "overland" ? "aufzeichnung" : importZeigen === "gpx" ? "gpx" : importZeigen === "ueber" ? "ueber" : null}
         zumPass={() => {
           setPass("start");
           setImportZeigen(null);
