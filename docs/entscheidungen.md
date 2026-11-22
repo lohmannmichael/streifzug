@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: Tempo nach Etappe F (Messung mit einem Jahr Daten)
+- Gleiche Messung wie E3 (`MESSEN=1 npx playwright test e2e/tempo.spec.ts`, 1.088 Wege, 384.818 Punkte, CPU vierfach gebremst), jetzt mit kompletten Straßen, feinen Übersichtslinien, Reisen und `ABGLEICH_VERSION` 10
+- Öffnen: Zahl nach 0,07 s, Plan nach 0,7 s (E3: 0,9 s), Gelb nach 1,5 s (E3: unter 1 s), alles fertig nach 3,1 s. Ziel „Plan mit letztem Stand unter 2 s“ erreicht
+- Neuer Tag (3 Wege) eingerechnet 0,9 s nach dem Öffnen (E3: 1,0–1,2 s)
+- Komplette Straßen kommen 4,1 s nach dem Ergebnis (59 Straßen), der Plan wartet nicht darauf
+- Alles neu rechnen (erster Start, neue `ABGLEICH_VERSION`): 153 s (E3: 105 s), mehr Stücke durch Wirtschaftswege und Zufahrten; läuft im Hintergrund mit Fortschritt
+- Speicher der Seite 49 MB (E3: 17–34 MB), gespeicherter Stand 1,1 Mio. Zeichen, Lesen 0,7 s. Für später, falls es eng wird: Übersichtslinien und Stück-Kennungen der kompletten Straßen kleiner speichern
+
 ## 22.11.2026: F6 Reisen
 - Regel (Vorschlag aus dem Plan, **[ANNAHME]**, Michi legt die Schwellen fest; Werte in `packages/core/src/reisen.ts`): Eine Reise sind aufeinanderfolgende Wege mehr als 100 km von Zuhause, zwischen erstem und letztem liegt mindestens eine Nacht (anderer Kalendertag). Sie endet mit dem ersten Weg zurück im Umkreis; eine laufende Reise zählt schon. Zuhause = der Ort mit den meisten Metern (Mitte seiner Box). Je Weg zählt sein mittlerer Punkt
 - Name: ein Ort → sein Name; zwei → „A und B“; mehr in einem Land → das Land; sonst „A, B und weitere“. Orte: Ort mit Daten (Box) oder der nächste „wird vorbereitet“-Ort bis 25 km. Umbenennen im Blatt („Umbenennen“, einfache Eingabe), gespeichert auf dem Gerät (`streifzug.reisen-namen`, noch nicht im Konto)
