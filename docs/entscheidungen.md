@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 22.11.2026: Lücken über die Straßen nachzeichnen (vorgezogen, Wunsch Michi)
+- `packages/core/src/nachzeichnen.ts` (mit Tests): Zwischen zwei aufeinanderfolgenden Punkten eines Fuß-/Radwegs (15–150 m Luftlinie) sucht die App den kürzesten Weg über das Straßennetz (Dijkstra auf den Stücken). Er wird nur eingetragen, wenn er höchstens 1,3 × Luftlinie + 20 m lang ist und kein zweiter Weg, der den ersten meidet, weniger als 25 % länger ist. Ein Stück wird gelb, wenn die nachgezeichneten Wege 60 % davon abdecken. Nie über eine Autofahrt hinweg
+- Messung mit Michis Weg vom 22.11. (ausgedünnt): 10 s → 99 % (vorher 97 %), kein falsches Gelb; 15 s → 98 % (vorher 94 %), 29 m zusätzlich; 30 s → 96 %, aber rund 300 m Gelb, das es im genauen Ergebnis nicht gibt (die Linien zwischen weit entfernten Punkten schneiden Blöcke ab)
+- Empfehlung an Michi: Overland „Min Time Between Points“ 10 s. `ABGLEICH_VERSION` 8
+
 ## 22.11.2026: Seltener Punkte von Overland – Messung
 - Michis Weg vom 22.11. (9:20–11:35 Uhr, ca. 6 s Takt) künstlich ausgedünnt, gleiche Regeln: 10 s → 97 % der gelben Straßen, 15 s → 94 %, 30 s → 92 %. Die App füllt Lücken also schon weitgehend selbst (Verbindungslinie zwischen den Punkten, Ecken- und Lückenregel). Ein echtes Nachzeichnen über das Straßennetz (Ideenliste) würde den Rest holen
 

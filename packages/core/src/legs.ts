@@ -199,6 +199,26 @@ export function splitLegs(input: readonly Fix[]): Leg[] {
 }
 
 /**
+ * Runs of walked or cycled points: consecutive aktiv legs together with the stops between them,
+ * split wherever something was driven. Used to trace gaps along the streets.
+ */
+export function aktiveFolgen(fixes: readonly Fix[]): Fix[][] {
+  const legs = splitLegs(fixes);
+  const sortiert = [...fixes].sort((x, y) => x.t - y.t);
+  const out: Fix[][] = [];
+  for (let i = 0; i < legs.length; i++) {
+    if (legs[i]!.art !== "aktiv") continue;
+    let j = i;
+    while (j + 1 < legs.length && legs[j + 1]!.art === "aktiv") j++;
+    const von = legs[i]!.von;
+    const bis = legs[j]!.bis;
+    out.push(sortiert.filter((x) => x.t >= von && x.t <= bis));
+    i = j;
+  }
+  return out;
+}
+
+/**
  * What an outing covered, per kind of leg: "aktiv" (streets only, points up to 25 m inaccurate)
  * and "gefahren" (streets and motorways, 30 m to the side, points up to 50 m inaccurate).
  */
