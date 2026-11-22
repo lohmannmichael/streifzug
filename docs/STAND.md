@@ -11,7 +11,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit (`ABGLEICH_VERSION` 9)
 - Oberflächentests (E1): 14 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
-- Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb werden nicht gezeichnet)
+- Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb, kurze Stummel und Schlaufen an Kreuzungen werden nicht gezeichnet)
 - Orte ohne Region: behalten, „Wird vorbereitet“, Wünsche in `region_wishes`
 - Konto: anonym; neues Konto nur, wenn das alte wirklich gelöscht ist; Overland-Verbindung und eigene Wege werden vom Server zurückgeholt
 

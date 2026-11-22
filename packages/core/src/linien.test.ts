@@ -93,3 +93,93 @@ describe("fahrbahnenErgaenzen", () => {
     expect([...fahrbahnenErgaenzen(alle, new Set(["nord"]))]).toEqual([]);
   });
 });
+
+/** A piece from (ostM, nordM) to (ostM2, nordM2). */
+function linie(id: string, von: [number, number], bis: [number, number], kind: Piece["kind"] = "street", weight = 1): Piece {
+  const a = at(von[0], von[1]);
+  const b = at(bis[0], bis[1]);
+  const lengthM = Math.hypot(bis[0] - von[0], bis[1] - von[1]);
+  return { id, kind, weight, lengthM, coords: [a, b], mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] };
+}
+/** A straight yellow street east, 100 m in four pieces. */
+const hauptstrasse = () => [0, 25, 50, 75].map((x) => linie(`h${x}`, [x, 0], [x + 25, 0]));
+
+describe("eineLinieJeStrasse: Stummel", () => {
+  it("does not draw a short path stub hanging off the line (end of a crossing, sidewalk bit)", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("stummel", [50, 0], [50, 20], "path")], []);
+    expect(ids(r.gelb)).not.toContain("stummel");
+    expect(r.gelb).toHaveLength(4);
+  });
+
+  it("does not draw a short street stub either (turning link at a junction)", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("abbieger", [25, 0], [40, -15])], []);
+    expect(ids(r.gelb)).not.toContain("abbieger");
+  });
+
+  it("removes a stub made of two short pieces as a whole", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("s1", [50, 0], [50, 10], "path"), linie("s2", [50, 10], [60, 15], "path")], []);
+    expect(ids(r.gelb)).toEqual(["h0", "h25", "h50", "h75"]);
+  });
+
+  it("keeps a side street that was really walked into (longer than 30 m)", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("q1", [50, 0], [50, 25]), linie("q2", [50, 25], [50, 50])], []);
+    expect(ids(r.gelb)).toContain("q1");
+    expect(ids(r.gelb)).toContain("q2");
+  });
+
+  it("keeps the ends of the main line and a short piece on its own (park path)", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("park", [0, 300], [20, 300], "path")], []);
+    expect(r.gelb).toHaveLength(5);
+  });
+
+  it("keeps a short piece between two lines (both ends attached)", () => {
+    const zweite = [0, 25, 50, 75].map((x) => linie(`n${x}`, [x, 60], [x + 25, 60]));
+    const r = eineLinieJeStrasse([...hauptstrasse(), ...zweite, linie("verbindung", [50, 0], [50, 60], "path")], []);
+    expect(ids(r.gelb)).toContain("verbindung");
+  });
+
+  it("treats ends less than 2 m apart as one point (pieces cut at a tile edge)", () => {
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("weiter", [100.8, 0.3], [120, 0]), linie("stummel", [50, 0], [50, 20], "path")], []);
+    expect(ids(r.gelb)).toContain("weiter");
+    expect(ids(r.gelb)).not.toContain("stummel");
+  });
+
+  it("does not draw a short loop that leaves the line and comes back (turning loop, U-turn link)", () => {
+    const schlaufe = [linie("l1", [50, 0], [52, -10]), linie("l2", [52, -10], [58, -10]), linie("l3", [58, -10], [60, 0])];
+    const r = eineLinieJeStrasse([...hauptstrasse(), linie("h50a", [50, 0], [60, 0]), ...schlaufe].filter((p) => p.id !== "h50").concat([linie("h60", [60, 0], [75, 0])]), []);
+    expect(ids(r.gelb).filter((i) => i.startsWith("l"))).toEqual([]);
+  });
+
+  it("keeps a short straight link between two separate streets", () => {
+    const zweite = [0, 25, 50, 75].map((x) => linie(`n${x}`, [x, 25], [x + 25, 25]));
+    const r = eineLinieJeStrasse([...hauptstrasse(), ...zweite, linie("gasse", [50, 0], [50, 25], "path")], []);
+    expect(ids(r.gelb)).toContain("gasse");
+  });
+
+  it("does not draw the V of a junction running down to the hidden other carriageway", () => {
+    // Ends 25 m apart on the line, tip 14 m south: 2 × 18.9 m.
+    const v = [linie("v1", [62.5, 0], [50, -14]), linie("v2", [50, -14], [37.5, 0])];
+    const linieMitPunkten = [linie("a", [0, 0], [37.5, 0]), linie("b", [37.5, 0], [62.5, 0]), linie("c", [62.5, 0], [100, 0])];
+    const r = eineLinieJeStrasse([...linieMitPunkten, ...v], []);
+    expect(ids(r.gelb)).toEqual(["a", "b", "c"]);
+  });
+
+  it("keeps a real side loop that is long (a walked U-shaped street)", () => {
+    const u = [linie("u1", [25, 0], [25, 40]), linie("u2", [25, 40], [50, 40]), linie("u3", [50, 40], [50, 0])];
+    const r = eineLinieJeStrasse([...hauptstrasse(), ...u], []);
+    expect(ids(r.gelb).filter((i) => i.startsWith("u"))).toEqual(["u1", "u2", "u3"]);
+  });
+
+  it("does not draw a turning link that starts in the middle of a piece and ends at the hidden other carriageway", () => {
+    const haken = [linie("k1", [37, 0], [40, -10]), linie("k2", [40, -10], [35, -17]), linie("k3", [35, -17], [30, -17])];
+    const r = eineLinieJeStrasse([...hauptstrasse(), ...haken], []);
+    expect(ids(r.gelb)).toEqual(["h0", "h25", "h50", "h75"]);
+  });
+
+  it("hides a sidewalk piece beside the street even with a small jog in it", () => {
+    // Start to end runs at about 28°, the longest part along the street.
+    const knick: Piece = { id: "gehweg", kind: "path", weight: 1, lengthM: 20, coords: [at(30, 9), at(40, 9), at(40, 2), at(43, 2)], mid: at(40, 5.5) };
+    const r = eineLinieJeStrasse([...hauptstrasse(), knick], []);
+    expect(ids(r.gelb)).not.toContain("gehweg");
+  });
+});

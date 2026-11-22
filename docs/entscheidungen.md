@@ -1,5 +1,17 @@
 # Entscheidungen
 
+## 22.11.2026: Eine Linie je Straße, Nachbesserung (Stummel und Schlaufen)
+- Michi (Bilder Aachener Straße, 18:43): „Hier ist es immer noch komisch.“ Mit Michis OK seine Wege (Overland-Punkte und die 7 gespeicherten eigenen Wege) nur lesend geholt und im Test-Browser mit den echten Karten nachgestellt: Weiden 17 %, wie auf dem iPhone
+- Ergebnis: Die aktuelle Version zeichnet an der Aachener Straße schon eine Linie. Michis Bild 1 zeigt noch beide Fahrbahnen und den Gehweg, also lief auf dem iPhone sehr wahrscheinlich eine ältere Version (Web-App ganz schließen und neu öffnen, Stand unter Einstellungen → Über → Zustand)
+- Übrig blieben Kritzeleien an Kreuzungen. Neu im Kern `linien.ts` (`stummelWeg`, 8 neue Tests), nur beim Zeichnen:
+  - kurze Stummel unter 30 m, die an einer Kreuzung hängen und lose enden (Ende eines Querwegs, Gehweg-Rest, Abbieger)
+  - Verbindungen hinüber zur ausgeblendeten Gegenfahrbahn oder zum Gehweg bis 60 m (Wendefahrbahn, „Haken“)
+  - Schlaufen, die die Linie verlassen und nach höchstens 30 m Luftlinie zurückkommen, bis 60 m lang (das „V“ an Am Rapohl)
+  - Enden unter 2 m Abstand gelten als ein Punkt (Kachelränder); ein Ende, das mitten auf einem gezeichneten Stück liegt, gilt als angebunden
+  - Gehweg neben der Straße: Die Richtung kommt jetzt vom längsten Teilstück, ein kleiner Knick (Einfahrt) verhindert das Ausblenden nicht mehr
+- Bleiben: kurze Wege für sich allein (Park), kurze gerade Verbindungen zwischen zwei Straßen, längere Seitenstraßen. Zählung, Prozente und Stempel unverändert
+- Geprüft an 8 Stellen mit Michis Daten (Aachener Straße, Bonnstraße, Müngersdorf, Stadtwald): Aachener Straße überall eine Linie; zwei echte kurze Straßenstücke an Kreuzungen (Hölderlinstraße, Rudolf-Harbig-Weg) bleiben bewusst
+
 ## 22.11.2026: E2 Karte aufgeteilt
 - `karte/Karte.tsx` (775 Zeilen) in Teile mit je einer Aufgabe, Code dabei nur verschoben:
   - `aufbau.ts`: Karte bauen, Stil laden, graue Fläche bei Ausfall (47 Zeilen)
