@@ -574,3 +574,13 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .viertel-liste[open] > summary .wert { transform: rotate(90deg); }
 .viertel-liste .bezirk { margin: 14px 0 2px; font-size: var(--t-klein); font-weight: 600; }
 .viertel-zeile { padding-left: 12px; }
+
+/* Stamp passport (Bauplan 3, D3): page tabs, pages side by side, stamps tilted and offset. */
+.stempel-reiter { display: flex; gap: 20px; overflow-x: auto; margin: 0 -20px; padding: 0 20px; border-bottom: 1px solid var(--linie); scrollbar-width: none; }
+.stempel-reiter button { flex: none; min-height: 44px; border: 0; border-bottom: 2.5px solid transparent; background: none; color: var(--text-leise); font-weight: 600; cursor: pointer; }
+.stempel-reiter button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--tinte); }
+.stempel-seiten { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -20px; scrollbar-width: none; }
+.stempel-seiten::-webkit-scrollbar, .stempel-reiter::-webkit-scrollbar { display: none; }
+.stempel-blatt { flex: none; width: 100%; scroll-snap-align: start; display: grid; grid-template-columns: 1fr 1fr; align-content: start; justify-items: center; gap: 18px 0; padding: 28px 20px 40px; min-height: 60vh; }
+.stempel-blatt > .zeile-text { grid-column: 1 / -1; }
+.stempel-blatt .pass-stempel { width: 156px; height: 156px; }

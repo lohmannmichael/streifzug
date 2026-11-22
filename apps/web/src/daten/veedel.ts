@@ -1,4 +1,4 @@
-import { faelligeStempel, naechsteStempel, type Gruppe, type Naechster, type Stand, type Stempel } from "@streifzug/core";
+import { faelligeStempel, naechsteStempel, stempelUmstellen, type Gruppe, type Naechster, type Stand, type Stempel } from "@streifzug/core";
 import { useEffect, useMemo, useState } from "react";
 import type { Etikett, KurzWeg, OffeneStrasse } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, fragen } from "./arbeiter";
@@ -55,16 +55,28 @@ export interface GesetzterStempel extends Stempel {
 
 const STEMPEL = "streifzug.stempel";
 
+/** Root of the place Köln, once the regions are loaded (for moving old stamps, Bauplan 3, D3). */
+let koelnWurzel: string | null = null;
+
 function lesen(): GesetzterStempel[] {
+  let liste: GesetzterStempel[];
   try {
-    return JSON.parse(localStorage.getItem(STEMPEL) ?? "[]") as GesetzterStempel[];
+    liste = JSON.parse(localStorage.getItem(STEMPEL) ?? "[]") as GesetzterStempel[];
   } catch {
     return [];
   }
+  // Old Veedel counts belong to Köln now; written back once, the account gets it with the next upload.
+  if (koelnWurzel && liste.some((s) => /^veedel-anzahl:\d+$/.test(s.id))) {
+    liste = stempelUmstellen(liste, koelnWurzel);
+    localStorage.setItem(STEMPEL, JSON.stringify(liste));
+    kontoDatenGeaendert();
+  }
+  return liste;
 }
 
 /** Progress as the stamp rules need it: Veedel (smallest areas), districts, cities, km. */
-export function standAus(daten: Regionen, f: Fortschritt): Stand {
+export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte = 0): Stand {
+  koelnWurzel ??= daten.liste.find((r) => r.id === "koeln")?.wurzel ?? null;
   const veedel = [...daten.gebiete.values()]
     .filter((g) => g.kinder.length === 0)
     .map((g) => ({ id: g.id, aktivM: zaehlendeMeter(f.proGebiet.get(g.id) ?? { strasse_m: 0, weg_m: 0 }, false), gesamtM: gesamtMeter(g, f.abzug) }));
@@ -76,7 +88,10 @@ export function standAus(daten: Regionen, f: Fortschritt): Stand {
     .filter((g) => g.kinder.length > 0)
     .map((g) => ({ id: g.id, art: g.eltern ? "bezirk" : "stadt", veedel: blaetter(g.id) }));
   const aktivKmGesamt = f.stuecke.reduce((m, p) => m + (p.kind === "street" ? p.lengthM * p.weight : 0), 0) / 1000;
-  return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt };
+  // Places with walked meters (with data, plus those being prepared) and their countries.
+  const mitWegen = daten.liste.filter((r) => zaehlendeMeter(f.proGebiet.get(r.wurzel) ?? { strasse_m: 0, weg_m: 0 }, false) >= 1);
+  const laender = new Set(mitWegen.map((r) => r.land ?? "DE")).size;
+  return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt, orte: mitWegen.length + fremdeOrte, laender };
 }
 
 /** Stamps given so far, read only (for pages that show them). */
@@ -104,9 +119,11 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[]; 
   }, []);
   useEffect(() => {
     if (!stand) return;
+    const gesetzt = lesen();
     const vorhanden = new Set(gesetzt.map((s) => s.id));
     const neu = faelligeStempel(stand, vorhanden);
-    if (neu.length === 0) return;
+    // Nothing new; the list may still have changed (old stamps moved to Köln).
+    if (neu.length === 0) return setGesetzt((alt) => (alt.length === gesetzt.length && alt.every((s, i) => s.id === gesetzt[i]!.id) ? alt : gesetzt));
     const jetzt = Date.now();
     const dazu = neu.map((s, i): GesetzterStempel => {
       // A fixed, slightly random place and tilt, so the page looks stamped by hand.

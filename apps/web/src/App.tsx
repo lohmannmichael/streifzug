@@ -14,7 +14,8 @@ import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
-import { Blatt, StempelSeite, type BlattProps, type Hoehe } from "./seiten/Blatt";
+import { Blatt, type BlattProps, type Hoehe } from "./seiten/Blatt";
+import { StempelSeite } from "./seiten/Stempel";
 import { OrteSeite } from "./seiten/Orte";
 import { PassSeite, useRandWischen, ZurueckZumPass, type PassTeil } from "./seiten/Pass";
 import { Export } from "./seiten/Export";
@@ -300,7 +301,7 @@ export function App() {
         }}
       />
     ) : pass === "stempel" ? (
-      <StempelSeite {...blattProps} zurueck={zumPass} />
+      <StempelSeite daten={daten!} fortschritt={fortschritt} fremdeOrte={fremdeOrte} zurueck={zumPass} />
     ) : pass === "rueckblicke" ? (
       <WegeSeite zurueck={zumPass} />
     ) : pass === "einstellungen" ? (

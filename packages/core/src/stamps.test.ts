@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faelligeStempel, fehlendeMeter, naechsteStempel, verdienteStempel, type Stand } from "./stamps";
+import { besteStempel, faelligeStempel, fehlendeMeter, naechsteStempel, stempelUmstellen, verdienteStempel, type Stand, type Stempel } from "./stamps";
 
 const stand = (over: Partial<Stand> = {}): Stand => ({
   veedel: [
@@ -68,5 +68,84 @@ describe("fehlendeMeter", () => {
       { stufe: 75, restM: 13_425 },
       { stufe: 100, restM: 20_500 },
     ]);
+  });
+});
+
+describe("Anzahl-Stempel (Bauplan 3, D3)", () => {
+  const sieben = Array.from({ length: 7 }, (_, i) => ({ id: `v${i}`, aktivM: 10, gesamtM: 1000 }));
+  const ort = (veedel: string[]) => ({ id: "koeln", art: "stadt" as const, veedel });
+
+  it("counts entered Veedel per place: 5, 10, 25, 50 and finally all of them", () => {
+    const s = stand({ veedel: sieben, gruppen: [ort([...sieben.map((v) => v.id), "x1", "x2", "x3"])] });
+    expect(ids(s)).toContain("veedel-anzahl:koeln:5");
+    expect(ids(s)).not.toContain("veedel-anzahl:koeln:10");
+    expect(ids(s)).not.toContain("veedel-anzahl:koeln:alle");
+  });
+
+  it("gives 'alle' when every Veedel of the place is entered, also below 50", () => {
+    const s = stand({ veedel: sieben, gruppen: [ort(sieben.map((v) => v.id))] });
+    const a = verdienteStempel(s).find((x) => x.id === "veedel-anzahl:koeln:alle");
+    expect(a).toMatchObject({ art: "veedel-anzahl", gebietId: "koeln", stufe: 7 });
+    // a step as large as the place itself is "alle", not a number of its own
+    expect(ids(s)).not.toContain("stadt-rundum:koeln");
+  });
+
+  it("counts places and countries over everything", () => {
+    expect(ids(stand({ orte: 5, laender: 3 }))).toEqual(expect.arrayContaining(["orte-anzahl:5", "laender-anzahl:2", "laender-anzahl:3"]));
+    expect(ids(stand({ orte: 4, laender: 1 })).filter((x) => x.startsWith("orte-") || x.startsWith("laender-"))).toEqual([]);
+  });
+});
+
+describe("besteStempel", () => {
+  const g = (id: string, art: Stempel["art"], gebietId: string | null, stufe: number | null): Stempel => ({ id, art, gebietId, stufe });
+
+  it("shows per Veedel only the highest percent stamp", () => {
+    const b = besteStempel([g("betreten:w", "betreten", "w", null), g("prozent:w:10", "prozent", "w", 10), g("prozent:w:25", "prozent", "w", 25)]);
+    expect(b.map((x) => x.id)).toEqual(["prozent:w:25"]);
+  });
+
+  it("shows 'betreten' only while no percent stamp is reached", () => {
+    expect(besteStempel([g("betreten:w", "betreten", "w", null)]).map((x) => x.id)).toEqual(["betreten:w"]);
+  });
+
+  it("after 50 % exactly one other stamp than at 25 %", () => {
+    const bis25 = [g("betreten:w", "betreten", "w", null), g("prozent:w:10", "prozent", "w", 10), g("prozent:w:25", "prozent", "w", 25)];
+    const bei25 = besteStempel(bis25);
+    const bei50 = besteStempel([...bis25, g("prozent:w:50", "prozent", "w", 50)]);
+    expect(bei25).toHaveLength(1);
+    expect(bei50).toHaveLength(1);
+    expect(bei50[0]!.id).not.toBe(bei25[0]!.id);
+  });
+
+  it("keeps all other stamps", () => {
+    const andere = [g("km-neu:10", "km-neu", null, 10), g("veedel-anzahl:koeln:5", "veedel-anzahl", "koeln", 5)];
+    expect(besteStempel(andere)).toEqual(andere);
+  });
+});
+
+describe("stempelUmstellen", () => {
+  it("gives old 'veedel-anzahl:<n>' stamps to the place Köln, nothing is lost", () => {
+    const alt = [
+      { id: "veedel-anzahl:5", art: "veedel-anzahl" as const, gebietId: null, stufe: 5, gestempeltAm: 1 },
+      { id: "veedel-anzahl:86", art: "veedel-anzahl" as const, gebietId: null, stufe: 86, gestempeltAm: 2 },
+      { id: "betreten:w", art: "betreten" as const, gebietId: "w", stufe: null, gestempeltAm: 3 },
+    ];
+    const neu = stempelUmstellen(alt, "koeln");
+    expect(neu).toHaveLength(3);
+    expect(neu[0]).toMatchObject({ id: "veedel-anzahl:koeln:5", gebietId: "koeln", stufe: 5, gestempeltAm: 1 });
+    expect(neu[1]).toMatchObject({ id: "veedel-anzahl:koeln:alle", gebietId: "koeln", stufe: 86 });
+    expect(neu[2]).toBe(alt[2]);
+  });
+
+  it("keeps the earlier one when the new key exists already", () => {
+    const neu = stempelUmstellen(
+      [
+        { id: "veedel-anzahl:koeln:5", art: "veedel-anzahl" as const, gebietId: "koeln", stufe: 5, gestempeltAm: 9 },
+        { id: "veedel-anzahl:5", art: "veedel-anzahl" as const, gebietId: null, stufe: 5, gestempeltAm: 4 },
+      ],
+      "koeln",
+    );
+    expect(neu).toHaveLength(1);
+    expect(neu[0]!.gestempeltAm).toBe(4);
   });
 });

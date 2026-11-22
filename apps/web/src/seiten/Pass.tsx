@@ -1,3 +1,4 @@
+import { besteStempel } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { WegKopf } from "../daten/abgleich.worker";
 import { ANDERE_GEAENDERT, fragen } from "../daten/arbeiter";
@@ -31,7 +32,9 @@ export function orteMitWegen(daten: Regionen, f: Fortschritt | null, fremde: Fre
 export function stempelKurz(s: GesetzterStempel, name: string): string {
   if (s.art === "prozent") return `${name} ${s.stufe} %`;
   if (s.art === "betreten") return `${name} ${t.pass.betreten}`;
-  if (s.art === "veedel-anzahl") return t.pass.veedelAnzahl(s.stufe ?? 0);
+  if (s.art === "veedel-anzahl") return s.id.endsWith(":alle") ? t.pass.alleVeedel(name) : `${name} ${t.pass.veedelAnzahl(s.stufe ?? 0)}`;
+  if (s.art === "orte-anzahl") return t.pass.orteAnzahl(s.stufe ?? 0);
+  if (s.art === "laender-anzahl") return t.pass.laenderAnzahl(s.stufe ?? 0);
   if (s.art === "km-neu") return t.pass.kmNeu(s.stufe ?? 0);
   if (s.art === "strassen-komplett") return t.pass.strassenKomplett(s.stufe ?? 0);
   return `${name} ${t.pass.rundum}`;
@@ -97,7 +100,7 @@ export function PassSeite(props: {
             titel={t.pass.stempelTitel}
             onClick={() => props.oeffnen("stempel")}
           >
-            <span>{letzter ? t.pass.stempelText(gesetzt.length, stempelKurz(letzter, letzterName)) : t.pass.keineStempel}</span>
+            <span>{letzter ? t.pass.stempelText(besteStempel(gesetzt).length, stempelKurz(letzter, letzterName)) : t.pass.keineStempel}</span>
           </PassZeile>
           <PassZeile bild={<BildRueckblick />} titel={t.pass.rueckblickeTitel} onClick={() => props.oeffnen("rueckblicke")}>
             <span>{letzterWeg ? t.pass.rueckblickeText(tagText(letzterWeg.startedAt), wege!.filter((w) => tagText(w.startedAt) === tagText(letzterWeg.startedAt)).length) : t.pass.keineWege}</span>

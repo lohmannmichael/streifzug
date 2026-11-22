@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: D3 Stempelpass: nur die besten
+- Kern (`stamps.ts`, mit Tests): `besteStempel` zeigt je Veedel nur den höchsten Prozent-Stempel, „betreten“ nur, solange kein Prozent-Stempel erreicht ist. Gespeichert bleiben alle
+- Neue Reihen: `ORTE_ANZAHL` 5, 10, 25, 50 (Orte mit gelbem Meter, auch „wird vorbereitet“), `LAENDER_ANZAHL` 2, 3, 5, 10. Veedel-Anzahl gilt jetzt je Ort: 5, 10, 25, 50 und als letzte Stufe „alle“ (alle Veedel dieses Orts, also auch in Freising mit 9). „Stadt rundum“ entfällt, weil es dasselbe ist wie „alle“; „Bezirk rundum“ bleibt
+- Alte Stempel `veedel-anzahl:<n>` gehören jetzt zum Ort Köln (`stempelUmstellen`; 86 wird „alle“). Umgestellt beim Lesen auf dem Gerät, ins Konto beim nächsten Hochladen; bei doppeltem Schlüssel gewinnt das frühere Datum. Nichts wird gelöscht
+- Seite `seiten/Stempel.tsx`: Reiter „Sonderstempel“, dann je Ort eine Seite (Reihenfolge wie bei Orte), seitlich wischbar; Stempel leicht gedreht und versetzt. „Als Nächstes“ entfällt
+- Neue Stempelformen: Achteck mit Zahl und „ORTE“ (rot) bzw. „LÄNDER“ (blau); bei „alle“ steht „ALLE“ statt der Zahl. Lange Namen im Rechteck-Stempel („JUNKERSDORF“) werden gestaucht statt abgeschnitten
+- Geprüft: alter Stempel „5 Veedel“ im Speicher → genau einmal `veedel-anzahl:<Köln>:5`; Seiten Sonderstempel, Köln, Freising
+
 ## 22.11.2026: D2 Orte
 - Seite `seiten/Orte.tsx` nach `Orte.png` ohne „Reisen“: „Zuhause“ = Ort mit den meisten gelben Metern, dann „Weitere Orte“, am Ende „Wird vorbereitet“. Je Ort Mini-Plan (SVG ohne Kartenkacheln, das Gelb und Rot des Orts eingepasst), Name, „N Veedel · zuletzt neu …“ (Datum des zuletzt neu gelb gewordenen Stücks; wann man zuletzt dort war, weiß die App je Ort nicht), Prozent
 - Tipp auf einen Ort: Pass schließt, der Plan zeigt den ganzen Ort über dem Blatt (`fitBounds` auf die Ortsgrenze), das Blatt zeigt den Ort. Gilt auch für Bezirke

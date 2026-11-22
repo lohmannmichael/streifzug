@@ -137,6 +137,8 @@ export const de = {
   stempel: {
     betreten: "BETRETEN",
     veedel: "VEEDEL",
+    orte: "ORTE",
+    laender: "LÄNDER",
     strassenKomplett: "STRASSEN KOMPLETT",
     kmNeu: "NEU GESEHEN",
     rundum: "RUNDUM",
@@ -148,6 +150,10 @@ export const de = {
           ? `Stempel: ${gebiet} betreten`
           : art === "veedel-anzahl"
             ? `Stempel: ${stufe} Veedel betreten`
+            : art === "orte-anzahl"
+              ? `Stempel: ${stufe} Orte`
+              : art === "laender-anzahl"
+                ? `Stempel: ${stufe} Länder`
             : art === "km-neu"
               ? `Stempel: ${stufe} Kilometer neu gesehen`
               : art === "strassen-komplett"
@@ -244,6 +250,12 @@ export const de = {
     unsicher: "unsicher erkannt",
     keineAbschnitte: "Dieser Weg hat keine Abschnitte (zu wenig Bewegung).",
   },
+  stempelSeite: {
+    sonder: "Sonderstempel",
+    sonderLeer: "Hier landen Stempel für Kilometer, Orte und Länder.",
+    keine: "Noch keine Stempel. Der erste kommt, sobald du ein Veedel betrittst.",
+    seite: (n: number, von: number) => `Seite ${n} von ${von}`,
+  },
   orte: {
     titel: "Orte",
     zuhause: "Zuhause",
@@ -281,6 +293,9 @@ export const de = {
     betreten: "betreten",
     rundum: "rundum",
     veedelAnzahl: (n: number) => `${n} Veedel`,
+    alleVeedel: (ort: string) => `${ort} alle Veedel`,
+    orteAnzahl: (n: number) => `${n} Orte`,
+    laenderAnzahl: (n: number) => `${n} Länder`,
     kmNeu: (n: number) => `${n} km neu`,
     strassenKomplett: (n: number) => `${n} Straßen komplett`,
   },

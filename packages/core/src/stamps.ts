@@ -3,7 +3,16 @@
  * A stamp once given is never taken away; the caller keeps the given ones and passes them in.
  */
 
-export type StempelArt = "betreten" | "prozent" | "veedel-anzahl" | "strassen-komplett" | "bezirk-rundum" | "stadt-rundum" | "km-neu";
+export type StempelArt =
+  | "betreten"
+  | "prozent"
+  | "veedel-anzahl"
+  | "orte-anzahl"
+  | "laender-anzahl"
+  | "strassen-komplett"
+  | "bezirk-rundum"
+  | "stadt-rundum"
+  | "km-neu";
 
 export interface Stempel {
   /** Stable key, e.g. "prozent:<veedel>:25" or "km-neu:50". */
@@ -16,7 +25,11 @@ export interface Stempel {
 }
 
 export const VEEDEL_PROZENT = [10, 25, 50, 75, 100] as const;
-export const VEEDEL_ANZAHL = [5, 10, 25, 50, 86] as const;
+/** Entered Veedel per place; the last step is "alle" (every Veedel of that place, Bauplan 3, D3). */
+export const VEEDEL_ANZAHL = [5, 10, 25, 50] as const;
+/** Places with at least one walked meter, and countries, over everything. */
+export const ORTE_ANZAHL = [5, 10, 25, 50] as const;
+export const LAENDER_ANZAHL = [2, 3, 5, 10] as const;
 export const STRASSEN_KOMPLETT = [10, 50, 100, 250, 500] as const;
 export const KM_NEU = [10, 50, 100, 250, 500] as const;
 
@@ -39,6 +52,9 @@ export interface Stand {
   gruppen: Gruppe[];
   strassenKomplett: number;
   aktivKmGesamt: number;
+  /** Places with at least one walked meter (also those without data yet), and their countries. */
+  orte?: number;
+  laender?: number;
 }
 
 const prozent = (v: VeedelStand) => (v.gesamtM > 0 ? (v.aktivM / v.gesamtM) * 100 : 0);
@@ -54,12 +70,21 @@ export function verdienteStempel(s: Stand): Stempel[] {
     const p = prozent(v);
     for (const stufe of VEEDEL_PROZENT) if (p >= stufe - 1e-9) out.push({ id: `prozent:${v.id}:${stufe}`, art: "prozent", gebietId: v.id, stufe });
   }
-  for (const stufe of VEEDEL_ANZAHL) if (betreten.size >= stufe) out.push({ id: `veedel-anzahl:${stufe}`, art: "veedel-anzahl", gebietId: null, stufe });
+  // Per place (city group): 5, 10, 25, 50 entered Veedel, and "alle" instead of "Stadt rundum".
+  for (const g of s.gruppen) {
+    if (g.art !== "stadt" || g.veedel.length === 0) continue;
+    const drin = g.veedel.filter((id) => betreten.has(id)).length;
+    for (const stufe of VEEDEL_ANZAHL)
+      if (stufe < g.veedel.length && drin >= stufe) out.push({ id: `veedel-anzahl:${g.id}:${stufe}`, art: "veedel-anzahl", gebietId: g.id, stufe });
+    if (drin === g.veedel.length) out.push({ id: `veedel-anzahl:${g.id}:alle`, art: "veedel-anzahl", gebietId: g.id, stufe: g.veedel.length });
+  }
+  for (const stufe of ORTE_ANZAHL) if ((s.orte ?? 0) >= stufe) out.push({ id: `orte-anzahl:${stufe}`, art: "orte-anzahl", gebietId: null, stufe });
+  for (const stufe of LAENDER_ANZAHL) if ((s.laender ?? 0) >= stufe) out.push({ id: `laender-anzahl:${stufe}`, art: "laender-anzahl", gebietId: null, stufe });
   for (const stufe of STRASSEN_KOMPLETT) if (s.strassenKomplett >= stufe) out.push({ id: `strassen-komplett:${stufe}`, art: "strassen-komplett", gebietId: null, stufe });
   for (const stufe of KM_NEU) if (s.aktivKmGesamt >= stufe) out.push({ id: `km-neu:${stufe}`, art: "km-neu", gebietId: null, stufe });
   for (const g of s.gruppen)
-    if (g.veedel.length > 0 && g.veedel.every((id) => betreten.has(id)))
-      out.push({ id: `${g.art}-rundum:${g.id}`, art: g.art === "bezirk" ? "bezirk-rundum" : "stadt-rundum", gebietId: g.id, stufe: null });
+    if (g.art === "bezirk" && g.veedel.length > 0 && g.veedel.every((id) => betreten.has(id)))
+      out.push({ id: `bezirk-rundum:${g.id}`, art: "bezirk-rundum", gebietId: g.id, stufe: null });
   return out;
 }
 
@@ -89,4 +114,35 @@ export function naechsteStempel(s: Stand, anzahl = 2): Naechster[] {
 /** Missing meters to each percent step of one Veedel (for the stamp card; 0 when reached). */
 export function fehlendeMeter(v: VeedelStand): { stufe: number; restM: number }[] {
   return VEEDEL_PROZENT.map((stufe) => ({ stufe, restM: Math.max(0, (stufe / 100) * v.gesamtM - v.aktivM) }));
+}
+
+/**
+ * What the passport shows (Bauplan 3, D3): per Veedel only the highest percent stamp, and
+ * "betreten" only while no percent stamp is reached. All given stamps stay stored.
+ */
+export function besteStempel<T extends Stempel>(gegeben: readonly T[]): T[] {
+  const besterProzent = new Map<string, T>();
+  for (const s of gegeben)
+    if (s.art === "prozent" && s.gebietId && (s.stufe ?? 0) > (besterProzent.get(s.gebietId)?.stufe ?? -1)) besterProzent.set(s.gebietId, s);
+  return gegeben.filter((s) => {
+    if (s.art === "prozent") return s.gebietId ? besterProzent.get(s.gebietId) === s : true;
+    if (s.art === "betreten") return !s.gebietId || !besterProzent.has(s.gebietId);
+    return true;
+  });
+}
+
+/**
+ * Old Veedel counts ("veedel-anzahl:<n>", from before places had their own) belong to the place
+ * Köln (Bauplan 3, D3); 86 was "all of Köln". Nothing is dropped; when the new key exists already,
+ * the earlier date wins.
+ */
+export function stempelUmstellen<T extends Stempel & { gestempeltAm: number }>(gegeben: readonly T[], koelnId: string): T[] {
+  const jeId = new Map<string, T>();
+  for (const s of gegeben) {
+    const alt = /^veedel-anzahl:(\d+)$/.exec(s.id);
+    const neu: T = alt ? { ...s, id: `veedel-anzahl:${koelnId}:${alt[1] === "86" ? "alle" : alt[1]}`, gebietId: koelnId } : s;
+    const da = jeId.get(neu.id);
+    if (!da || neu.gestempeltAm < da.gestempeltAm) jeId.set(neu.id, neu);
+  }
+  return [...jeId.values()];
 }

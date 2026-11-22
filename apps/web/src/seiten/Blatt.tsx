@@ -100,7 +100,10 @@ export function Blatt(props: BlattProps) {
   const gesehen = gebiet ? gesehenM(props.fortschritt, gebiet) : 0;
   const p = prozent(gesehen, gesamt);
   const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
-  const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
+  const stand = useMemo(
+    () => (daten && props.fortschritt ? standAus(daten, props.fortschritt, props.fremdeOrte.length) : null),
+    [daten, props.fortschritt, props.fremdeOrte.length],
+  );
   const stempel = useStempel(stand);
 
   // Two heights (Bauplan 3, B2): the sheet follows the finger and snaps to the nearer height;
@@ -440,49 +443,4 @@ function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten)
   return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
 }
 
-/** Stamps (until D3: all of them, newest first), a page of the Pass. */
-export function StempelSeite(props: BlattProps & { zurueck: () => void }) {
-  const { daten } = props;
-  const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
-  const gesetzt = useGesetzteStempel();
-  if (!daten) return null;
-  return (
-    <PassUnterseite titel={t.pass.stempelTitel} zurueck={props.zurueck} klasse="sammlung-seite">
-      <Stempelpass daten={daten} gesetzt={gesetzt} naechste={stand ? naechsteStempel(stand) : []} />
-    </PassUnterseite>
-  );
-}
 
-/** All stamps like on a passport page, set freely and slightly tilted; below, the next two. */
-function Stempelpass(props: { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[] }) {
-  const name = (id: string | null) => (id ? (props.daten.gebiete.get(id)?.name ?? "") : "");
-  const neueste = [...props.gesetzt].sort((x, y) => y.gestempeltAm - x.gestempeltAm);
-  return (
-    <>
-      {neueste.length === 0 ? (
-        <p className="zeile-text leise">{t.sammlung.keineStempel}</p>
-      ) : (
-        <div className="passseite">
-          {neueste.map((s) => (
-            <div key={s.id} className="pass-stempel" style={{ transform: `translate(${(s.x - 0.5) * 18}px, ${((s.y * 7) % 1) * 12 - 6}px)` }}>
-              <Stempel stempel={s} gebietName={name(s.gebietId)} stadtName={s.gebietId ? stadtName(props.daten, s.gebietId) : undefined} datum={s.gestempeltAm} groesse={104} drehung={s.drehung} />
-            </div>
-          ))}
-        </div>
-      )}
-      {props.naechste.length > 0 && (
-        <>
-          <h2 className="abschnitt-titel">{t.sammlung.alsNaechstes}</h2>
-          <ul className="zeilen">
-            {props.naechste.map((n) => (
-              <li key={n.id} className="zeile">
-                <span>{n.art === "prozent" ? t.sammlung.prozentStufe(name(n.gebietId), n.stufe ?? 0) : t.sammlung.kmStufe(n.stufe ?? 0)}</span>
-                <span className="wert">{t.blatt.noch(alsKm(n.restM))}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </>
-  );
-}

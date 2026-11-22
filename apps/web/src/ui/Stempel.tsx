@@ -9,6 +9,8 @@ const TINTE: Record<StempelDaten["art"], string> = {
   prozent: "#24388f",
   betreten: "#1c1c1c",
   "veedel-anzahl": "#c42b22",
+  "orte-anzahl": "#c42b22",
+  "laender-anzahl": "#24388f",
   "strassen-komplett": "#c42b22",
   "bezirk-rundum": "#c42b22",
   "stadt-rundum": "#c42b22",
@@ -59,18 +61,22 @@ export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 12
     form = (
       <>
         <rect x="6" y="28" width="108" height="64" rx="3" fill="none" stroke={farbe} strokeWidth="3.5" />
-        <text x="60" y="52" fontSize={gebietName.length > 12 ? 11 : 14} fontWeight="800" letterSpacing="1" fill={farbe} textAnchor="middle">{gebietName.toUpperCase()}</text>
+        {/* Long names are squeezed to fit inside the frame. */}
+        <text x="60" y="52" fontSize={gebietName.length > 12 ? 11 : 14} fontWeight="800" letterSpacing="1" fill={farbe} textAnchor="middle" {...(gebietName.length > 9 ? { textLength: 94, lengthAdjust: "spacingAndGlyphs" } : {})}>{gebietName.toUpperCase()}</text>
         <text x="60" y="66" fontSize="8.5" fontWeight="700" letterSpacing="2" fill={farbe} textAnchor="middle">{t.stempel.betreten}</text>
         <line x1="14" y1="74" x2="106" y2="74" stroke={farbe} strokeWidth="1.4" />
         <text x="60" y="86" fontSize="9" fontWeight="600" letterSpacing="1" fill={farbe} textAnchor="middle">{tag}</text>
       </>
     );
-  } else if (s.art === "veedel-anzahl") {
+  } else if (s.art === "veedel-anzahl" || s.art === "orte-anzahl" || s.art === "laender-anzahl") {
+    // Octagon: a number of Veedel (per place, the last step "ALLE"), places or countries.
+    const alle = s.id.endsWith(":alle");
+    const wort = s.art === "orte-anzahl" ? t.stempel.orte : s.art === "laender-anzahl" ? t.stempel.laender : t.stempel.veedel;
     form = (
       <>
         <polygon points="38,6 82,6 114,38 114,82 82,114 38,114 6,82 6,38" fill="none" stroke={farbe} strokeWidth="4" />
-        <text x="60" y="64" fontSize="34" fontWeight="800" fill={farbe} textAnchor="middle">{s.stufe}</text>
-        <text x="60" y="82" fontSize="10" fontWeight="700" letterSpacing="2" fill={farbe} textAnchor="middle">{t.stempel.veedel}</text>
+        <text x="60" y="64" fontSize={alle ? 24 : 34} fontWeight="800" fill={farbe} textAnchor="middle">{alle ? t.stempel.alle : s.stufe}</text>
+        <text x="60" y="82" fontSize="10" fontWeight="700" letterSpacing="2" fill={farbe} textAnchor="middle">{wort}</text>
         <text x="60" y="97" fontSize="7.5" fontWeight="600" letterSpacing="1" fill={farbe} textAnchor="middle">{tag}</text>
       </>
     );
