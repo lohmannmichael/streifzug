@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 22.11.2026: Autofahrt = einmal schneller als 40 km/h
+- Eine Fahrt sind Abschnitte mit höchstens 5 Minuten Halt dazwischen. War man darin einmal über 40 km/h (98-%-Wert), werden auch ihre langsamen Abschnitte gefahren (rot), wenn das iPhone dort „Auto“ meldet oder ohne Angabe Radtempo hatte. Gehen nach dem Parken (iPhone meldet „walking“) bleibt gelb. Lastenrad (um 25 km/h, nie über 40) bleibt gelb. Tests dazu. `ABGLEICH_VERSION` 7
+
 ## 22.11.2026: Lastenrad – „Auto“ vom iPhone nur glauben, wenn das Tempo passt
 - Michi fährt ein Lastenrad (um 25 km/h); das iPhone meldet dabei oft „driving“. Regel jetzt: Meldet das iPhone Auto, gilt der Abschnitt nur dann als gefahren, wenn er meist über 30 km/h (90 %) oder zeitweise über 40 km/h (98 %) liegt, oder sehr langsam ist (unter 12 km/h, Stau). Dazwischen ist es Rad (gelb, als „unsicher“ markiert). Ohne iOS-Angabe wie bisher: über 30 km/h gefahren
 - Michis Fahrt am 22.11. 11:03–11:09 Uhr ist damit wieder gelb. `ABGLEICH_VERSION` 6

@@ -31,6 +31,8 @@ const MOTION_SWITCH_MS = 20_000;
 const TOP_MS = 40 / 3.6;
 /** From here a "car" could also be a bike. */
 const RAD_MIN_MS = 12 / 3.6;
+/** Stops up to this long still belong to the same trip. */
+const FAHRT_PAUSE_MS = 5 * 60_000;
 const FAST_MS = 30 / 3.6;
 const SURE_FAST_MS = 38 / 3.6;
 const SHORT_MS = 60_000;
@@ -161,6 +163,28 @@ export function splitLegs(input: readonly Fix[]): Leg[] {
     const fixes = idx.map((i) => f[i]!);
     return { ...einstufen(fixes, idx.map((i) => tempi[i]!)), von: fixes[0]!.t, bis: fixes.at(-1)!.t, fixes };
   });
+  const tempoJeLeg = teile.map((idx) => idx.map((i) => tempi[i]!));
+
+  // One trip = legs with only short stops between them (traffic lights, junctions). If you were
+  // faster than 40 km/h once in a trip, it was a car: its slower legs that could be a car (the phone
+  // said "car", or bike speed without any word from the phone) become driven too. Walking stays.
+  let start = 0;
+  for (let i = 1; i <= legs.length; i++) {
+    if (i < legs.length && legs[i]!.von - legs[i - 1]!.bis <= FAHRT_PAUSE_MS) continue;
+    const fahrt = legs.slice(start, i).map((l, k) => ({ l, tempi: tempoJeLeg[start + k]! }));
+    if (fahrt.some((x) => quantil(x.tempi, 0.98) > TOP_MS))
+      for (const { l, tempi: t } of fahrt) {
+        if (l.art === "gefahren") continue;
+        const sagt = l.fixes.map(motionArt).filter((a): a is Art => a !== null);
+        const sagtAuto = sagt.length > 0 && sagt.filter((a) => a === "gefahren").length >= sagt.length / 2;
+        const ohneAngabeSchnell = sagt.length === 0 && quantil(t, 0.9) > RAD_MIN_MS;
+        if (sagtAuto || ohneAngabeSchnell) {
+          l.art = "gefahren";
+          l.unsicher = false;
+        }
+      }
+    start = i;
+  }
 
   // Smoothing: short legs between two neighbours of the same kind take their kind.
   for (let i = 1; i + 1 < legs.length; i++) {

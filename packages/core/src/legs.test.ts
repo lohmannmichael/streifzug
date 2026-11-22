@@ -109,3 +109,26 @@ describe("Overland motion words", () => {
   });
 });
 
+describe("a trip faster than 40 km/h once is a car", () => {
+  it("slow parts of a car trip (town, traffic lights) are driven too", () => {
+    const a = strecke(0, 0, 22, 120, 6, ["driving"]); // slow residential street
+    const h = halt(122_000, 733, 40, ["driving"]); // traffic light
+    const b = strecke(164_000, 733, 60, 180, 6, ["driving"]); // main road
+    expect(arten([...a, ...h, ...b])).toEqual(["gefahren", "gefahren"]);
+  });
+
+  it("a cargo bike at 25 km/h with stops stays a bike", () => {
+    const a = strecke(0, 0, 25, 120, 6, ["driving"]);
+    const h = halt(122_000, 833, 40, ["driving"]);
+    const b = strecke(164_000, 833, 24, 180, 6, ["driving"]);
+    expect(arten([...a, ...h, ...b])).toEqual(["aktiv", "aktiv"]);
+  });
+
+  it("walking after parking stays walking", () => {
+    const a = strecke(0, 0, 55, 180, 6, ["driving"]);
+    const h = halt(182_000, 2750, 60, ["stationary"]);
+    const b = strecke(244_000, 2750, 5, 300, 6, ["walking"]);
+    expect(arten([...a, ...h, ...b])).toEqual(["gefahren", "aktiv"]);
+  });
+});
+
