@@ -8,6 +8,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Plan im Druck-Stil, Textmarker (deckend) für zu Fuß und Rad, rote Kuli-Linie für gefahren, Parkwege schmal gelb (zählen nicht)
 - Blatt mit zwei Höhen, Pass oben rechts (Orte, Stempel, Rückblicke, Einstellungen), Stempel mit Tinten-Filter
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (nur Gelb)
+- Nach einem Flug: weiter Sprung nach mindestens 10 Min. Pause gilt als neuer Anfang, nicht als Ausreißer
 - Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit (`ABGLEICH_VERSION` 9)
 - Oberflächentests (E1): 14 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
@@ -23,11 +24,10 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | C Vertrauen | C1 Statuszeile Aufzeichnung · C2 Abschnitt umstellen · C3 Fehler und Wartezustände · C4 Zuhause-Zone entfernen | fertig (22.11.) |
 | D Aufbau | D1 Pass · D2 Orte · D3 Stempel · D4 Rückblicke · D5 Einstellungen · D6 Quellenhinweis · D7 Wörter · D8 Altes entfernen | fertig (22.11.), Michi prüft eine Woche |
 | E Robust | E1 Oberflächentests · E2 Karte aufteilen · E3 Tempo · E4 Orte bei Bedarf laden | E1, E2 erledigt (22.11.), E3–E4 offen |
-| F Neues | F1–F7 | offen |
+| F Neues | F1–F7 | offen; Reihenfolge (Michi 22.11.): F7, F3, F1, F2, F4, F5, F6 |
 
 ## Offene Fragen an Michi
 - Notizen aus der Prüfwoche (Etappe D) fehlen noch; in der Sitzung vom 22.11. stand nur der Platzhalter
-- Nach einem Flug: Punkte am Zielort, die mit dem letzten Punkt zu Hause in einem Rutsch ankommen, verwirft die App einige Stunden lang als „zu schnell“ (siehe Entscheidung E1). Vorschlag: Sprung nach langer Pause nicht als Ausreißer werten, sondern als neuen Weg. Vor einer Reise klären
 - Eine Woche normal nutzen (Abschluss Etappe D) und aufschreiben, wo er sucht oder was hakt
 - Overland: „Min Time Between Points“ auf 10 s stellen; Mitteilungen von Overland ggf. aus (Statuszeile in Unterwegs reicht)
 - Test, ob Overland nach „Location updates were stopped“ von selbst weiterläuft

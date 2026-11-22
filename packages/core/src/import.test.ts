@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { density, parseGpx, splitOutings, summarizeImported } from "./import";
+import { cleanFixes, density, parseGpx, splitOutings, summarizeImported } from "./import";
 import type { Fix } from "./track";
 
 describe("parseGpx", () => {
@@ -45,5 +45,29 @@ describe("summarizeImported", () => {
 describe("density", () => {
   it("counts pairs close in time or space", () => {
     expect(density([[fix(0, 0), fix(30, 40), fix(300, 50), fix(600, 400)]])).toBeCloseTo(2 / 3, 5);
+  });
+});
+
+describe("cleanFixes", () => {
+  // Köln in the morning, then a flight: Lissabon is about 1850 km away.
+  const koeln = (t: number, i: number): Fix => ({ t: t * 1000, lon: 6.83 + i * 0.0001, lat: 50.94, acc: 5 });
+  const lissabon = (t: number, i: number): Fix => ({ t: t * 1000, lon: -9.14 + i * 0.0001, lat: 38.71, acc: 5 });
+
+  it("drops a single point that would need more than plane speed (GPS outlier)", () => {
+    const fixes = [koeln(0, 0), koeln(5, 1), { ...koeln(10, 2), lat: 51.5 }, koeln(15, 3)];
+    expect(cleanFixes(fixes).map((f) => f.t / 1000)).toEqual([0, 5, 15]);
+  });
+
+  it("keeps the ways at the destination after a flight (3 hours later, same batch)", () => {
+    const morgen = [0, 5, 10].map((t, i) => koeln(t, i));
+    const ankunft = 3 * 3600;
+    const dort = [0, 5, 10, 15].map((t, i) => lissabon(ankunft + t, i));
+    expect(cleanFixes([...morgen, ...dort])).toHaveLength(7);
+  });
+
+  it("still drops a lone outlier after a pause when the next point does not confirm it", () => {
+    const pause = 3600;
+    const fixes = [koeln(0, 0), koeln(5, 1), { ...koeln(pause, 2), lat: 38.71 }, koeln(pause + 5, 3), koeln(pause + 10, 4)];
+    expect(cleanFixes(fixes).map((f) => f.t / 1000)).toEqual([0, 5, pause + 5, pause + 10]);
   });
 });

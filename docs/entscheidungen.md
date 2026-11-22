@@ -1,5 +1,15 @@
 # Entscheidungen
 
+## 22.11.2026: Reihenfolge nach E2 (Michi: „so wie du denkst“)
+- Erst Flug-Korrektur, dann E3, E4, danach F7 und F3 (klein, sichtbar), dann F1, F2, zuletzt F4, F5, F6. Weicht von der Reihenfolge in Fassung 3 ab (F1 zuerst)
+- Aufwand grob: Etappe E mit Flug-Korrektur 5–6 Std., Etappe F 15–20 Std.
+- Michi: Arbeit bei 95 % Nutzung beenden. Claude sieht den Verbrauch nicht direkt, arbeitet deshalb in abgeschlossenen Schritten und hört an einem sauberen Punkt auf
+
+## 22.11.2026: Nach einem Flug gehen keine Punkte mehr verloren
+- Bisher: `cleanFixes` verwarf jeden Punkt, der vom letzten behaltenen Punkt aus nur mit über 50 m/s erreichbar wäre. Kamen Punkte vom Morgen in Köln und vom Nachmittag am Zielort in einem Rutsch an, fehlten dort die ersten Stunden (Köln → Lissabon rund 10 Stunden)
+- Neu: Nach mindestens 10 Minuten Pause gilt ein weiter Sprung als neuer Anfang, wenn der nächste Punkt dazu passt. Ein einzelner Ausreißer (auch nach einer Pause) wird weiter verworfen. Tests in `import.test.ts`
+- Schon gespeicherte Wege ändern sich nicht (bisher kein Flug in den Daten)
+
 ## 22.11.2026: Eine Linie je Straße, Nachbesserung (Stummel und Schlaufen)
 - Michi (Bilder Aachener Straße, 18:43): „Hier ist es immer noch komisch.“ Mit Michis OK seine Wege (Overland-Punkte und die 7 gespeicherten eigenen Wege) nur lesend geholt und im Test-Browser mit den echten Karten nachgestellt: Weiden 17 %, wie auf dem iPhone
 - Ergebnis: Die aktuelle Version zeichnet an der Aachener Straße schon eine Linie. Michis Bild 1 zeigt noch beide Fahrbahnen und den Gehweg, also lief auf dem iPhone sehr wahrscheinlich eine ältere Version (Web-App ganz schließen und neu öffnen, Stand unter Einstellungen → Über → Zustand)

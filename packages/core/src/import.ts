@@ -44,19 +44,27 @@ export function parseGpx(text: string): Fix[] {
 /** Sorted by time, without duplicates, inaccurate points (over 25 m) and jumps (over 50 m/s). */
 export function cleanFixes(fixes: Fix[]): Fix[] {
   fixes.sort((a, b) => a.t - b.t);
+  const gut = fixes.filter((f) => f.acc <= MAX_ACCURACY_M);
+  const zuSchnell = (a: Fix, b: Fix) => {
+    const dt = (b.t - a.t) / 1000;
+    return dt <= 0 || distanceM([a.lon, a.lat], [b.lon, b.lat]) / dt > MAX_SPEED_MS;
+  };
   const out: Fix[] = [];
-  for (const f of fixes) {
-    if (!(f.acc <= MAX_ACCURACY_M)) continue;
+  gut.forEach((f, i) => {
     const prev = out.at(-1);
-    if (prev) {
-      const dt = (f.t - prev.t) / 1000;
-      if (dt <= 0) continue;
-      if (distanceM([prev.lon, prev.lat], [f.lon, f.lat]) / dt > MAX_SPEED_MS) continue;
-    }
+    if (prev && f.t <= prev.t) return;
+    // A jump after a long pause (a flight, the phone switched off) is a new start, not an
+    // outlier, when the next point agrees with it. Otherwise everything at the destination
+    // would be dropped until enough time has passed (Köln → Lissabon: about 10 hours).
+    const neuerStart = prev && f.t - prev.t >= NEUER_START_MS && gut[i + 1] !== undefined && !zuSchnell(f, gut[i + 1]!);
+    if (prev && zuSchnell(prev, f) && !neuerStart) return;
     out.push(f);
-  }
+  });
   return out;
 }
+
+/** From this pause on, a far jump can be a new start (same as the pause that splits outings). */
+const NEUER_START_MS = 10 * 60_000;
 
 /**
  * Splits a long history into outings at pauses (default 10 minutes) and at jumps (default 300 m,
