@@ -42,7 +42,7 @@ function tageAus(wege: WegKopf[]): Tag[] {
  * the distance that turned yellow that day. A tap plays that day on the plan; the arrow (or a long
  * tap) opens the day with its ways and legs ("zu Fuß · Rad · gefahren", C2).
  */
-export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurueck: () => void; abspielen: (tag: Tag) => void }) {
+export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurueck: () => void; abspielen: (tag: Tag) => void; zeitreise: () => void }) {
   const wege = useWegeListe();
   const [offenerTag, setOffenerTag] = useState<Tag | null>(null);
   const tage = useMemo(() => tageAus(wege ?? []), [wege]);
@@ -63,6 +63,19 @@ export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurue
     <PassUnterseite titel={t.rueckblicke.titel} zurueck={props.zurueck}>
       {wege === null && <p className="zeile-text leise">{t.blatt.nochOffenLaedt}</p>}
       {wege?.length === 0 && <p className="zeile-text leise">{t.blatt.keineWege}</p>}
+      {(props.fortschritt?.stuecke.length ?? 0) > 0 && (
+        <ul className="orte-zeilen">
+          <li>
+            <button type="button" className="ort-zeile" onClick={props.zeitreise}>
+              <span className="ort-text">
+                <b>{t.zeitreise.titel}</b>
+                <span>{t.zeitreise.zeile}</span>
+              </span>
+              <span className="pfeil" aria-hidden="true">›</span>
+            </button>
+          </li>
+        </ul>
+      )}
       <ul className="orte-zeilen">
         {tage.map((tag) => (
           <TagZeile

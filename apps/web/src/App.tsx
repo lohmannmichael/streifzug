@@ -18,6 +18,7 @@ import { OrteSeite } from "./seiten/Orte";
 import { PassSeite, type PassTeil } from "./seiten/Pass";
 import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { RueckblickeSeite, type Tag } from "./seiten/Rueckblicke";
+import { ZeitreiseLeiste } from "./seiten/Zeitreise";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
 import { IconPass, IconStandort } from "./ui/Icons";
@@ -37,6 +38,8 @@ export function App() {
   const overland = useOverlandStatus();
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   // One past day from "Rückblicke" (Bauplan 3, D4).
+  // Zeitreise (Bauplan 3, F3): end of the chosen day, or null.
+  const [zeitreise, setZeitreise] = useState<number | null>(null);
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; bis: number; nr: number } | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
@@ -140,6 +143,11 @@ export function App() {
   // line beside the yellow. Counting is not affected.
   const linien = useMemo(() => eineLinieJeStrasse(zaehlendeStuecke, fortschritt?.gefahren ?? []), [zaehlendeStuecke, fortschritt]);
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
+  // During the Zeitreise only what was yellow by the chosen day; the red pen line is left out.
+  const gelbZeitreise = useMemo(
+    () => (zeitreise === null ? linien.gelb : linien.gelb.filter((p) => (erstesMalRoh(fortschritt, p.id) ?? 0) < zeitreise)),
+    [zeitreise, linien.gelb, fortschritt],
+  );
   const erstesMal = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.erstesMal[i] ?? Date.now()])), [fortschritt]);
 
   // Replay on opening (Bauplan 5.1): starts once the progress includes the new ways (at most 2.5 s wait).
@@ -312,6 +320,11 @@ export function App() {
       <RueckblickeSeite
         fortschritt={fortschritt}
         zurueck={zumPass}
+        zeitreise={() => {
+          // Starts today; the slider goes back from there.
+          setPass(null);
+          setZeitreise(new Date().setHours(24, 0, 0, 0));
+        }}
         abspielen={(tag: Tag) => {
           // The pass closes and the day runs on the plan: its ways, only what was new that day.
           void wegeSeit(tag.von - 86400_000).then((andere) => {
@@ -372,8 +385,8 @@ export function App() {
           }}
           springen={springen.current}
           spur={aufzeichnung.fixes}
-          entdeckt={linien.gelb}
-          gefahren={linien.rot}
+          entdeckt={gelbZeitreise}
+          gefahren={zeitreise === null ? linien.rot : []}
           prozente={prozenteJeGebiet(daten, fortschritt)}
           folgen={aufzeichnung.aktiv}
           zeichnen={aufzeichnung.aktiv}
@@ -398,12 +411,28 @@ export function App() {
             <IconStandort />
           </button>
         </div>
-        <Blatt {...blattProps} />
+        {zeitreise !== null && daten && fortschritt ? (
+          <ZeitreiseLeiste daten={daten} gebiet={gebiet} fortschritt={fortschritt} bis={zeitreise} setBis={setZeitreise} schliessen={() => setZeitreise(null)} />
+        ) : (
+          <Blatt {...blattProps} />
+        )}
       </main>
     </div>
     {seite && <div className="ueber-plan">{seite}</div>}
     </>
   );
+}
+
+/** When a piece was first walked (index lookup, built once per progress). */
+const erstesMalIndex = new WeakMap<Fortschritt, Map<string, number>>();
+function erstesMalRoh(f: Fortschritt | null, id: string): number | undefined {
+  if (!f) return undefined;
+  let m = erstesMalIndex.get(f);
+  if (!m) {
+    m = new Map(f.stuecke.map((p, i) => [p.id, f.erstesMal[i] ?? 0]));
+    erstesMalIndex.set(f, m);
+  }
+  return m.get(id);
 }
 
 function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null): Map<string, number> {

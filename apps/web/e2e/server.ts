@@ -34,6 +34,8 @@ export interface ServerOptionen {
   karteAus?: boolean;
   /** Street tiles for matching fail (the map itself still draws). */
   strassenAus?: boolean;
+  /** Moves single test ways this many days back (Zeitreise). */
+  tageZurueck?: Record<string, number>;
 }
 
 export interface Server {
@@ -91,7 +93,7 @@ async function openfreemap(route: Route, s: Server) {
 function punkteAlsZeilen(s: Server, jetzt: number) {
   const namen = s.optionen.wege ?? TESTWEGE.map((w) => w.name);
   return TESTWEGE.filter((w) => namen.includes(w.name))
-    .flatMap((w) => w.punkte)
+    .flatMap((w) => w.punkte.map((p) => ({ ...p, vorMin: p.vorMin + (s.optionen.tageZurueck?.[w.name] ?? 0) * 1440 })))
     .map((p) => ({ t: new Date(jetzt - p.vorMin * 60_000).toISOString(), lon: p.lon, lat: p.lat, acc: p.acc, motion: p.motion, speed: p.speed }))
     .sort((a, b) => a.t.localeCompare(b.t));
 }

@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: F3 Zeitreise
+- Rückblicke hat oben die Zeile „Zeitreise“. Ein Tipp schließt den Pass; statt des Blatts steht unten eine Leiste: Viertel, Datum, Prozent, Schieber vom ersten Tag mit Gelb bis heute, „Fertig“
+- Der Plan zeigt nur Gelb, das bis zum Ende des gewählten Tages zum ersten Mal gegangen wurde (gespeichertes erstes Datum je Stück). Die rote Kuli-Linie ist während der Zeitreise ausgeblendet (für sie gibt es kein Datum je Stück)
+- Prozent des gewählten Viertels läuft mit: Straßenmeter im Viertel nach Datum sortiert und aufsummiert (Kern `zeitreise.ts`, 7 Tests), dadurch beim Ziehen ohne Rechenpause. Ausnahmen („Hier komme ich nicht hin“) gelten mit heutigem Stand
+- Schieber in Tagen; im Umkreis von 2 Tagen um einen Monatsanfang rastet er dort ein, Monatsanfänge sind unter dem Schieber markiert
+- Nicht angepasst: Schraffur und Prozente der Viertel beim Herauszoomen zeigen weiter den heutigen Stand
+- Oberflächentest `e2e/zeitreise.spec.ts` (Testwege 40 und 10 Tage zurückverlegt, neue Server-Option `tageZurueck`): Schieber auf den ersten Tag → weniger Gelb, kleinere Zahl; „Fertig“ → wieder heute
+
 ## 22.11.2026: Wirtschafts- und lange Zufahrtswege werden gezeichnet
 - Michi (Bild Müngersdorf, 21:29): „Den Weg, den ich nachgezeichnet hab, ist nicht drin.“ Mit seinem OK die Overland-Punkte der Fahrt (9:26–9:31) nur lesend geholt: angekommen, als Rad erkannt, 0–4 m neben den Wegen der Karte. Die Strecke lief über einen Fußweg (schmal gelb), dann einen Wirtschaftsweg (`track`) und einen Zufahrtsweg (`service`). Die letzten beiden beachtete die App gar nicht (Regel aus Fassung 2: zählen nie)
 - Michi: „Ja, so bauen“. Neu: Wirtschaftswege werden wie Parkwege schmal gelb gezeichnet; Zufahrtswege nur, wenn die Linie mindestens 100 m lang ist (Hofeinfahrten und Parkplatzgassen bleiben weg). Gesperrte (privat, kein Zugang) nicht. Beide zählen weiter nicht, Prozente und Stempel unverändert

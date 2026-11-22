@@ -214,6 +214,13 @@ export const de = {
     safariText: "Geh jetzt zurück zur App Unterwegs auf deinem Homescreen. Dort legst du unter Einstellungen → Konto dein Passwort fest.",
     safariWeiter: "Hier weiter",
   },
+  zeitreise: {
+    titel: "Zeitreise",
+    zeile: "Sieh, wie dein Plan gewachsen ist.",
+    schieber: "Tag der Zeitreise",
+    heute: "heute",
+    fertig: "Fertig",
+  },
   rueckblicke: {
     titel: "Rückblicke",
     zeile: (wege: number, neu: string | null) => `${wege} ${wege === 1 ? "Weg" : "Wege"}${neu ? ` · ${neu} neu` : ""}`,

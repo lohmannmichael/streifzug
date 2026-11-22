@@ -597,3 +597,13 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 
 /* Map credits (Bauplan 3, D6): small grey line above the sheet, 44 px tall touch area. */
 .quelle-zeile { position: absolute; left: 8px; top: -44px; z-index: 1; height: 44px; display: flex; align-items: flex-end; padding: 0 8px 7px; border: 0; background: none; color: var(--text-leise); font-size: 11px; letter-spacing: 0.01em; text-shadow: 0 0 3px var(--nebel), 0 0 6px var(--nebel); cursor: pointer; }
+
+/* Zeitreise (Bauplan 3, F3): a low bar instead of the sheet, with the slider. */
+.blatt.zeitreise { height: auto; padding-top: 18px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); gap: 14px; }
+.zeit-schieber-box { position: relative; padding-bottom: 2px; }
+.zeit-schieber { width: 100%; height: 44px; margin: 0; accent-color: var(--tinte); }
+.zeit-monate { position: relative; height: 16px; margin: -6px 10px 0; font-size: var(--t-klein); color: var(--text-leise); }
+.zeit-monate span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.zeit-monate span::before { content: ""; position: absolute; left: 50%; top: -6px; width: 1px; height: 5px; background: var(--text-leise); }
+.zeit-enden { display: flex; justify-content: space-between; font-size: var(--t-klein); color: var(--text-leise); font-variant-numeric: tabular-nums; }
+.zeit-fertig { align-self: stretch; justify-content: center; }
