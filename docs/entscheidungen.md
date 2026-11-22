@@ -4,6 +4,7 @@
 - B1: Halbes Blatt nur noch Kilometer, Stempelkarte und bei Bedarf eine Statuszeile („Automatisch aufzeichnen einrichten“, solange Overland nicht verbunden ist; Overland still; neuer Ort). „Zuletzt“, „Noch offen“, „Jetzt mit offener App aufzeichnen“ und die Zeile „Deine Städte und Veedel“ sind raus; „Noch offen“ wird nicht mehr berechnet (Code bleibt bis D8). Stempelkarte als Reihe aus sechs Kreisen (Bild `Viertel.png`): erreicht = Stempel, offen = leerer Kreis, kein „noch x km“. Menüpunkt „Letzte Wege“ entfällt bis D4 (Rückblicke)
 - B2: Zwei Höhen. Das Blatt ist immer halb hoch und wird für „klein“ nach unten geschoben; beim Ziehen folgt es dem Finger, beim Loslassen rastet es auf der näheren Höhe ein (200 ms). Ein Wisch über 0,5 px/ms entscheidet nach Richtung (bei kurzen Bewegungen unter 0,3 s zählt die Geschwindigkeit der ganzen Bewegung). Der ganze Kopf ist Griff, Tippen auf den Kopf wechselt die Höhe, der Griff-Knopf bleibt für VoiceOver
 - B3: Im Inhalt zieht eine Bewegung nach unten das Blatt, wenn der Inhalt oben steht. Ein Tipp auf das schon gewählte Veedel setzt das Blatt auf klein
+- Nachbesserung (Michi: „oben am Rand geht es nicht gut“): Griff unsichtbar 28 pt hoch über die ganze Breite, und ein 18 pt breiter Streifen über der Blattkante gehört schon zum Blatt
 - Städte und Stempelpass liegen bis D1 als eigene Seite hinter dem Menü
 - Geprüft mit Touch-Gesten im iPhone-Format (CDP): schnell hoch, schnell runter (60 px in 50 ms), langsames Ziehen folgt dem Finger, Herunterziehen aus dem Inhalt, halbes Blatt passt ohne Scrollen (390 × 844)
 

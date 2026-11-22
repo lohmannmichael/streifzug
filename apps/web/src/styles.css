@@ -300,18 +300,31 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
   will-change: transform;
 }
 .blatt.zieht { transition: none; }
-.blatt-zug { flex: none; display: grid; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; padding-bottom: 14px; }
+.blatt-zug { position: relative; flex: none; display: grid; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; padding-bottom: 14px; }
+/* A strip just above the sheet's edge belongs to the sheet too, so a finger at the very top grabs it. */
+.blatt-zug::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; }
+/* The handle: a large invisible touch area, the visible line in the middle. */
 .griff {
-  justify-self: center;
-  width: 36px;
-  height: 5px;
-  margin: 8px 0 14px;
+  justify-self: stretch;
+  height: 28px;
+  margin: 0 0 6px;
   padding: 0;
   border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+}
+.griff::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  width: 36px;
+  height: 5px;
+  margin-left: -18px;
   border-radius: 3px;
   background: var(--linie);
-  box-shadow: 0 0 0 14px transparent;
-  cursor: pointer;
 }
 .blatt-kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .kopf-links { min-width: 0; }
