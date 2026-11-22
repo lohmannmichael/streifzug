@@ -1,5 +1,19 @@
 # Entscheidungen
 
+## 22.11.2026: E4 Orte nur bei Bedarf laden
+- Bisher: Beim Start holte die App alle 5 Orte komplett (Summen, Grenzen, Namen), und der Service Worker legte alle Orte-Dateien schon bei der Installation aufs Gerät. Bei 50+ Orten zu viel
+- Neu: Vorab auf dem Gerät liegt nur noch `regionen/index.json` (Name, Box, Land je Ort). Ein Ort wird geladen,
+  - beim Start: Köln (Startort Weiden) und der Ort des zuletzt gewählten Gebiets (neu gemerkt in `localStorage streifzug.gebietOrt`)
+  - wenn dort Wege liegen (Meter im Ort)
+  - wenn der Plan in seine Box schaut, ab Zoom 8 (weiter heraus lädt der Plan nichts von selbst)
+  - wenn er in Pass → Orte geöffnet wird, und wenn der Standort in ihm liegt
+- Der Hintergrund-Rechner lädt Grenzen nur für Orte, in denen gesehene Stücke liegen (`orteMitPunkten`, Kern `bedarf.ts`, 8 Tests)
+- Zwischenspeicher „orte“ (Service Worker, zuerst vom Gerät, höchstens 300 Dateien ≈ 100 Orte, 1 Jahr). Die Adresse trägt das Datum der Daten (`?v=2026-11-19`), ein neu berechneter Ort wird also neu geholt, nie ein veralteter gezeigt
+- Mittelpunkt im Index: weggelassen. Die Box (schon im Index) reicht für Pass, Orte-Liste und Laden; die Mitte lässt sich aus ihr ableiten
+- Neue Oberflächentests (`e2e/orte.spec.ts`): frischer Start ohne Wege holt nur Köln; mit Testwegen nur Köln und Freising; der zuletzt gewählte Ort (Lerchenfeld in Freising) wird beim Öffnen geladen. Gegenprobe mit dem alten Stand: alle drei rot
+- Geprüft ohne Netz mit echtem Service Worker: Plan, Weiden und 0 % erscheinen aus dem Zwischenspeicher
+- Beim ersten Öffnen nach dem Update werden die Köln-Dateien einmal neu geholt (neue Adresse), danach liegen sie wieder auf dem Gerät
+
 ## 22.11.2026: E3 Tempo mit einem Jahr Daten
 - Frage 1 (Plan): Die App rechnet beim Öffnen nur neue Wege, das Ergebnis je Weg liegt auf dem Gerät (`stueckIds` mit Schlüssel aus `ABGLEICH_VERSION`, Punktzahl, Korrekturen). Bei einer neuen `ABGLEICH_VERSION` wird jeder Weg einmal neu gerechnet, im Hintergrund mit „N neue Wege werden eingerechnet …“, die App bleibt bedienbar
 - Datensatz: `e2e/werkzeuge/jahr-erzeugen.ts`, 365 Tage × 3 Wege auf echten Straßen zwischen Lövenich und Lindenthal (15 Kacheln), 1.088 Wege, 384.818 Punkte (Datei 30 MB, nicht im Repo). Messung: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`, Chrome mit vierfach gebremster CPU, Weiden kommt auf 55 %

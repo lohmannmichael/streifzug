@@ -1,7 +1,8 @@
 import type { Fix, LonLat, Piece } from "@streifzug/core";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
-import type { Regionen } from "../daten/regionen";
+import { orteImBlick } from "@streifzug/core";
+import { orteLaden, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
 import { eigenesZeichnen, erstesMalSetzen, LEER, linienSammlung, setzeDaten, stifteSetzen } from "./ebenen";
@@ -104,6 +105,10 @@ export function Karte(props: KartenProps) {
       if (datenRef.current)
         void gebieteZeichnen(karte, dunkelRef.current, datenRef.current, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
     });
+    // Places the plan looks at are loaded (Bauplan 3, E4).
+    const imBlick = () => orteImBlickLaden(karte, datenRef.current);
+    karte.on("moveend", imBlick);
+    karte.on("load", imBlick);
     tippenEinrichten(karte, { daten: () => datenRef.current, etikett: setEtikett, waehlen: (id) => waehlenRef.current(id) });
 
     const wechsel = (e: MediaQueryListEvent) => {
@@ -124,6 +129,7 @@ export function Karte(props: KartenProps) {
   // Draw regions once their data has arrived.
   useEffect(() => {
     const karte = karteRef.current;
+    if (karte) orteImBlickLaden(karte, props.daten);
     if (karte && props.daten && stilDa.current())
       void gebieteZeichnen(karte, dunkelRef.current, props.daten, gewaehltRef.current).then(() => prozenteSetzen(karte, datenRef.current, prozenteRef.current));
   }, [props.daten]);
@@ -257,4 +263,11 @@ export function Karte(props: KartenProps) {
       <SchildAnKarte karte={karteDa} etikett={etikett} schliessen={() => setEtikett(null)} />
     </>
   );
+}
+
+/** Loads the places in view (none when zoomed out far). */
+function orteImBlickLaden(karte: MapLibreMap, daten: Regionen | null) {
+  if (!daten) return;
+  const b = karte.getBounds();
+  orteLaden(orteImBlick(daten.liste, [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], karte.getZoom()));
 }

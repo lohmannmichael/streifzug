@@ -1,4 +1,5 @@
-import { aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
+import { orteMitPunkten, aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
+import { ortDatei } from "./ortDatei";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
 
@@ -19,11 +20,16 @@ interface Flaeche {
 
 const flaechen = new Map<string, Promise<Flaeche[]>>();
 
-export function ladeFlaechen(regionId: string): Promise<Flaeche[]> {
+/** Boundaries of one place (loaded once; again after a failure). */
+export function ladeFlaechen(region: Region): Promise<Flaeche[]> {
+  const regionId = region.id;
   let p = flaechen.get(regionId);
   if (!p) {
-    p = fetch(`/regionen/${regionId}/gebiete.geojson`)
-      .then((r) => r.json() as Promise<{ features: { properties: { id: string }; geometry: PolygonGeometry }[] }>)
+    p = fetch(ortDatei(region, "gebiete.geojson"))
+      .then((r) => {
+        if (!r.ok) throw new Error(`${regionId} ${r.status}`);
+        return r.json() as Promise<{ features: { properties: { id: string }; geometry: PolygonGeometry }[] }>;
+      })
       .then((d) =>
         d.features.map((f) => {
           const rings = f.geometry.type === "Polygon" ? f.geometry.coordinates : f.geometry.coordinates.flat();
@@ -39,6 +45,7 @@ export function ladeFlaechen(regionId: string): Promise<Flaeche[]> {
           return { id: String(f.properties.id), geometry: f.geometry, bbox };
         }),
       );
+    p.catch(() => flaechen.delete(regionId));
     flaechen.set(regionId, p);
   }
   return p;
@@ -116,8 +123,11 @@ export async function stueckeFuerIds(ids: Iterable<string>): Promise<Piece[]> {
 /** Seen meters per area id (all levels): every piece counts for each area its middle lies in. */
 export async function meterJeGebiet(stuecke: Iterable<Piece>, liste: Region[]): Promise<Map<string, Summe>> {
   const proGebiet = new Map<string, Summe>();
-  const regionen = await Promise.all(liste.map(async (r) => ({ r, f: await ladeFlaechen(r.id) })));
-  for (const piece of stuecke) {
+  const alle = [...stuecke];
+  // Only the places where pieces lie are loaded (Bauplan 3, E4).
+  const noetig = new Set(orteMitPunkten(liste, alle.map((p) => p.mid)));
+  const regionen = await Promise.all(liste.filter((r) => noetig.has(r.id)).map(async (r) => ({ r, f: await ladeFlaechen(r) })));
+  for (const piece of alle) {
     const [x, y] = piece.mid;
     for (const { r, f } of regionen) {
       if (x < r.bbox[0] || x > r.bbox[2] || y < r.bbox[1] || y > r.bbox[3]) continue;

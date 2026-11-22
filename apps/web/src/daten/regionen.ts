@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { ortDatei } from "./ortDatei";
+
+export { ortDatei };
 
 export interface Summe {
   strasse_m: number;
@@ -39,39 +42,108 @@ export function viertelWort(daten: Regionen | null, gebietId: string | null | un
 }
 
 export interface Regionen {
+  /** All places from regionen/index.json (small; names, boxes, countries). */
   liste: Region[];
+  /** Areas of the places loaded so far (Bauplan 3, E4: places are loaded when needed). */
   gebiete: Map<string, GebietDaten>;
+  /** Ids of the places whose areas are in `gebiete`. */
+  geladen: ReadonlySet<string>;
 }
 
-let laden: Promise<Regionen> | null = null;
+// One store for the whole app: every loaded place makes a new snapshot, so React draws again.
+let stand: Regionen | null = null;
+let indexLaden: Promise<Region[]> | null = null;
+const ortLaden = new Map<string, Promise<void>>();
+const hoerer = new Set<() => void>();
+const melden = () => hoerer.forEach((h) => h());
 
-async function ladeAlles(): Promise<Regionen> {
-  const liste = (await (await fetch("/regionen/index.json")).json()) as Region[];
-  const gebiete = new Map<string, GebietDaten>();
-  await Promise.all(
-    liste.map(async (r) => {
-      const s = (await (await fetch(`/regionen/${r.id}/summen.json`)).json()) as {
-        gebiete: Record<string, Omit<GebietDaten, "id" | "regionId" | "kinder">>;
-      };
-      for (const [id, g] of Object.entries(s.gebiete)) gebiete.set(id, { ...g, id, regionId: r.id, kinder: [] });
-    }),
-  );
-  for (const g of gebiete.values()) if (g.eltern) gebiete.get(g.eltern)?.kinder.push(g.id);
-  return { liste, gebiete };
+function index(): Promise<Region[]> {
+  indexLaden ??= fetch("/regionen/index.json")
+    .then((r) => {
+      if (!r.ok) throw new Error(`index ${r.status}`);
+      return r.json() as Promise<Region[]>;
+    })
+    .then((liste) => {
+      stand ??= { liste, gebiete: new Map(), geladen: new Set() };
+      return liste;
+    })
+    .catch((e: unknown) => {
+      indexLaden = null;
+      throw e;
+    });
+  return indexLaden;
 }
 
-/** All built regions (see scripts/region.ts) with street totals per area. */
-export function useRegionen(): Regionen | null {
-  const [daten, setDaten] = useState<Regionen | null>(null);
+/** Loads the area totals of one place (once; again after a failure). Unknown ids are ignored. */
+export function ortLadenAuf(id: string): Promise<void> {
+  let p = ortLaden.get(id);
+  if (!p) {
+    p = index()
+      .then(async (liste) => {
+        const r = liste.find((x) => x.id === id);
+        if (!r) return;
+        const antwort = await fetch(ortDatei(r, "summen.json"));
+        if (!antwort.ok) throw new Error(`${id} ${antwort.status}`);
+        const s = (await antwort.json()) as { gebiete: Record<string, Omit<GebietDaten, "id" | "regionId" | "kinder">> };
+        const gebiete = new Map(stand!.gebiete);
+        const neu: GebietDaten[] = [];
+        for (const [gid, g] of Object.entries(s.gebiete)) {
+          const d = { ...g, id: gid, regionId: r.id, kinder: [] as string[] };
+          gebiete.set(gid, d);
+          neu.push(d);
+        }
+        for (const g of neu) if (g.eltern) gebiete.get(g.eltern)?.kinder.push(g.id);
+        stand = { liste: stand!.liste, gebiete, geladen: new Set([...stand!.geladen, r.id]) };
+        melden();
+      })
+      .catch((e: unknown) => {
+        ortLaden.delete(id);
+        throw e;
+      });
+    ortLaden.set(id, p);
+  }
+  return p;
+}
+
+/** The latest snapshot (also outside React, e.g. after awaiting `ortLadenAuf`). */
+export function regionenJetzt(): Regionen | null {
+  return stand;
+}
+
+/** Loads several places; failures are left for the next try. */
+export function orteLaden(ids: Iterable<string>): void {
+  for (const id of ids) if (!stand?.geladen.has(id)) ortLadenAuf(id).catch(() => undefined);
+}
+
+/**
+ * The places (see scripts/region.ts) with street totals per area. Null until the list and the
+ * start places (`start`) have arrived; more places come in as they are loaded.
+ */
+export function useRegionen(start: readonly string[]): Regionen | null {
+  const [, neu] = useState(0);
+  const [bereit, setBereit] = useState(false);
   useEffect(() => {
-    laden ??= ladeAlles();
+    const h = () => neu((n) => n + 1);
+    hoerer.add(h);
     let aktiv = true;
-    laden.then((d) => aktiv && setDaten(d)).catch(() => (laden = null));
+    let warten = 0;
+    const versuchen = () =>
+      void Promise.allSettled([index(), ...start.map(ortLadenAuf)]).then((e) => {
+        if (!aktiv) return;
+        // Without the list nothing works: try again a little later (no network on opening).
+        if (e[0]!.status === "rejected") warten = window.setTimeout(versuchen, 3000);
+        else setBereit(true);
+      });
+    versuchen();
     return () => {
       aktiv = false;
+      window.clearTimeout(warten);
+      hoerer.delete(h);
     };
+    // The start places are read once, on opening.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  return daten;
+  return bereit ? stand : null;
 }
 
 /** "Lindenthal, Köln": the names of all parents, nearest first. */

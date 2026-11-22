@@ -59,9 +59,10 @@ export function OrteSeite(props: {
 
 function OrtZeile(props: { region: Region; daten: Regionen; fortschritt: Fortschritt | null; oeffnen: () => void }) {
   const { region: r, daten, fortschritt: f } = props;
-  const wurzel = daten.gebiete.get(r.wurzel)!;
+  // Missing for a moment while the place is still loading (Bauplan 3, E4).
+  const wurzel = daten.gebiete.get(r.wurzel);
   const gesehen = zaehlendeMeter(f?.proGebiet.get(r.wurzel) ?? LEER, false);
-  const anteil = prozent(gesehen, gesamtMeter(wurzel, f?.abzug));
+  const anteil = wurzel ? prozent(gesehen, gesamtMeter(wurzel, f?.abzug)) : null;
   // The yellow (and red) of this place, for the mini plan and "zuletzt".
   const imOrt = useMemo(() => {
     const [w, s, e, n] = r.bbox;
@@ -76,7 +77,7 @@ function OrtZeile(props: { region: Region; daten: Regionen; fortschritt: Fortsch
     });
     return { gelb, rot: (f?.gefahren ?? []).filter(drin), zuletzt };
   }, [r.bbox, f]);
-  const viertel = betretene(daten, f, wurzel);
+  const viertel = wurzel ? betretene(daten, f, wurzel) : 0;
   return (
     <li>
       <button type="button" className="ort-zeile" onClick={props.oeffnen}>
@@ -85,7 +86,7 @@ function OrtZeile(props: { region: Region; daten: Regionen; fortschritt: Fortsch
           <b>{r.name}</b>
           <span>{t.orte.unterzeile(viertel, viertelWort(daten, r.wurzel).viele, imOrt.zuletzt ? tagText(imOrt.zuletzt) : null)}</span>
         </span>
-        <span className="ort-prozent">{prozentText(anteil)} %</span>
+        <span className="ort-prozent">{anteil === null ? "" : `${prozentText(anteil)} %`}</span>
         <span className="pfeil" aria-hidden="true">›</span>
       </button>
     </li>
@@ -95,7 +96,10 @@ function OrtZeile(props: { region: Region; daten: Regionen; fortschritt: Fortsch
 /** Number of entered smallest areas below an area. */
 export function betretene(daten: Regionen, f: Fortschritt | null, g: GebietDaten): number {
   if (g.kinder.length === 0) return zaehlendeMeter(f?.proGebiet.get(g.id) ?? LEER, false) >= 1 ? 1 : 0;
-  return g.kinder.reduce((n, id) => n + betretene(daten, f, daten.gebiete.get(id)!), 0);
+  return g.kinder.reduce((n, id) => {
+    const k = daten.gebiete.get(id);
+    return n + (k ? betretene(daten, f, k) : 0);
+  }, 0);
 }
 
 /**

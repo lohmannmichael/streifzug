@@ -174,7 +174,7 @@ async function sitzungAbwarten(): Promise<string | null> {
 }
 
 /** Fetches new points from the receiver (in the background worker). Returns how many came in. */
-export async function overlandAbholen(daten: Regionen): Promise<number> {
+export async function overlandAbholen(daten: Pick<Regionen, "liste">): Promise<number> {
   if (holt || !navigator.onLine) return 0;
   holt = true;
   try {
@@ -202,12 +202,14 @@ export async function overlandAbholen(daten: Regionen): Promise<number> {
 export function useOverlandAbholen(daten: Regionen | null, danach?: () => void) {
   const danachRef = useRef(danach);
   danachRef.current = danach;
+  // Only the list of places is needed; places loaded later do not start a new fetch.
+  const liste = daten?.liste;
   useEffect(() => {
-    if (!daten) return;
+    if (!liste) return;
     // After each fetch on opening or coming back, the replay looks for new outings.
     const los = (geoeffnet: boolean) => {
       if (document.visibilityState !== "visible") return;
-      void overlandAbholen(daten).finally(() => {
+      void overlandAbholen({ liste }).finally(() => {
         if (geoeffnet) danachRef.current?.();
       });
     };
@@ -222,7 +224,7 @@ export function useOverlandAbholen(daten: Regionen | null, danach?: () => void) 
       document.removeEventListener("visibilitychange", zurueck);
       window.removeEventListener("online", zurueck);
     };
-  }, [daten]);
+  }, [liste]);
 }
 
 /** Other outings that ended after a point in time, shortened for the replay (from the worker). */

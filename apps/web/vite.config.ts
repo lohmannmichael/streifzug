@@ -27,9 +27,17 @@ export default defineConfig({
       },
       workbox: {
         // The map style, tiles and street data come from other hosts and are not precached.
-        globPatterns: ["**/*.{js,mjs,css,html,svg,png,webp,woff2,geojson}", "regionen/**/*.json"],
+        // Of the places only the list is precached; each place is loaded when needed (Bauplan 3, E4).
+        globPatterns: ["**/*.{js,mjs,css,html,svg,png,webp,woff2}", "regionen/index.json"],
         // Street tiles are loaded when needed and then kept on the device.
         runtimeCaching: [
+          // Places loaded once stay on the device. The address carries the date of the data
+          // (?v=…), so a rebuilt place is fetched anew. At most about 100 places (3 files each).
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/regionen/") && url.pathname !== "/regionen/index.json",
+            handler: "CacheFirst",
+            options: { cacheName: "orte", expiration: { maxEntries: 300, maxAgeSeconds: 365 * 86400 }, cacheableResponse: { statuses: [200] } },
+          },
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/strassen/"),
             handler: "CacheFirst",

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, aufStandHoeren, fragen } from "./arbeiter";
 import { gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
-import type { Regionen, Summe } from "./regionen";
+import { ortLadenAuf, regionenJetzt, type Regionen, type Summe } from "./regionen";
 import { standLaden, standMerken } from "./stand";
 
 export { kachelnFuer } from "./rechnen";
@@ -82,15 +82,17 @@ export function useFortschritt(
   // Which outings and sources take part and, every 10 fixes, the live track.
   const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}:${versuch}`;
   const aktuell = useRef(0);
+  // Only the list of places matters here; loading more places does not start a new calculation.
+  const liste = daten?.liste;
   useEffect(() => {
-    if (!daten) return;
+    if (!liste) return;
     const eigene: SpurDaten[] = spuren.map((s) => ({
       id: s.id,
       n: s.fixes.length,
       t: s.t,
       ...(imWorker.get(s.id) === ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]) ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
     }));
-    const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste: daten.liste });
+    const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste });
     aktuell.current = nr;
     const weg = aufStandHoeren((a) => {
       if (a.nr === aktuell.current) setRechnet({ fertig: a.fertig, gesamt: a.gesamt });
@@ -116,18 +118,20 @@ export function useFortschritt(
     return weg;
     // Recalculate only when the set of outings changes or the live track grows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schluessel, daten]);
+  }, [schluessel, liste]);
   return { fortschritt, vorlaeufig, rechnet, fehler, nochmal: () => setVersuch((n) => n + 1) };
 }
 
-/** The smallest area (Stadtteil) that contains a point, or null outside all regions. */
+/** The smallest area (Stadtteil) that contains a point, or null outside all regions. Loads the place if needed. */
 export async function gebietAn(punkt: [number, number], daten: Regionen): Promise<string | null> {
   const [x, y] = punkt;
   for (const r of daten.liste) {
     if (x < r.bbox[0] || x > r.bbox[2] || y < r.bbox[1] || y > r.bbox[3]) continue;
-    for (const g of await ladeFlaechen(r.id)) {
+    await ortLadenAuf(r.id);
+    const jetzt = regionenJetzt() ?? daten;
+    for (const g of await ladeFlaechen(r)) {
       if (x < g.bbox[0] || x > g.bbox[2] || y < g.bbox[1] || y > g.bbox[3]) continue;
-      if ((daten.gebiete.get(g.id)?.kinder.length ?? 1) === 0 && pointInGeometry(punkt, g.geometry)) return g.id;
+      if ((jetzt.gebiete.get(g.id)?.kinder.length ?? 1) === 0 && pointInGeometry(punkt, g.geometry)) return g.id;
     }
   }
   return null;

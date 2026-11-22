@@ -1,5 +1,5 @@
 import type { FilterSpecification, Map as MapLibreMap } from "maplibre-gl";
-import { prozentText, type Regionen } from "../daten/regionen";
+import { ortDatei, prozentText, type Regionen } from "../daten/regionen";
 import { setzeDaten } from "./ebenen";
 import { FARBEN } from "./stil";
 
@@ -13,22 +13,27 @@ const fertigGeladen = new Map<string, { gebiete: FeatureSammlung; namen: Feature
 /** Boundaries and label points of one region, with a flag for the smallest areas ("blatt"). */
 export function ladeRegion(id: string, daten: Regionen) {
   let p = geladen.get(id);
-  if (!p) {
-    p = Promise.all([
-      fetch(`/regionen/${id}/gebiete.geojson`).then((r) => r.json() as Promise<FeatureSammlung>),
-      fetch(`/regionen/${id}/namen.geojson`).then((r) => r.json() as Promise<FeatureSammlung>),
-    ]).then(([gebiete, namen]) => {
+  const region = daten.liste.find((r) => r.id === id);
+  if (!p && region) {
+    const holen = (datei: string) =>
+      fetch(ortDatei(region, datei)).then((r) => {
+        if (!r.ok) throw new Error(`${id} ${r.status}`);
+        return r.json() as Promise<FeatureSammlung>;
+      });
+    p = Promise.all([holen("gebiete.geojson"), holen("namen.geojson")]).then(([gebiete, namen]) => {
       for (const sammlung of [gebiete, namen])
         for (const f of sammlung.features) f.properties.blatt = (daten.gebiete.get(String(f.properties.id))?.kinder.length ?? 0) === 0;
       fertigGeladen.set(id, { gebiete, namen });
       return { gebiete, namen };
     });
+    // Failed (no network): asked again next time.
+    p.catch(() => geladen.delete(id));
     geladen.set(id, p);
   }
-  return p;
+  return p ?? Promise.reject(new Error(`unbekannter Ort ${id}`));
 }
 
-/** Draws all regions: thin lines for the smallest areas, thicker ones for the levels above. */
+/** Draws all loaded places: thin lines for the smallest areas, thicker ones for the levels above. */
 export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten: Regionen, gewaehlt: string | null) {
   const f = dunkel ? FARBEN.dunkel : FARBEN.hell;
   const linie = f.grenze;
@@ -38,7 +43,10 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
   const davor = karte.getLayer("gefahren") ? "gefahren" : undefined;
 
   for (const region of daten.liste) {
-    const { gebiete, namen } = await ladeRegion(region.id, daten);
+    if (!daten.geladen.has(region.id) || karte.getSource(`gebiete-${region.id}`)) continue;
+    const geholt = await ladeRegion(region.id, daten).catch(() => null);
+    if (!geholt) continue;
+    const { gebiete, namen } = geholt;
     if (!karte.getStyle() || karte.getSource(`gebiete-${region.id}`)) continue;
     karte.addSource(`gebiete-${region.id}`, { type: "geojson", data: gebiete as never, promoteId: "id", attribution: "Grenzen: Overture Maps" });
     karte.addSource(`namen-${region.id}`, { type: "geojson", data: namen as never });

@@ -18,3 +18,4 @@ export * from "./luecken";
 export * from "./export";
 export * from "./nachzeichnen";
 export * from "./linien";
+export * from "./bedarf";

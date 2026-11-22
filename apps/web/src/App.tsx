@@ -7,7 +7,7 @@ import { useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import"
 import { useOnline } from "./daten/netz";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung } from "./daten/supabase";
-import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
+import { findeNachName, gesamtMeter, orteLaden, ortLadenAuf, prozent, regionenJetzt, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
 import { useAusnahmen } from "./daten/ausnahmen";
 import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
@@ -24,6 +24,9 @@ import { IconPass, IconStandort } from "./ui/Icons";
 
 // Until the location is used, the map starts at home; the last chosen area is remembered.
 const START_NAME = "Weiden";
+const START_ORT = "koeln";
+// The place of the chosen area, so it can be loaded on opening (Bauplan 3, E4).
+const MERKEN_ORT = "streifzug.gebietOrt";
 const MERKEN = "streifzug.gebiet";
 
 export function App() {
@@ -39,15 +42,26 @@ export function App() {
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
   const [einstellungen, aendern] = useEinstellungen(sitzung);
-  const daten = useRegionen();
-  const gebiet = daten ? (daten.gebiete.get(gewaehlt ?? "") ?? findeNachName(daten, START_NAME) ?? null) : null;
+  // On opening only Köln and the place of the chosen area are loaded; more places follow when needed.
+  const [startOrte] = useState(() => [...new Set([START_ORT, localStorage.getItem(MERKEN_ORT) ?? START_ORT])]);
+  const daten = useRegionen(startOrte);
+  // While the place of the chosen area is still loading, nothing is shown instead of jumping to Weiden.
+  const gewaehltOrt = localStorage.getItem(MERKEN_ORT);
+  const wartetAufOrt = !!gewaehlt && !!gewaehltOrt && !!daten && !daten.gebiete.has(gewaehlt) && !daten.geladen.has(gewaehltOrt) && daten.liste.some((r) => r.id === gewaehltOrt);
+  const gebiet = daten && !wartetAufOrt ? (daten.gebiete.get(gewaehlt ?? "") ?? findeNachName(daten, START_NAME) ?? null) : null;
   // Choosing from a list or the map brings the area into view; locating keeps the map on your position.
   const springen = useRef(true);
   const waehlen = (id: string, sprung = true) => {
     springen.current = sprung;
     setGewaehlt(id);
     localStorage.setItem(MERKEN, id);
+    const ort = regionenJetzt()?.gebiete.get(id)?.regionId;
+    if (ort) localStorage.setItem(MERKEN_ORT, ort);
   };
+  // Remember the place of an area chosen before this version too.
+  useEffect(() => {
+    if (gebiet) localStorage.setItem(MERKEN_ORT, gebiet.regionId);
+  }, [gebiet?.regionId]);
   const aufzeichnung = useAufzeichnung();
   const warAktivFuerRueckblick = useRef(false);
   const aufnahmeAktiv = useRef(false);
@@ -92,6 +106,11 @@ export function App() {
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
   const { fortschritt, vorlaeufig, rechnet, fehler: rechenFehler, nochmal: nochmalRechnen } = useFortschritt(spuren, zaehlen, daten);
+  // Places where ways lie are loaded too (names, shares, stamps).
+  useEffect(() => {
+    if (!daten || !fortschritt) return;
+    orteLaden(daten.liste.filter((r) => zaehlendeMeter(fortschritt.proGebiet.get(r.wurzel) ?? { strasse_m: 0, weg_m: 0 }, false) >= 1).map((r) => r.id));
+  }, [daten?.liste, fortschritt]);
   const online = useOnline();
   // Back online after a failed calculation: try again by itself.
   useEffect(() => {
@@ -283,7 +302,8 @@ export function App() {
           // Pass closes, the plan goes to the whole place, the sheet shows it (Bauplan 3, D2).
           setPass(null);
           setHoehe(1);
-          waehlen(wurzel);
+          const ort = daten.liste.find((r) => r.wurzel === wurzel);
+          if (ort) void ortLadenAuf(ort.id).then(() => waehlen(wurzel), () => undefined);
         }}
       />
     ) : pass === "stempel" ? (
