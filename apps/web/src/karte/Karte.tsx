@@ -229,7 +229,7 @@ export interface KartenProps {
   position: [number, number] | null;
   zentrieren: number;
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
-  rueckblick: { wege: LonLat[][]; seit: number; nr: number } | null;
+  rueckblick: { wege: LonLat[][]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
   /** "Noch offen", tapped: the open pieces of one street, shown as a dashed black line. */
   offen: LonLat[][] | null;
@@ -550,14 +550,15 @@ export function Karte(props: KartenProps) {
     const blatt = rahmen ? Math.max(0, karte.getContainer().getBoundingClientRect().bottom - rahmen.top) : 160;
     return rueckblickAbspielen(
       karte,
-      { wege: rb.wege, seit: rb.seit },
+      { wege: rb.wege, seit: rb.seit, bis: rb.bis },
       {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,
         zeichnen: (stuecke) => setzeDaten(karte, "entdeckt", linienSammlung(stuecke)),
         aktuell: () => entdecktRef.current,
         untenFrei: Math.min(blatt, karte.getContainer().clientHeight * 0.4),
-        veedel: veedelRahmen(gewaehltRef.current, datenRef.current),
+        // A past day ends where its ways are, not at the chosen Veedel.
+        veedel: rb.bis === undefined ? veedelRahmen(gewaehltRef.current, datenRef.current) : null,
       },
       () => rbEnde.current(),
     );

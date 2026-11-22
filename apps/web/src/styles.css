@@ -584,3 +584,9 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .stempel-blatt { flex: none; width: 100%; scroll-snap-align: start; display: grid; grid-template-columns: 1fr 1fr; align-content: start; justify-items: center; gap: 18px 0; padding: 28px 20px 40px; min-height: 60vh; }
 .stempel-blatt > .zeile-text { grid-column: 1 / -1; }
 .stempel-blatt .pass-stempel { width: 156px; height: 156px; }
+
+/* Rückblicke (Bauplan 3, D4): a day plays on tap; the arrow opens its ways. */
+.tag-zeile { display: flex; align-items: stretch; border-bottom: 1px solid var(--linie); }
+.tag-abspielen { flex: 1; display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 10px 0; border: 0; background: none; text-align: left; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
+.abspiel-zeichen { flex: none; display: grid; place-items: center; }
+.tag-pfeil { flex: none; width: 52px; border: 0; border-left: 1px solid var(--linie); background: none; color: var(--text-leise); font-size: 1.25rem; cursor: pointer; }

@@ -46,8 +46,6 @@ export interface BlattProps {
   /** Is Overland set up, and when did the newest point arrive (from the server)? */
   overland: OverlandStatus;
   einstellungen: (ziel?: "overland") => void;
-  eigeneWege: KurzWeg[];
-  abspielen: (w: KurzWeg) => void;
   position: [number, number] | null;
   offen: string | null;
   offenZeigen: (s: OffeneStrasse | null) => void;

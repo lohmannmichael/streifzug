@@ -239,9 +239,14 @@ export const de = {
     safariText: "Geh jetzt zurück zur App Unterwegs auf deinem Homescreen. Dort legst du unter Einstellungen → Konto dein Passwort fest.",
     safariWeiter: "Hier weiter",
   },
+  rueckblicke: {
+    titel: "Rückblicke",
+    zeile: (wege: number, neu: string | null) => `${wege} ${wege === 1 ? "Weg" : "Wege"}${neu ? ` · ${neu} neu` : ""}`,
+    wegeZeigen: (tag: string) => `Wege vom ${tag} zeigen`,
+  },
   wege: {
     titel: "Wege",
-    unterzeile: "Die letzten 30 Tage. Tipp auf einen Weg zeigt seine Abschnitte. Hat die App etwas falsch erkannt, stell es hier um.",
+    unterzeile: "Tipp auf einen Weg zeigt seine Abschnitte. Hat die App etwas falsch erkannt, stell es hier um.",
     zeile: (von: string, bis: string, strecke: string) => `${von}–${bis} · ${strecke}`,
     abschnitt: (von: string, bis: string, strecke: string, min: number) => `${von}–${bis} · ${strecke} · ${min} Min.`,
     arten: { zuFuss: "zu Fuß", rad: "Rad", gefahren: "gefahren" },

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
-import { useOverlandAbholen, useOverlandStatus, type KurzWeg } from "./daten/import";
+import { useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import";
 import { useOnline } from "./daten/netz";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
@@ -20,7 +20,7 @@ import { OrteSeite } from "./seiten/Orte";
 import { PassSeite, useRandWischen, ZurueckZumPass, type PassTeil } from "./seiten/Pass";
 import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
-import { WegeSeite } from "./seiten/Wege";
+import { RueckblickeSeite, type Tag } from "./seiten/Rueckblicke";
 import { Stifte } from "./seiten/Stifte";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
@@ -37,7 +37,8 @@ export function App() {
   const [pass, setPass] = useState<PassTeil | null>(null);
   const overland = useOverlandStatus();
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
-  const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
+  // One past day from "Rückblicke" (Bauplan 3, D4).
+  const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; bis: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | null>(null);
@@ -65,16 +66,6 @@ export function App() {
     aufnahmeAktiv.current = aufzeichnung.aktiv;
   }, [aufzeichnung.aktiv]);
   const streifzuege = useStreifzuege();
-  // Own finished outings, shortened, for "Zuletzt".
-  const eigeneWege: KurzWeg[] = useMemo(
-    () =>
-      streifzuege
-        .filter((s) => s.status !== "aktiv" && s.fixes.length > 1)
-        .sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt))
-        .slice(0, 5)
-        .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, coords: kuerzen(s.fixes) })),
-    [streifzuege],
-  );
   // Car rides count only with the switch on (docs/PLAN.md, section 2). The page holds only own
   // outings; imports and Overland are loaded by the background worker, each with its switch.
   // All own outings take part; per leg it is decided what is "aktiv" (counts) or "gefahren" (pen line).
@@ -234,11 +225,6 @@ export function App() {
             setImportZeigen(ziel ?? null);
             setPass("einstellungen");
           },
-    eigeneWege: eigeneWege,
-    abspielen: (w: KurzWeg) => {
-            setHoehe(1);
-            setEinzeln((alt) => ({ wege: [w.coords], seit: w.startedAt, nr: (alt?.nr ?? 1000) + 1 }));
-          },
     position: position,
     offen: offen?.name ?? null,
     offenZeigen: setOffen,
@@ -303,7 +289,22 @@ export function App() {
     ) : pass === "stempel" ? (
       <StempelSeite daten={daten!} fortschritt={fortschritt} fremdeOrte={fremdeOrte} zurueck={zumPass} />
     ) : pass === "rueckblicke" ? (
-      <WegeSeite zurueck={zumPass} />
+      <RueckblickeSeite
+        fortschritt={fortschritt}
+        zurueck={zumPass}
+        abspielen={(tag: Tag) => {
+          // The pass closes and the day runs on the plan: its ways, only what was new that day.
+          void wegeSeit(tag.von - 86400_000).then((andere) => {
+            const wege = [
+              ...andere.filter((w) => w.startedAt >= tag.von && w.startedAt < tag.bis).map((w) => w.coords),
+              ...streifzuege.filter((s) => s.status !== "aktiv" && s.startedAt >= tag.von && s.startedAt < tag.bis && s.fixes.length > 1).map((s) => kuerzen(s.fixes)),
+            ];
+            setPass(null);
+            setHoehe(1);
+            setEinzeln((alt) => ({ wege, seit: tag.von, bis: tag.bis, nr: (alt?.nr ?? 1000) + 1 }));
+          });
+        }}
+      />
     ) : pass === "einstellungen" ? (
       <Profil
         sitzung={sitzung}

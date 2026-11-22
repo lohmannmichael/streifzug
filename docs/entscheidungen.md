@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: D4 Rückblicke als Liste
+- Seite `seiten/Rueckblicke.tsx` (früher `Wege.tsx`): Tage der letzten 30 Tage mit Wegen, neueste zuerst; je Zeile Datum, Zahl der Wege, „N km neu“ (Stücke, deren erster Weg an dem Tag begann)
+- Tipp auf einen Tag: Pass schließt, der bestehende Rückblick spielt nur diesen Tag (`bis` im Rückblick: nur was an dem Tag neu war wird gelb, später Entdecktes wartet), danach wieder der aktuelle Stand. Kein Zoom zum gewählten Veedel und kein Hochzählen am Ende. Liegen die Wege eines Tages weit auseinander, zeigt er die Gegend mit den meisten
+- Pfeil rechts oder langer Tipp: der Tag mit seinen Wegen und Abschnitten (zu Fuß · Rad · gefahren aus C2)
+- Weg: Menü „Wege“ (schon mit D1) und die alten Blatt-Daten für „Zuletzt“ (`eigeneWege`, `abspielen`)
+- Geprüft: zwei Tage (Overland-Daten Köln, Testweg Freising); beide abspielbar, danach Prozent wie vorher; Tag öffnen zeigt seine Wege. Testkonten aus D1–D4 gelöscht
+
 ## 22.11.2026: D3 Stempelpass: nur die besten
 - Kern (`stamps.ts`, mit Tests): `besteStempel` zeigt je Veedel nur den höchsten Prozent-Stempel, „betreten“ nur, solange kein Prozent-Stempel erreicht ist. Gespeichert bleiben alle
 - Neue Reihen: `ORTE_ANZAHL` 5, 10, 25, 50 (Orte mit gelbem Meter, auch „wird vorbereitet“), `LAENDER_ANZAHL` 2, 3, 5, 10. Veedel-Anzahl gilt jetzt je Ort: 5, 10, 25, 50 und als letzte Stufe „alle“ (alle Veedel dieses Orts, also auch in Freising mit 9). „Stadt rundum“ entfällt, weil es dasselbe ist wie „alle“; „Bezirk rundum“ bleibt
