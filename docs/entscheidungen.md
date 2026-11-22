@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 22.11.2026: Zwei Fahrbahnen zählen ganz, wenn eine gegangen ist
+- Michi: „Bei größeren Straßen, wenn ich sie in eine Richtung gefahren bin, dann zählt es.“ Auf welcher Seite der Strich liegt, ist egal
+- Bisher: jede Fahrbahn zählt halb, die andere nur, wenn sie innerhalb der 20 m Abgleich-Abstand lag (an der Aachener Straße mit Straßenbahn dazwischen oft nicht)
+- Neu: `fahrbahnenErgaenzen` (Kern `linien.ts`, mit Tests) nimmt jedes ungesehene Fahrbahn-Stück dazu, das bis 35 m neben einem gegangenen Fahrbahn-Stück parallel liegt; nur seitlich daneben, nicht weiter die Straße entlang. Gezeichnet wird weiter ein Strich (nördliche bzw. westliche Fahrbahn). `ABGLEICH_VERSION` 9, alle Wege werden einmal neu gerechnet
+- Wirkung mit Michis Wegen seit 15.11.: Gelb 16,6 → 16,8 km, Prozente unverändert auf eine Stelle
+
 ## 22.11.2026: Eine Linie je Straße
 - Michi: „Jede Straße soll am Ende einmal sauber abgezeichnet sein“, er sah mehrere gelbe Striche nebeneinander
 - Ursache: Gezählt wurde schon jede Straße nur einmal (zwei Fahrbahnen je halb, Wege nie), gezeichnet aber alles: Gehwege und Radwege neben der Straße (eigene Wege in OpenStreetMap), beide Fahrbahnen, der rote Kuli-Strich direkt neben Gelb

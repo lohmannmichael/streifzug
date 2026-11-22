@@ -6,9 +6,10 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 
 ## Was läuft
 - Plan im Druck-Stil, Textmarker (deckend) für zu Fuß und Rad, rote Kuli-Linie für gefahren, Parkwege schmal gelb (zählen nicht)
-- Blatt mit drei Höhen, Menü „…“ (Städte und Veedel, Letzte Wege, Stempelpass, Einstellungen), Stempel mit Tinten-Filter
+- Blatt mit zwei Höhen, Pass oben rechts (Orte, Stempel, Rückblicke, Einstellungen), Stempel mit Tinten-Filter
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (nur Gelb)
-- Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen (`ABGLEICH_VERSION` 7)
+- Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit (`ABGLEICH_VERSION` 9)
+- Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb werden nicht gezeichnet)
 - Orte ohne Region: behalten, „Wird vorbereitet“, Wünsche in `region_wishes`
 - Konto: anonym; neues Konto nur, wenn das alte wirklich gelöscht ist; Overland-Verbindung und eigene Wege werden vom Server zurückgeholt
 
@@ -23,6 +24,10 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | F Neues | F1–F7 | offen |
 
 ## Offene Fragen an Michi
+- Eine Woche normal nutzen (Abschluss Etappe D) und aufschreiben, wo er sucht oder was hakt
+- Overland: „Min Time Between Points“ auf 10 s stellen; Mitteilungen von Overland ggf. aus (Statuszeile in Unterwegs reicht)
+- Test, ob Overland nach „Location updates were stopped“ von selbst weiterläuft
+- Anmelden mit Apple: später (Michi 22.11.: „Erst Mail, später Apple“), braucht Apple-Entwicklerkonto
 
 ## Zu Beginn jeder Sitzung
 - `select name, meters, first_seen from region_wishes` prüfen und Orte mit `npm run region` aufnehmen

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LonLat } from "./geo";
-import { eineLinieJeStrasse } from "./linien";
+import { eineLinieJeStrasse, fahrbahnenErgaenzen } from "./linien";
 import type { Piece } from "./pieces";
 
 // About 1 m per 0.0000142719° of longitude and 0.0000089932° of latitude at 50.94° N.
@@ -74,5 +74,22 @@ describe("eineLinieJeStrasse", () => {
     const gelb = [stueck("strasse", 0), stueck("gehweg", 6, "path")];
     eineLinieJeStrasse(gelb, []);
     expect(gelb).toHaveLength(2);
+  });
+});
+
+describe("fahrbahnenErgaenzen", () => {
+  it("counts the other carriageway when one was walked (Aachener Straße with tram in between)", () => {
+    const alle = [stueck("nord", 15, "street", 0.5), stueck("sued", -15, "street", 0.5)];
+    expect([...fahrbahnenErgaenzen(alle, new Set(["nord"]))]).toEqual(["sued"]);
+  });
+
+  it("does not add a separate street next to it, nor a single street", () => {
+    const alle = [stueck("nord", 15, "street", 0.5), stueck("nachbar", 60, "street", 1), stueck("parallel", -15, "street", 1)];
+    expect([...fahrbahnenErgaenzen(alle, new Set(["nord"]))]).toEqual([]);
+  });
+
+  it("only beside what was walked, not further along the street", () => {
+    const alle = [stueck("nord", 15, "street", 0.5), stueck("sued-weiter", -15, "street", 0.5, 60)];
+    expect([...fahrbahnenErgaenzen(alle, new Set(["nord"]))]).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import { aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry } from "@streifzug/core";
+import { aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
 
@@ -9,7 +9,7 @@ import { stueckeDerKachel } from "./strassen";
 
 /** Bump when the matching rules change: stored results of older versions are worked out again. */
 // 2 (21.11.2026): legs "aktiv"/"gefahren" (Bauplan 6.2), results stored separately.
-const ABGLEICH_VERSION = 8;
+const ABGLEICH_VERSION = 9;
 
 interface Flaeche {
   id: string;
@@ -93,6 +93,8 @@ export async function abgleichen(fixes: Fix[], locker: boolean, korrekturen: rea
   for (const id of nachzeichnen(alle, aktiveFolgen(fixes, korrekturen), aktivIds)) aktivIds.add(id);
   for (const id of eckenSchliessen(alle, aktivIds, zuFuss)) aktivIds.add(id);
   for (const id of lueckenSchliessen(alle, aktivIds)) aktivIds.add(id);
+  // Two carriageways: one walked counts the other too (Michi, 22.11.2026).
+  for (const id of fahrbahnenErgaenzen(alle, aktivIds)) aktivIds.add(id);
   return { aktiv: alle.filter((p) => aktivIds.has(p.id)), gefahren: alle.filter((p) => !aktivIds.has(p.id) && gefahrenIds.has(p.id)) };
 }
 
