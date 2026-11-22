@@ -15,6 +15,8 @@ function tileUrl(): Promise<string> {
   vorlage ??= fetch("https://tiles.openfreemap.org/planet")
     .then((r) => r.json() as Promise<{ tiles: string[] }>)
     .then((j) => j.tiles[0]!);
+  // A failed request is not kept: the next try (e.g. "Nochmal versuchen") asks again.
+  vorlage.catch(() => (vorlage = null));
   return vorlage;
 }
 
@@ -58,9 +60,11 @@ function ladeKachel(tile: Tile): Promise<Kachel> {
         for (const coords of linienVon(f.toGeoJSON(tile.x, tile.y, TILE_ZOOM).geometry)) namen.push({ name, coords });
       }
       return { stuecke: piecesFromTile(tile, features, { drive: true }), namen };
-    })().catch(() => {
+    })().catch((e: unknown) => {
+      // No network or a broken answer: never count this as "no streets here" (the result of a way
+      // would be stored empty). Forget the try and let the calculation fail; it is repeated later.
       kacheln.delete(key);
-      return { stuecke: [], namen: [] };
+      throw e;
     });
     kacheln.set(key, p);
   }

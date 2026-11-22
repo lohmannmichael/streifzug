@@ -58,6 +58,11 @@ export interface BlattProps {
   zahlVorher: number | null;
   /** The calculation failed: shown instead of the district line, so it can be reported. */
   rechenFehler: string | null;
+  nochmalRechnen: () => void;
+  online: boolean;
+  /** The replay waits for a tap (calculating took longer than 8 s). */
+  rueckblickAngebot: boolean;
+  rueckblickStarten: () => void;
   teil: SammlungTeil;
   setTeil: (t: SammlungTeil) => void;
   /** After the replay: count up from `von` (Bauplan 5, Nr. 6). */
@@ -200,13 +205,17 @@ export function Blatt(props: BlattProps) {
 
   const status = a.aktiv
     ? t.blatt.unterwegs(alsStrecke(props.neuUnterwegsM), props.neueStrassen)
-    : props.rueckblick
-      ? t.blatt.seit(seitText(props.rueckblick.wege[0]?.startedAt ?? Date.now()), props.rueckblick.wege.length, alsStrecke(props.rueckblick.km * 1000))
-      : props.rechenFehler
-        ? t.blatt.rechenFehler(props.rechenFehler)
-        : props.rechnet
+    : props.rechenFehler
+      ? props.online
+        ? t.blatt.rechenFehler
+        : t.blatt.offline
+      : props.rechnet
         ? t.blatt.rechnetWege(Math.max(1, props.rechnet.gesamt - props.rechnet.fertig))
-        : gebiet && daten
+        : props.rueckblick
+          ? t.blatt.seit(seitText(props.rueckblick.wege[0]?.startedAt ?? Date.now()), props.rueckblick.wege.length, alsStrecke(props.rueckblick.km * 1000))
+          : !props.online
+            ? t.blatt.offline
+            : gebiet && daten
           ? elternText(daten, gebiet.id)
           : " ";
 
@@ -254,10 +263,21 @@ export function Blatt(props: BlattProps) {
               <h1 id="gebiet-name" className="gebiet">{gebiet?.name ?? " "}</h1>
               <p className="ober" aria-live="polite">
                 {status}
-                {props.rueckblick && !a.aktiv && (
+                {props.rueckblick && !a.aktiv && !props.rechenFehler && !props.rechnet && (
+                  <>
+                    {props.rueckblickAngebot && (
+                      <>
+                        {" "}
+                        <button type="button" className="text-knopf klein" onClick={props.rueckblickStarten}>{t.blatt.rueckblickAnsehen}</button>
+                      </>
+                    )}{" "}
+                    <button type="button" className="text-knopf klein" onClick={props.rueckblickBeenden}>{t.blatt.ueberspringen}</button>
+                  </>
+                )}
+                {!a.aktiv && props.rechenFehler && props.online && (
                   <>
                     {" "}
-                    <button type="button" className="text-knopf klein" onClick={props.rueckblickBeenden}>{t.blatt.ueberspringen}</button>
+                    <button type="button" className="text-knopf klein" onClick={props.nochmalRechnen}>{t.blatt.nochmalVersuchen}</button>
                   </>
                 )}
               </p>
@@ -311,13 +331,14 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
         </p>
       )}
       {/* Status line (Bauplan 3, C1): only when the recording needs attention. */}
-      {props.overland.verbunden === false && (
+      {props.rechenFehler && <p className="zeile-text leise technik">{props.rechenFehler}</p>}
+      {props.online && props.overland.verbunden === false && (
         <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
           <span>{t.blatt.einrichten}</span>
           <span className="wert">›</span>
         </button>
       )}
-      {overlandSteht(props.overland) && (
+      {props.online && overlandSteht(props.overland) && (
         <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
           <span>{props.overland.letzter ? t.import.overland.still(zeitText(props.overland.letzter)) : t.import.overland.nochKeinPunkt}</span>
           <span className="wert">{t.import.overland.pruefen} ›</span>

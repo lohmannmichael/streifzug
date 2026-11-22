@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: C3 Fehler und Wartezustände
+- Einrechnen schlägt fehl: Kopfzeile „Neue Wege ließen sich gerade nicht einrechnen. Deine Wege sind sicher.“ mit „Nochmal versuchen“, die technische Meldung klein im Blatt und unter Einstellungen → Zustand (Titel ohne „für Claude“). Kommt das Netz zurück, rechnet die App von selbst nochmal
+- Wichtig dabei: Kam eine Straßenkachel nicht an (Funkloch), wurde sie bisher still als „keine Straßen“ gezählt und das leere Ergebnis des Wegs gespeichert. Jetzt ist das ein Fehler: nichts wird gespeichert, der Weg wird beim nächsten Versuch neu gerechnet (`strassen.ts`, Worker meldet `uebersprungen`)
+- Öffnen: Plan und letzter Stand sofort, dann „N neue Wege werden eingerechnet …“ (jetzt schon ab einem Weg). Der Rückblick startet nur von selbst, wenn das Einrechnen innerhalb von 8 Sekunden nach dem Öffnen fertig ist; sonst Knopf „Rückblick ansehen“ im Blatt. Nach einem Fehler startet er nicht mit altem Stand
+- Kartendienst nicht erreichbar (Stil kommt nicht oder nicht innerhalb von 12 s): graue Fläche „Der Plan lädt gerade nicht. Deine Wege sind sicher.“ mit „Nochmal“
+- Ohne Netz: Kopfzeile „Offline. Neue Wege kommen, sobald Netz da ist.“, Overland-Hinweise ausgeblendet (wären ohne Netz falsch). Die App speichert jetzt Kartenstil und schon gesehene Kartenkacheln (höchstens 1.500, 60 Tage) und das Kartenprogramm (`.mjs` fehlte im Speicher), damit der Plan auch ohne Netz erscheint
+- Geprüft im Browser: Karte aus → graue Fläche → „Nochmal“ → Plan; Netz aus/an; Straßendaten gesperrt → Fehlerzeile → „Nochmal versuchen“ → eingerechnet; Straßendaten 9 s verzögert → „1 neuer Weg wird eingerechnet …“, danach „Rückblick ansehen“; schnell → Rückblick startet selbst; Start ganz ohne Netz → Plan mit Straßen und Offline-Zeile. Testkonten gelöscht
+
 ## 22.11.2026: C2 Abschnitt umstellen
 - Menü → „Wege“: die Wege der letzten 30 Tage nach Tagen (wird in D4 zur Rückblicke-Liste). Tipp auf einen Weg zeigt seine Abschnitte (Uhrzeit, Strecke, Dauer, „unsicher erkannt“) mit „zu Fuß · Rad · gefahren“; „wie erkannt“ nimmt die Korrektur zurück
 - Kern: `splitLegs`, `seenByLegs`, `aktiveFolgen` nehmen Korrekturen (`{von, bis, art}` je Weg); ein Abschnitt, dessen Mitte im korrigierten Zeitraum liegt, bekommt die Art, die Korrektur gewinnt immer (Tests in `legs.test.ts`). Rohdaten bleiben unverändert

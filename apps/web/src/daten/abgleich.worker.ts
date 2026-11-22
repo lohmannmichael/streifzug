@@ -64,7 +64,7 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
@@ -276,17 +276,19 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     ...zaehlende.filter((k) => jeSpur.get(k.id)?.key !== keyVon(k.id, k.n) && k.fixes).map((k) => ({ id: k.id, n: k.n, fixes: k.fixes!, locker: true, speichern: true })),
   ];
   let merken: { id: string; ids: string[]; gefahren: string[]; gueltig: string }[] = [];
+  const uebersprungen: string[] = [];
   for (let i = 0; i < offen.length; i++) {
     const s = offen[i]!;
     // A newer request (e.g. the next live fixes) takes over; what is done so far is kept.
     if (neueste !== nr) break;
-    if (offen.length > 3) senden({ typ: "stand", nr, fertig: i, gesamt: offen.length });
+    senden({ typ: "stand", nr, fertig: i, gesamt: offen.length });
     // One broken outing must not stop all the others: it is skipped (and tried again next time).
     let r: Awaited<ReturnType<typeof abgleichen>>;
     try {
       r = await abgleichen(s.fixes, s.locker, korrekturenJetzt[s.id] ?? []);
     } catch (e) {
       console.warn("Weg übersprungen", s.id, e);
+      uebersprungen.push(s.id);
       continue;
     }
     for (const p of [...r.aktiv, ...r.gefahren]) stueckNachId.set(p.id, p);
@@ -348,7 +350,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     zellen.set(zelle, e);
   }
   const draussen = [...zellen.values()].filter((e) => e.m >= 200);
-  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen });
+  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen });
 }
 
 function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {

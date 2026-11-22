@@ -27,13 +27,25 @@ export default defineConfig({
       },
       workbox: {
         // The map style, tiles and street data come from other hosts and are not precached.
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2,geojson}", "regionen/**/*.json"],
+        globPatterns: ["**/*.{js,mjs,css,html,svg,png,webp,woff2,geojson}", "regionen/**/*.json"],
         // Street tiles are loaded when needed and then kept on the device.
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/strassen/"),
             handler: "CacheFirst",
             options: { cacheName: "strassen", expiration: { maxEntries: 2000 } },
+          },
+          // Map style and tile index from OpenFreeMap: fresh when online, the last copy when offline.
+          {
+            urlPattern: ({ url }) => url.hostname === "tiles.openfreemap.org" && !/\.(pbf|png|webp)$/.test(url.pathname),
+            handler: "NetworkFirst",
+            options: { cacheName: "karte-stil", networkTimeoutSeconds: 4, expiration: { maxEntries: 60 } },
+          },
+          // Map tiles, fonts and icons seen before: kept for offline use (about 30 MB at most).
+          {
+            urlPattern: ({ url }) => url.hostname === "tiles.openfreemap.org",
+            handler: "CacheFirst",
+            options: { cacheName: "karte-kacheln", expiration: { maxEntries: 1500, maxAgeSeconds: 60 * 86400 }, cacheableResponse: { statuses: [200] } },
           },
         ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,

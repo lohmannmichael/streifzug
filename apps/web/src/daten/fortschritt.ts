@@ -60,11 +60,13 @@ export function useFortschritt(
   spuren: Spur[],
   zaehlen: Zaehlen,
   daten: Regionen | null,
-): { fortschritt: Fortschritt | null; rechnet: { fertig: number; gesamt: number } | null; fehler: string | null } {
+): { fortschritt: Fortschritt | null; rechnet: { fertig: number; gesamt: number } | null; fehler: string | null; nochmal: () => void } {
   const [fortschritt, setFortschritt] = useState<Fortschritt | null>(null);
   const [rechnet, setRechnet] = useState<{ fertig: number; gesamt: number } | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [andereStand, setAndereStand] = useState(0);
+  // "Nochmal versuchen" after an error: a new key starts the calculation again.
+  const [versuch, setVersuch] = useState(0);
   useEffect(() => {
     const neu = () => setAndereStand((n) => n + 1);
     window.addEventListener(ANDERE_GEAENDERT, neu);
@@ -72,7 +74,7 @@ export function useFortschritt(
   }, []);
   const anzahl = spuren.reduce((n, s) => n + s.fixes.length, 0);
   // Which outings and sources take part and, every 10 fixes, the live track.
-  const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}`;
+  const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}:${versuch}`;
   const aktuell = useRef(0);
   useEffect(() => {
     if (!daten) return;
@@ -89,10 +91,12 @@ export function useFortschritt(
     });
     void antwort.then((a) => {
       // A complete result means the worker now knows every own outing that was sent.
-      for (const s of spuren) if (!s.id.startsWith("live:")) imWorker.set(s.id, ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]));
+      // Skipped ways (e.g. street data did not arrive) are sent again on the next try.
+      const nichtDrin = new Set(a.uebersprungen);
+      for (const s of spuren) if (!s.id.startsWith("live:") && !nichtDrin.has(s.id)) imWorker.set(s.id, ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]));
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
-      setFehler(null);
+      setFehler(a.uebersprungen.length ? `${a.uebersprungen.length} übersprungen (Straßendaten nicht geladen)` : null);
       setFortschritt({ stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen });
     }).catch((e: unknown) => {
       if (nr !== aktuell.current) return;
@@ -103,7 +107,7 @@ export function useFortschritt(
     // Recalculate only when the set of outings changes or the live track grows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schluessel, daten]);
-  return { fortschritt, rechnet, fehler };
+  return { fortschritt, rechnet, fehler, nochmal: () => setVersuch((n) => n + 1) };
 }
 
 /** The smallest area (Stadtteil) that contains a point, or null outside all regions. */

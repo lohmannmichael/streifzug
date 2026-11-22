@@ -11,7 +11,7 @@ export function useNeueStrassen(stuecke: Piece[]): number {
     let aktiv = true;
     void Promise.all(stuecke.map(strassenName)).then((namen) => {
       if (aktiv) setAnzahl(new Set(namen.filter(Boolean)).size);
-    });
+    }).catch(() => undefined);
     return () => {
       aktiv = false;
     };

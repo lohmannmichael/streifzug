@@ -4,6 +4,7 @@ import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
 import { useOverlandAbholen, useOverlandStatus, type KurzWeg } from "./daten/import";
+import { useOnline } from "./daten/netz";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
@@ -105,7 +106,20 @@ export function App() {
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
-  const { fortschritt, rechnet, fehler: rechenFehler } = useFortschritt(spuren, zaehlen, daten);
+  const { fortschritt, rechnet, fehler: rechenFehler, nochmal: nochmalRechnen } = useFortschritt(spuren, zaehlen, daten);
+  const online = useOnline();
+  // Back online after a failed calculation: try again by itself.
+  useEffect(() => {
+    if (online && rechenFehler) nochmalRechnen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online]);
+  // When the app was opened or came back (Bauplan 3, C3: replay only on its own within 8 s).
+  const geoeffnetAm = useRef(Date.now());
+  useEffect(() => {
+    const zurueck = () => document.visibilityState === "visible" && (geoeffnetAm.current = Date.now());
+    document.addEventListener("visibilitychange", zurueck);
+    return () => document.removeEventListener("visibilitychange", zurueck);
+  }, []);
   // Progress before the current outing, to show what it added afterwards.
   const vorher = useRef<Fortschritt | null>(null);
   const warAktiv = useRef(false);
@@ -123,16 +137,22 @@ export function App() {
 
   // Replay on opening (Bauplan 5.1): starts once the progress includes the new ways (at most 2.5 s wait).
   const [rbBereit, setRbBereit] = useState<number | null>(null);
+  // Took longer than 8 s: the replay is offered as a button instead of starting by itself.
+  const [rbAngebot, setRbAngebot] = useState<number | null>(null);
   useEffect(() => {
-    if (!rueckblick) return setRbBereit(null);
-    if (rbBereit === rueckblick.nr) return;
+    if (!rueckblick) {
+      setRbAngebot(null);
+      return setRbBereit(null);
+    }
+    if (rbBereit === rueckblick.nr || rbAngebot === rueckblick.nr) return;
     // Never before the progress is there and fully calculated (after an update everything is
     // matched again, which takes a while on the phone).
-    if (!fortschritt || rechnet) return;
-    if (fortschritt.erstesMal.some((t) => t >= rueckblick.seit)) return setRbBereit(rueckblick.nr);
-    const warten = window.setTimeout(() => setRbBereit(rueckblick.nr), 2500);
+    if (!fortschritt || rechnet || rechenFehler) return;
+    const los = () => (Date.now() - geoeffnetAm.current > 8000 ? setRbAngebot(rueckblick.nr) : setRbBereit(rueckblick.nr));
+    if (fortschritt.erstesMal.some((t) => t >= rueckblick.seit)) return los();
+    const warten = window.setTimeout(los, 2500);
     return () => window.clearTimeout(warten);
-  }, [rueckblick, fortschritt, rechnet, rbBereit]);
+  }, [rueckblick, fortschritt, rechnet, rechenFehler, rbBereit, rbAngebot]);
   // The share before the new ways: the number stays there during the replay and counts up afterwards (Nr. 6).
   const [zahlVorher, setZahlVorher] = useState<number | null>(null);
   const [hochzaehlen, setHochzaehlen] = useState<{ von: number; nr: number } | null>(null);
@@ -206,6 +226,10 @@ export function App() {
     neueStrassen: neueStrassen,
     rueckblick: rueckblick && !aufzeichnung.aktiv ? rueckblick : null,
     rueckblickBeenden: rueckblickBeenden,
+    rueckblickAngebot: !!rueckblick && rbAngebot === rueckblick.nr && rbBereit !== rueckblick.nr,
+    rueckblickStarten: () => rueckblick && setRbBereit(rueckblick.nr),
+    online: online,
+    nochmalRechnen: nochmalRechnen,
     overland,
     einstellungen: (ziel?: "overland") => {
             setImportZeigen(ziel ?? null);
@@ -270,6 +294,7 @@ export function App() {
           [t.zustand.eigene, String(streifzuege.length)],
           [t.zustand.stuecke, fortschritt ? t.zustand.stueckeWert(fortschritt.stuecke.filter((p) => p.kind === "street").length, fortschritt.gefahren.length) : t.zustand.nochNicht],
           [t.zustand.rechnet, rechenFehler ?? (rechnet ? `${rechnet.fertig} / ${rechnet.gesamt}` : t.zustand.fertig)],
+          [t.zustand.netz, online ? t.zustand.online : t.zustand.offline],
         ]}
       />
     );

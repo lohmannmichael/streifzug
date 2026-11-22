@@ -339,6 +339,9 @@ export function Karte(props: KartenProps) {
   const [etikett, setEtikett] = useState<EtikettZustand | null>(null);
   const schild = useRef<{ marker: Marker; el: HTMLDivElement } | null>(null);
   const dunkelRef = useRef(false);
+  // Map service unreachable (Bauplan 3, C3): grey area with a sentence and "Nochmal".
+  const [kaputt, setKaputt] = useState(false);
+  const pruefUhr = useRef(0);
   // Drawing moment: ids already shown, and the running animation.
   const bekannt = useRef<Set<string> | null>(null);
   const animation = useRef<{ bild: number; ende: () => void } | null>(null);
@@ -360,6 +363,24 @@ export function Karte(props: KartenProps) {
       dragRotate: false,
     });
     karteRef.current = karte;
+    // The style must arrive within 12 s; a failed style request shows the grey area at once.
+    const pruefen = () => {
+      window.clearTimeout(pruefUhr.current);
+      pruefUhr.current = window.setTimeout(() => !karte.isStyleLoaded() && setKaputt(true), 12_000);
+    };
+    pruefen();
+    (karte as unknown as { nochmal: () => void }).nochmal = () => {
+      setKaputt(false);
+      pruefen();
+      karte.setStyle(STIL_ADRESSE, { diff: false });
+    };
+    karte.on("error", () => {
+      if (!karte.isStyleLoaded()) setKaputt(true);
+    });
+    karte.on("style.load", () => {
+      window.clearTimeout(pruefUhr.current);
+      setKaputt(false);
+    });
     karte.touchZoomRotate.disableRotation();
     karte.addControl(new AttributionControl({ compact: true }), "top-left");
     karte.addControl(new ScaleControl({ unit: "metric", maxWidth: 90 }), "bottom-left");
@@ -407,6 +428,7 @@ export function Karte(props: KartenProps) {
     dunkel.addEventListener("change", wechsel);
     return () => {
       dunkel.removeEventListener("change", wechsel);
+      window.clearTimeout(pruefUhr.current);
       animation.current?.ende();
       karte.remove();
       karteRef.current = null;
@@ -563,6 +585,14 @@ export function Karte(props: KartenProps) {
   return (
     <>
       <div ref={box} className="karte" role="region" aria-label={t.karte.kartenRegion(props.gewaehltName)} />
+      {kaputt && (
+        <div className="karte-fehler" role="alert">
+          <p>{t.karte.laedtNicht}</p>
+          <button type="button" className="text-knopf" onClick={() => (karteRef.current as unknown as { nochmal?: () => void } | null)?.nochmal?.()}>
+            {t.karte.nochmal}
+          </button>
+        </div>
+      )}
       {etikett && schild.current && createPortal(<Schild z={etikett} schliessen={() => setEtikett(null)} />, schild.current.el)}
     </>
   );
@@ -695,7 +725,7 @@ function zeichenMoment(
       zeile.textContent = name;
       plakette.prepend(zeile);
       el.setAttribute("aria-label", t.karte.neuEntdecktIn(alsStrecke(meter), name));
-    });
+    }).catch(() => undefined);
     el.addEventListener("animationend", () => marke?.remove());
     window.setTimeout(() => marke?.remove(), 2500);
   }

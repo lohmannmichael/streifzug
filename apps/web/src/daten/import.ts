@@ -215,9 +215,12 @@ export function useOverlandAbholen(daten: Regionen | null, danach?: () => void) 
     los(true);
     const takt = window.setInterval(() => los(false), 5 * 60_000);
     document.addEventListener("visibilitychange", zurueck);
+    // Back online: fetch what came in meanwhile.
+    window.addEventListener("online", zurueck);
     return () => {
       window.clearInterval(takt);
       document.removeEventListener("visibilitychange", zurueck);
+      window.removeEventListener("online", zurueck);
     };
   }, [daten]);
 }
