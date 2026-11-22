@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: Eine Linie je Straße
+- Michi: „Jede Straße soll am Ende einmal sauber abgezeichnet sein“, er sah mehrere gelbe Striche nebeneinander
+- Ursache: Gezählt wurde schon jede Straße nur einmal (zwei Fahrbahnen je halb, Wege nie), gezeichnet aber alles: Gehwege und Radwege neben der Straße (eigene Wege in OpenStreetMap), beide Fahrbahnen, der rote Kuli-Strich direkt neben Gelb
+- Neu im Kern `linien.ts` (`eineLinieJeStrasse`, 10 Tests): Nur beim Zeichnen entfallen Wege, die bis 18 m neben einer gelben Straße parallel laufen; von zwei gelben Fahrbahnen bleibt immer dieselbe Seite (Ost-West-Straßen die nördliche, Nord-Süd-Straßen die westliche), damit die Linie nicht springt; Rot entfällt bis 20 m neben Gelb. Parkwege, Schleichwege und Querwege bleiben. Zählung, Prozente, Stempel und gespeicherte Ergebnisse ändern sich nicht
+- Gemessen mit Michis Wegen der letzten Woche: 698 gelbe Stücke, davon 163 nicht mehr gezeichnet (145 Geh-/Radwege, 18 zweite Fahrbahnen). Aachener Straße vorher bis zu vier Streifen, jetzt einer
+- Grenze: Ein kurzer Querweg, der nur zum (jetzt ausgeblendeten) Gehweg führte, bleibt als kleiner Stummel stehen
+
 ## 22.11.2026: D8 Altes entfernt (Michi: „Alles bei D“, mit den Empfehlungen aus der Tabelle)
 - Texte der alten Reiter „Gebiete“ und „Streifzüge“ und rund 30 weitere ungenutzte Texte (`texte/de.ts`) entfernt; der Text „Im Hintergrund zeichnet erst die iPhone-App auf“ war schon weg
 - „Noch offen“ samt Berechnung im Hintergrund (`offeneStrassen`), Karten-Ebene und Blatt-Anschluss entfernt; „Weißer Fleck“ (`nearestUnseen`) und die alten Logbuch-Helfer (`milestoneReached`, `newPerOuting`) aus `ziele.ts` samt Tests. `ziele.ts` bleibt für `nameNear` und `distanceToLineM`. „Als Nächstes“ (`naechsteStempel`, `fehlendeMeter`) samt Tests entfernt

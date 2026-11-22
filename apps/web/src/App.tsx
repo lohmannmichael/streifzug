@@ -1,4 +1,4 @@
-import type { LonLat } from "@streifzug/core";
+import { eineLinieJeStrasse, type LonLat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
@@ -117,6 +117,9 @@ export function App() {
     () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street" || p.kind === "path"),
     [fortschritt],
   );
+  // On the map one line per street (Michi, 22.11.): no sidewalk, second carriageway or red pen
+  // line beside the yellow. Counting is not affected.
+  const linien = useMemo(() => eineLinieJeStrasse(zaehlendeStuecke, fortschritt?.gefahren ?? []), [zaehlendeStuecke, fortschritt]);
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
   const erstesMal = useMemo(() => new Map((fortschritt?.stuecke ?? []).map((p, i) => [p.id, fortschritt!.erstesMal[i] ?? Date.now()])), [fortschritt]);
 
@@ -348,8 +351,8 @@ export function App() {
           }}
           springen={springen.current}
           spur={aufzeichnung.fixes}
-          entdeckt={zaehlendeStuecke}
-          gefahren={fortschritt?.gefahren ?? []}
+          entdeckt={linien.gelb}
+          gefahren={linien.rot}
           prozente={prozenteJeGebiet(daten, fortschritt)}
           folgen={aufzeichnung.aktiv}
           zeichnen={aufzeichnung.aktiv}

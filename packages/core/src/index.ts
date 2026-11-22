@@ -17,3 +17,4 @@ export * from "./replay";
 export * from "./luecken";
 export * from "./export";
 export * from "./nachzeichnen";
+export * from "./linien";
