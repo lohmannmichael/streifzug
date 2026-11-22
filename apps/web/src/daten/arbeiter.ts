@@ -12,6 +12,7 @@ function arbeiter(): Worker {
     worker.onmessage = (e: MessageEvent<Antwort>) => {
       const a = e.data;
       if (a.typ === "stand") for (const h of standHoerer) h(a);
+      else if (a.typ === "exportStand") window.dispatchEvent(new CustomEvent(EXPORT_STAND, { detail: a.anteil }));
       else {
         const w = wartend.get(a.nr);
         wartend.delete(a.nr);
@@ -36,6 +37,9 @@ export function aufStandHoeren(h: (a: Extract<Antwort, { typ: "stand" }>) => voi
   standHoerer.add(h);
   return () => standHoerer.delete(h);
 }
+
+/** Progress of "Alles exportieren" (0–1), as an event with `detail`. */
+export const EXPORT_STAND = "streifzug:export-stand";
 
 /** Other outings changed (import, delete, Overland): progress, logbook and info reload. */
 export const ANDERE_GEAENDERT = "streifzug-andere-geaendert";

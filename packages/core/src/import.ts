@@ -25,7 +25,18 @@ export function parseGpx(text: string): Fix[] {
     const lon = Number(/\blon="([^"]+)"/.exec(m[1]!)?.[1]);
     const t = zeit(/<time>([^<]+)<\/time>/.exec(m[2]!)?.[1]?.trim());
     const hacc = /<(?:\w+:)?hAcc>([^<]+)</.exec(m[2]!)?.[1];
-    if (Number.isFinite(lat) && Number.isFinite(lon) && t !== null) out.push({ t, lon, lat, acc: hacc !== undefined ? Number(hacc) : 5 });
+    // Unterwegs' own export also keeps the phone's motion and the speed.
+    const motion = /<(?:\w+:)?motion>([^<]+)</.exec(m[2]!)?.[1];
+    const speed = /<(?:\w+:)?speed>([^<]+)</.exec(m[2]!)?.[1];
+    if (Number.isFinite(lat) && Number.isFinite(lon) && t !== null)
+      out.push({
+        t,
+        lon,
+        lat,
+        acc: hacc !== undefined ? Number(hacc) : 5,
+        ...(motion ? { motion: motion.split(",") } : {}),
+        ...(speed !== undefined && Number.isFinite(Number(speed)) ? { speed: Number(speed) } : {}),
+      });
   }
   return cleanFixes(out);
 }

@@ -194,6 +194,15 @@ export const de = {
     rechnet: "Rechnen",
     fertig: "fertig",
   },
+  export: {
+    titel: "Alles exportieren",
+    erklaerung: "Alle Wege als GPX-Dateien, dazu Einstellungen, Ausnahmen und Stempel, in einer Zip-Datei.",
+    starten: "Export vorbereiten",
+    laeuft: (prozent: number) => `Wird vorbereitet … ${prozent} %`,
+    sichern: "Sichern oder teilen",
+    fertig: (wege: number, groesse: string) => `Fertig: ${wege} ${wege === 1 ? "Weg" : "Wege"}, ${groesse}. Auf dem iPhone: „In Dateien sichern“.`,
+    fehler: "Der Export hat nicht geklappt. Bitte nochmal versuchen.",
+  },
   konto: {
     sichernText: "Sichere dein Konto mit Mail und Passwort. Dann sind deine Wege auch auf einem neuen iPhone wieder da.",
     mail: "Mail-Adresse",

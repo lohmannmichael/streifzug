@@ -13,6 +13,7 @@ import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
+import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
 import { Stifte } from "./seiten/Stifte";
 import { Zuhause } from "./seiten/Zuhause";
@@ -401,9 +402,7 @@ function Profil(props: {
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
         <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.ich.daten}</h2>
-        <div className="gruppe">
-          <p className="zeile-text">{t.ich.datenHinweis}</p>
-        </div>
+        <Export />
         <h2>{t.zustand.titel}</h2>
         <div className="gruppe">
           {props.zustand.map(([k, v]) => (

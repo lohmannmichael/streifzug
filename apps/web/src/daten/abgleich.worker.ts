@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
-import { cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
+import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, pointInGeometry, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Piece } from "@streifzug/core";
 import { abgleichen, ABGLEICH_VERSION, ladeFlaechen, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
-import { einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
+import { alleLaden, einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
 
 /**
  * Background worker. Everything heavy happens here, so the page stays smooth:
@@ -55,7 +55,8 @@ export type Anfrage =
   | { typ: "letzteWege"; nr: number; anzahl: number }
   | { typ: "offen"; nr: number; regionId: string; gebietId: string; bezug: [number, number] | null }
   | { typ: "etikett"; nr: number; punkt: [number, number]; radiusM: number }
-  | { typ: "ortsName"; nr: number; punkt: [number, number] };
+  | { typ: "ortsName"; nr: number; punkt: [number, number] }
+  | { typ: "export"; nr: number; extra: { name: string; text: string }[] };
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
@@ -69,7 +70,9 @@ export type Antwort =
   | { typ: "offen"; nr: number; strassen: OffeneStrasse[] }
   | { typ: "etikett"; nr: number; etikett: Etikett | null }
   | { typ: "ortsName"; nr: number; name: string | null }
-  | { typ: "fehler"; nr: number; text: string };
+  | { typ: "fehler"; nr: number; text: string }
+  | { typ: "exportStand"; nr: number; anteil: number }
+  | { typ: "exportFertig"; nr: number; zip: Uint8Array; wege: number };
 
 /** Walked streets outside all regions, per cell of about 5 km (a place that is not prepared yet). */
 export interface Draussen {
@@ -465,6 +468,8 @@ async function antworten(a: Anfrage): Promise<void> {
       }
       return senden({ typ: "wege", nr: a.nr, wege });
     }
+    case "export":
+      return exportieren(a.nr, a.extra);
     case "ortsName":
       return senden({ typ: "ortsName", nr: a.nr, name: await ortsName(a.punkt) });
     case "etikett":
@@ -472,4 +477,23 @@ async function antworten(a: Anfrage): Promise<void> {
     case "offen":
       return senden({ typ: "offen", nr: a.nr, strassen: await offeneStrassen(a.regionId, a.gebietId, a.bezug) });
   }
+}
+
+/** Everything for "Alles exportieren": every way as GPX (own, Overland, imported) plus the extra files. */
+async function exportieren(nr: number, extra: { name: string; text: string }[]) {
+  const enc = new TextEncoder();
+  const zweistellig = (n: number) => String(n).padStart(2, "0");
+  const wege = [...(await alleLaden()), ...(await importeLaden(QUELLEN))].filter((s) => s.fixes.length > 1).sort((a, b) => a.startedAt - b.startedAt);
+  const namen = new Set<string>();
+  const dateien = wege.map((s) => {
+    const d = new Date(s.startedAt);
+    const herkunft = s.quelle && s.quelle !== "aufnahme" ? s.quelle : "eigene";
+    let name = `wege/${d.getFullYear()}-${zweistellig(d.getMonth() + 1)}-${zweistellig(d.getDate())}_${zweistellig(d.getHours())}${zweistellig(d.getMinutes())}_${herkunft}.gpx`;
+    for (let k = 2; namen.has(name); k++) name = name.replace(/(_\d+)?\.gpx$/, `_${k}.gpx`);
+    namen.add(name);
+    return { name, daten: enc.encode(gpxAus(s.fixes, `Unterwegs ${d.toLocaleString("de-DE")}`)) };
+  });
+  for (const e of extra) dateien.push({ name: e.name, daten: enc.encode(e.text) });
+  const zip = await zipErstellen(dateien, (anteil) => senden({ typ: "exportStand", nr, anteil }));
+  (self as unknown as DedicatedWorkerGlobalScope).postMessage({ typ: "exportFertig", nr, zip, wege: wege.length } satisfies Antwort, [zip.buffer]);
 }

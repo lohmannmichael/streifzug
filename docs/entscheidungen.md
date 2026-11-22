@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 22.11.2026: A3 Alles exportieren
+- Einstellungen → Deine Daten → „Export vorbereiten“: der Hintergrund-Worker packt alle Wege (eigene, Overland, GPX) als GPX-Dateien (`wege/JJJJ-MM-TT_HHMM_<Herkunft>.gpx`), dazu `unterwegs.json` (Einstellungen, Ausnahmen, Stempel mit Datum) und `LIESMICH.txt` in eine Zip-Datei. Danach öffnet „Sichern oder teilen“ den Teilen-Dialog (iOS verlangt dafür einen eigenen Tipp), ohne ihn wird die Datei geladen
+- Ohne Bibliothek: GPX-Schreiber und Zip-Packer in `packages/core/src/export.ts` (mit Tests), Komprimierung über `CompressionStream`. GPX enthält Genauigkeit, Bewegungsart und Tempo als Erweiterung; der GPX-Import liest sie wieder, damit dieselben Abschnitte (Rad/Auto) erkannt werden
+- Geprüft mit Michis echten Overland-Punkten (simuliert): 6 Wege exportiert, in ein leeres Testkonto importiert, vorher und nachher 320 gelbe Stücke. Testkonten gelöscht
+
 ## 22.11.2026: A2 Konto mit Mail und Passwort (statt Mail-Code)
 - Michi: einfacher Login ohne zusätzlichen Dienst. Ablauf: Mail-Adresse eintragen → eine Bestätigungs-Mail mit Link (öffnet Safari, das ist in Ordnung, der Link bestätigt nur) → zurück in der App ein Passwort festlegen. Das anonyme Konto bekommt die Adresse, Nutzer-ID und alle Daten bleiben. Auf neuen Geräten: Mail + Passwort, keine Mail nötig; das iPhone füllt das Passwort per Face ID aus. Mail-Bestätigung in Supabase bleibt eingeschaltet (keine Sicherheits-Einstellung geändert)
 - Anmelden auf einem Gerät mit eigenen Wegen: Frage „übernehmen?“ (ja: werden ins Konto hochgeladen; nein: nur vom Gerät entfernt). Overland-Wege des vorigen Kontos werden vom Gerät entfernt und kommen vom Konto neu
