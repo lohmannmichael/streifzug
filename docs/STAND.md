@@ -1,10 +1,22 @@
-# Stand für die nächste Sitzung (21.11.2026)
+# Stand für die nächste Sitzung (22.11.2026)
 
-**Ab 21.11.2026 gilt der Bauplan Fassung 2 (`docs/PLAN.md`).** Phase 1 gebaut (Definition of Done wartet auf Michi: 7 Tage Wege ohne App-Öffnen, echter Weg Fuß–Bahn–Fuß). **Phase 2 „Neues Aussehen“ gebaut (21.11.2026, live):** Plan-Stil, Archivo, App-Symbol; Blatt mit drei Höhen (Veedel und Prozent · Stempelkarte, Zuletzt, Noch offen · Sammlung mit Veedel-Baum und Stempelpass, „…“ → Einstellungen); Reiterleiste, Profil-Knopf und Logbuch entfernt; `stamps.ts` mit Tests, Stempel in vier Formen mit Tinten-Filter (fällige liegen sofort im Pass, Selbst-Stempeln kommt in Phase 3); Straßen-Etikett mit „Hier komme ich nicht hin“; herausgezoomt schraffierte Veedel; Stiftfarben und „Jedes Jahr eine Farbe“; Startbild.
+**Bauplan Fassung 2 (`docs/PLAN.md`) gilt.** Phase 1 (Aufzeichnung) und Phase 2 (Neues Aussehen) sind gebaut und live (https://streifzug.pages.dev). Aus Phase 3 vorgezogen: Rückblick beim Öffnen (nur Gelb, ohne Stift, auf Michis Wunsch).
 
-Neu (21.11.): Orte ohne Region werden behalten und unter „Wird vorbereitet“ gezeigt, Wünsche landen in Supabase `region_wishes` → zu Beginn einer Sitzung prüfen (`select name, meters, first_seen from region_wishes`) und Orte aufnehmen.
+**Seit 21./22.11. dazugekommen (Details in `docs/entscheidungen.md`):**
+- Menü oben rechts („…“): Deine Städte und Veedel, Letzte Wege, Stempelpass, Einstellungen; Übersicht Städte → Bezirke → Veedel zum Aufklappen
+- Orte ohne Region werden behalten („Wird vorbereitet“), Wünsche in Supabase `region_wishes` → zu Beginn einer Sitzung prüfen und mit `npm run region` aufnehmen
+- Erkennung: Tempo aus Nachbarpunkten (Overland ca. alle 6–31 s), Halt erst unter 0,4 m/s, aktive Abschnitte samt Pausen gemeinsam abgleichen; Ecken und kurze Lücken werden geschlossen (`luecken.ts`); Park-/Fußwege werden schmal gelb gezeichnet, zählen nie
+- Auto vs. Rad: iPhone-„driving“ zählt nur, wenn das Tempo passt; eine Fahrt (Halte bis 5 Min.) mit einmal über 40 km/h ist ganz Auto; Lastenrad um 25 km/h bleibt Rad. `ABGLEICH_VERSION` 7
+- Konto: Am 21.11. verlor Michis iPhone die App-Daten, neues anonymes Konto `50e0c8bc…`; alles vom alten Konto `a268989b…` umgehängt (alte Dateien in `spuren` als Sicherung). App legt neue Konten nur noch an, wenn das alte wirklich gelöscht ist; holt Overland-Verbindung und eigene Wege vom Server zurück; `navigator.storage.persist()`
+- Einstellungen unten: „Zustand (für Claude)“ (Version, Wege, Stücke, Rechnen)
 
-Offen in Phase 2: Michis iPhone-Test der sechs Gesten; Abgleich mit den Bildern „Plan“, „Viertel“, „Stempelpass“ (noch nicht da, gebaut nach Text). Bewusst noch nicht: „14 von 96 Straßen komplett“ (braucht das eigene Netz, Phase 4), Weg-Ansicht mit umstellbaren Abschnitten, Papierkörnung, Ton, Export/Löschen, iOS-Startbilder je Gerätegröße. Stempel und Ausnahmen liegen bisher nur auf dem Gerät (`streifzug.stempel`, `streifzug.ausnahmen`).
+**Offen / nächste Schritte:**
+1. Anmeldung per Mail (Code), damit das Konto nie mehr am Gerät hängt. Supabase Free erlaubt keine eigenen Mail-Texte (Mails kommen englisch); Alternative: eigener Mail-Versand (SMTP) oder Supabase-Plan. Danach „Mit Apple anmelden“, sobald ein Apple-Entwicklerkonto da ist
+2. Overland: Michi stellt „Continuous Tracking Mode“ auf „Both“; Meldung „Location updates were stopped“ beobachten
+3. Abschnitt von Hand umstellen („war Rad“ / „war Auto“), Weg-Ansicht (Bauplan 3.2)
+4. Phase 3 Rest: Selbst-Stempeln mit Ton, Straßen-Schilder im Rückblick
+5. Phase 4: Regionen nur bei Bedarf laden (Service Worker speichert bisher alle vorab), ganz Deutschland
+6. Bilder „Plan“, „Viertel“, „Stempelpass“ für den Design-Abgleich fehlen noch
 
 Ältere Notizen (bis 20.11.2026):
 
