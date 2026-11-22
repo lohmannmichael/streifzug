@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 22.11.2026: Bauplan Fassung 3 (Umbauplan) gilt
+- `docs/PLAN-3.md`: erst verlässlich, dann ruhig, dann neu (Etappen A–F). Fassung 2 gilt weiter, wo Fassung 3 nichts anderes sagt. Kein Apple-Entwicklerkonto, keine native App, Overland bleibt
+- A1: Skills für native Apps (expo-*, eas-*, react-native-*) und ihre Lizenzdateien entfernt, alter Stand nach `docs/archiv/`, `CLAUDE.md` auf Fassung 3 umgestellt
+- Abweichungen vom Plan, mit Michi zu klären: Mail-Code braucht eigenen Mail-Versand (A2); Stempel und Ausnahmen müssen mit ins Konto (A2); Zuhause-Zone läuft über eine Datenbank-Regel, nicht die Edge Function (C4, keine Zone gesetzt); Overland-Einstellung heißt „Continuous Tracking Mode: Both“ (C1); „Trampelpfade dunkler“ widerspricht Michis Entscheidung vom 22.11.
+
 ## 22.11.2026: Textmarker deckend, ohne Verdunkelung (Abweichung vom Bauplan 4.5)
 - Michi: durchgezogene Linie, keine Punkte, und oft gegangene Straßen werden **nicht** dunkler. Das Gelb ist deckend (Deckkraft 1), Straßen und Wege gleich. Der Bauplan wollte Überlagerung dunkler – gilt nicht mehr
 

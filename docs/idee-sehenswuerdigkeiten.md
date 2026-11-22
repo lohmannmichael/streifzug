@@ -16,11 +16,11 @@ Ziel: Im Urlaub (und zu Hause) sehen, welche großen Sehenswürdigkeiten einer S
 ## Oberfläche
 - Karte: Stempel-Symbole, offen = Umriss, gesehen = gelber Stempel
 - Gebiete-Liste je Stadt: zweiter Wert „Sehenswürdigkeiten 7/20“, aufklappbare Checkliste, sortiert nach Bekanntheit
-- Unterwegs: „Kölner Dom ist 300 m entfernt“ (Web: beim Öffnen; iPhone-App: Mitteilung)
+- Unterwegs: „Kölner Dom ist 300 m entfernt“ (beim Öffnen; Mitteilung später)
 - Vor der Reise: Stadt hinzufügen, Liste vorab offline laden, Merkliste („will ich sehen“)
 - Rückblick/Teilen: „Lissabon: 14 von 20 Sehenswürdigkeiten, 12 % der Straßen“
 
 ## Einordnung
 - Starker Grund für das Pro-Abo (Reisen) und für Kooperationen mit Tourismus-Ämtern (Challenges)
-- Vorschlag Reihenfolge: nach Phase 1 als kleines MVP (Top 20 je Region, automatisch bei 75 m, Liste + Karte), Mitteilungen erst mit der iPhone-App
+- Vorschlag Reihenfolge: nach Phase 1 als kleines MVP (Top 20 je Region, automatisch bei 75 m, Liste + Karte), Mitteilungen später
 - Lizenzen: Overture places teils ODbL (aus OSM), teils CDLA-Permissive; Namensnennung prüfen (docs/lizenzen.md ergänzen)

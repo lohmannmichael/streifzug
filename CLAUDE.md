@@ -9,7 +9,7 @@ Name der App: **Unterwegs** (seit 21.11.2026). Technische Namen bleiben „strei
 
 Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freischaltet und zeigt, wie viel Prozent einer Stadt, eines Bezirks und eines Stadtteils schon gesehen sind. Erst für Michi allein, von Anfang an so gebaut, dass daraus ein Produkt im App Store werden kann.
 
-- Plan und Regeln: `docs/PLAN.md` = **Bauplan Fassung 2** (Phasen 1–6 mit Definition of Done, Regeln, Design-System, Animationen, Datenbasis). Eine Phase zur Zeit, jede endet mit einem Test auf Michis iPhone. Alter Plan: `docs/archiv/PLAN-fassung-1.md`. Logo und App-Symbol: `docs/design/`
+- **Geltender Plan: `docs/PLAN-3.md` = Bauplan Fassung 3 (Umbauplan, 22.11.2026)**: Etappen A–F, ein Schritt = ein Commit = eine Live-Version, nach jedem Schritt prüft Michi am iPhone. Fassung 2 (`docs/PLAN.md`) gilt weiter für Zählregeln, Datenbasis, Pipeline und Design-System, außer wo Fassung 3 etwas anderes sagt. Alter Plan: `docs/archiv/PLAN-fassung-1.md`. Logo, App-Symbol und Zielbilder: `docs/design/`
 - Geschäftsseite: `docs/BUSINESSPLAN.md`
 - Entscheidungen: `docs/entscheidungen.md` (neue Einträge oben, mit Datum)
 - Aktueller Stand und nächste Schritte: `docs/STAND.md` (zu Beginn jeder Sitzung lesen, am Ende aktualisieren); Lizenzen: `docs/lizenzen.md`
@@ -17,7 +17,7 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 
 ## Stack
 
-- Monorepo: `packages/core` (TypeScript, Logik mit Tests), `apps/web` (Vite + React + TypeScript + MapLibre GL JS, PWA), ab Phase 3 `apps/mobile` (Expo), `supabase/` (Migrationen, Zugriffsregeln)
+- Monorepo: `packages/core` (TypeScript, Logik mit Tests), `apps/web` (Vite + React + TypeScript + MapLibre GL JS, Web-App auf dem Homescreen), `supabase/` (Migrationen, Zugriffsregeln)
 - Supabase (Postgres + PostGIS, Auth), Projekt `jbtrjmuztsjnzpokmymq`, Region Irland (EU). Jede Tabelle mit `user_id` und Row Level Security
 - Rohdaten der Aufzeichnungen: Supabase Storage, privater Bucket `spuren`, Ordner je Nutzer:in. Später bei vielen Nutzer:innen Umzug nach Cloudflare R2
 - Web-Hosting: Cloudflare Pages, Projekt `streifzug`, Adresse https://streifzug.pages.dev. Jeder Push nach `main` wird automatisch veröffentlicht (Build `npm run build`, Ausgabe `apps/web/dist`, `NODE_VERSION=22`). Nach jedem Push prüfen, ob die Veröffentlichung durchgelaufen ist (Pages-API, Token liegt in der Umgebung „Michis Apps“)
@@ -42,12 +42,12 @@ Eine App, die aufzeichnet, wo Michi zu Fuß und mit dem Rad war, Straßen freisc
 
 - Code und Kommentare auf Englisch, Oberfläche und Doku auf Deutsch
 
-- Immer nur die aktuelle Phase aus `docs/PLAN.md` bauen, in kleinen, prüfbaren Schritten (Skill `incremental-implementation`)
+- Immer nur den aktuellen Schritt aus `docs/PLAN-3.md` bauen, in kleinen, prüfbaren Schritten (Skill `incremental-implementation`). Nichts Neues vor Etappe F; Ideen in `docs/IDEEN.md`. Aufzeichnung über Overland, kein Apple-Entwicklerkonto, keine native App
 - Logik in `packages/core` immer mit Tests (Skill `test-driven-development`)
 - Jede Änderung kurz und verständlich erklären; Michi ist kein Entwickler und pflegt die App mit Claude
 - Keine Geheimnisse ins Repo (Schlüssel, Tokens, Passwörter); `.env*` in `.gitignore`
 - Abgleich Weg → Straße läuft auf dem Gerät; Rohdaten komprimiert als Datei, nicht als Tabellenzeilen
-- Daten exportierbar und löschbar halten (DSGVO, App Store)
+- Daten exportierbar und löschbar halten (DSGVO). Daten sind heilig: nichts löschen, was Rohdaten, Konten oder Dateien in `spuren` enthält, ohne Michis Ja
 - Oberfläche: Deutsch, Du-Form, keine Emojis, kurze Texte, gendern mit Doppelpunkt (Nutzer:innen). Alle Texte in einer Sprachdatei (später Englisch)
-- Design laut `docs/PLAN.md` Abschnitt 4 (Design-System, Verbotsliste gegen den „KI-Look“) und 5 (Animationen); bei Oberflächen-Arbeit die Skills `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `accessibility-engineering` (Web) bzw. `expo-native-ui` (iPhone) nutzen
+- Design laut `docs/PLAN.md` Abschnitt 4 (Design-System, Verbotsliste gegen den „KI-Look“) und 5 (Animationen); bei Oberflächen-Arbeit die Skills `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `accessibility-engineering` nutzen
 - Vor neuen Bibliotheken: offizielle Doku prüfen (Skill `source-driven-development`)

@@ -10,7 +10,7 @@ export const de = {
     losziehen: "Losziehen",
     beenden: "Beenden",
     unterwegs: "Unterwegs",
-    hinweisOffen: "Lass die App geöffnet, der Bildschirm bleibt an. Im Hintergrund zeichnet erst die iPhone-App auf.",
+    hinweisOffen: "Lass die App geöffnet, der Bildschirm bleibt an.",
     gps: {
       suche: "GPS wird gesucht …",
       gut: "GPS gut",

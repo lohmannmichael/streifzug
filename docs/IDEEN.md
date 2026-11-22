@@ -1,6 +1,6 @@
 # Ideenliste (Backlog)
 
-Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. Beim Einplanen in `docs/PLAN.md` übernehmen und hier als „eingeplant“ markieren.
+Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. Beim Einplanen in `docs/PLAN-3.md` übernehmen und hier als „eingeplant“ markieren.
 
 | Datum | Idee | Details | Vorschlag Zeitpunkt |
 |---|---|---|---|
