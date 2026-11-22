@@ -98,3 +98,10 @@ describe("seenByLegs", () => {
     expect([...r.aktiv].sort()).toEqual(["danach", "davor", "dazwischen"]);
   });
 });
+
+describe("Overland motion words", () => {
+  it('"driving" from Overland counts as gefahren even at 28 km/h in a side street', () => {
+    expect(arten(strecke(0, 0, 28, 300, 6, ["driving"]))).toEqual(["gefahren"]);
+  });
+});
+

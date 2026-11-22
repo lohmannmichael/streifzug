@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 22.11.2026: Overland meldet Autofahrten als „driving“
+- iOS nennt es „automotive“, Overland schickt aber „driving“. Das wurde nicht erkannt; Autofahrten in Wohnstraßen (25–30 km/h) galten nach dem Tempo als Rad und wurden gelb. Jetzt zählt „driving“ wie „automotive“ als gefahren (Test dazu). Bei Michis Daten bis 22.11.: 7,9 → 5,1 km gelb, der Rest wird rot
+- `ABGLEICH_VERSION` 5
+
 ## 22.11.2026: Wege werden gezeichnet (zählen nicht), Ecken und Lücken werden geschlossen
 - Fuß- und Radwege, Parkwege (Stadtwald, Tierpark) werden beim Gehen erkannt und schmaler gelb gezeichnet. Sie zählen nie zu Prozent, Stempeln oder km (nur Straßen)
 - Ecken (`eckenSchliessen`): kurzes Straßenstück (bis 40 m) neben Gelb, mit einem genauen Punkt (bis 15 m Ungenauigkeit) höchstens 10 m neben seiner Mitte, wird gelb. Grund: bei Punkten im Abstand von 25 m schneidet die Linie die Kreuzung ab. Mit Michis Weg vom 22.11.: 6 von 11 weißen Eckstücken gefunden, kein falsches

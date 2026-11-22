@@ -38,7 +38,8 @@ const d = (a: Fix, b: Fix) => distanceM([a.lon, a.lat], [b.lon, b.lat]);
 /** What the phone says about how one moves at this point, if anything. */
 function motionArt(f: Fix): Art | null {
   if (!f.motion || f.motion.length === 0) return null;
-  if (f.motion.includes("automotive")) return "gefahren";
+  // iOS calls it "automotive"; Overland sends "driving" (seen on 22.11.2026). Both mean car, bus, train.
+  if (f.motion.includes("automotive") || f.motion.includes("driving")) return "gefahren";
   if (f.motion.some((m) => ACTIVE.has(m))) return "aktiv";
   return null;
 }
