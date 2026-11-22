@@ -14,14 +14,15 @@ import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
-import { Blatt, SammlungSeite, type BlattProps, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
+import { Blatt, OrteSeite, StempelSeite, type BlattProps, type Hoehe } from "./seiten/Blatt";
+import { PassSeite, useRandWischen, ZurueckZumPass, type PassTeil } from "./seiten/Pass";
 import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
 import { WegeSeite } from "./seiten/Wege";
 import { Stifte } from "./seiten/Stifte";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
-import { IconMehr, IconSchliessen, IconStandort } from "./ui/Icons";
+import { IconPass, IconStandort } from "./ui/Icons";
 
 // Until the location is used, the map starts at home; the last chosen area is remembered.
 const START_NAME = "Weiden";
@@ -30,15 +31,12 @@ const MERKEN = "streifzug.gebiet";
 export function App() {
   const sitzung = useSitzung();
   const [hoehe, setHoehe] = useState<Hoehe>(1);
-  const [teil, setTeil] = useState<SammlungTeil>("veedel");
-  const [menueOffen, setMenueOffen] = useState(false);
+  // The Pass and its pages (Bauplan 3, D1); null = the plan.
+  const [pass, setPass] = useState<PassTeil | null>(null);
   const overland = useOverlandStatus();
-  const [sammlungOffen, setSammlungOffen] = useState(false);
-  const [wegeOffen, setWegeOffen] = useState(false);
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
-  const [profilOffen, setProfilOffen] = useState(false);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
@@ -232,7 +230,7 @@ export function App() {
     overland,
     einstellungen: (ziel?: "overland") => {
             setImportZeigen(ziel ?? null);
-            setProfilOffen(true);
+            setPass("einstellungen");
           },
     eigeneWege: eigeneWege,
     abspielen: (w: KurzWeg) => {
@@ -247,8 +245,6 @@ export function App() {
     zahlVorher: rueckblick && !aufzeichnung.aktiv ? zahlVorher : null,
     hochzaehlen: hochzaehlen,
     rechenFehler: rechenFehler,
-    teil: teil,
-    setTeil: setTeil,
   };
 
   // Opened from the confirmation link (in Safari): say where to go on.
@@ -272,11 +268,27 @@ export function App() {
       </div>
     );
 
-  if (wegeOffen) return <WegeSeite schliessen={() => setWegeOffen(false)} />;
-
-  if (sammlungOffen) return <SammlungSeite {...blattProps} schliessen={() => setSammlungOffen(false)} />;
-
-  if (profilOffen)
+  const zumPass = () => setPass("start");
+  if (pass === "start" && daten)
+    return (
+      <PassSeite
+        daten={daten}
+        fortschritt={fortschritt}
+        fremdeOrte={fremdeOrte}
+        overland={overland}
+        marker={marker}
+        kuli={einstellungen.kuli}
+        oeffnen={(teil) => {
+          if (teil === "einstellungen") setImportZeigen(null);
+          setPass(teil);
+        }}
+        schliessen={() => setPass(null)}
+      />
+    );
+  if (pass === "orte") return <OrteSeite {...blattProps} zurueck={zumPass} schliessen={() => setPass(null)} />;
+  if (pass === "stempel") return <StempelSeite {...blattProps} zurueck={zumPass} />;
+  if (pass === "rueckblicke") return <WegeSeite zurueck={zumPass} />;
+  if (pass === "einstellungen")
     return (
       <Profil
         sitzung={sitzung}
@@ -285,7 +297,7 @@ export function App() {
         daten={daten}
         zumImport={importZeigen}
         schliessen={() => {
-          setProfilOffen(false);
+          setPass("start");
           setImportZeigen(null);
         }}
         zustand={[
@@ -336,48 +348,13 @@ export function App() {
           stifte={stifte}
         />
         <div className="karten-knoepfe">
-          <button
-            type="button"
-            className="rund-knopf"
-            aria-label={t.menue.titel}
-            aria-expanded={menueOffen}
-            aria-haspopup="menu"
-            onClick={() => setMenueOffen(!menueOffen)}
-          >
-            {menueOffen ? <IconSchliessen /> : <IconMehr />}
+          <button type="button" className="rund-knopf" aria-label={t.pass.oeffnen} onClick={() => setPass("start")}>
+            <IconPass />
           </button>
           <button type="button" className="rund-knopf" aria-label={t.karte.standort} onClick={zumStandort}>
             <IconStandort />
           </button>
         </div>
-        {menueOffen && (
-          <>
-            <div className="menue-hintergrund" onClick={() => setMenueOffen(false)} />
-            <nav className="menue" role="menu" aria-label={t.menue.titel}>
-              {(
-                [
-                  [t.menue.staedte, () => { setTeil("veedel"); setSammlungOffen(true); }],
-                  [t.menue.wege, () => setWegeOffen(true)],
-                  [t.menue.stempelpass, () => { setTeil("pass"); setSammlungOffen(true); }],
-                  [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
-                ] as const
-              ).map(([text, tun]) => (
-                <button
-                  key={text}
-                  type="button"
-                  role="menuitem"
-                  className="menue-zeile"
-                  onClick={() => {
-                    setMenueOffen(false);
-                    tun();
-                  }}
-                >
-                  {text}
-                </button>
-              ))}
-            </nav>
-          </>
-        )}
         <Blatt {...blattProps} />
       </main>
     </div>
@@ -412,13 +389,11 @@ function Profil(props: {
     if (props.zumImport === "overland") overlandRef.current?.scrollIntoView({ block: "start" });
   }, [props.zumImport]);
   const { werte, aendern } = props;
+  const wischen = useRandWischen(props.schliessen);
   return (
     <div className="app">
-      <section className="seite seite-voll" aria-labelledby="profil-titel">
-        <button type="button" className="zurueck" onClick={props.schliessen}>
-          <IconSchliessen />
-          <span>{t.ich.zurueck}</span>
-        </button>
+      <section className="seite seite-voll" aria-labelledby="profil-titel" {...wischen}>
+        <ZurueckZumPass onClick={props.schliessen} />
         <h1 id="profil-titel">{t.ich.titel}</h1>
         <h2>{t.ich.konto}</h2>
         {props.sitzung.status === "offline" ? (

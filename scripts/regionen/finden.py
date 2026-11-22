@@ -75,6 +75,7 @@ def main():
         "id": rid,
         "name": wahl["names"]["primary"],
         "wurzel": {"ebene": wahl["subtype"], "name": wahl["names"]["primary"], "punkt": [round(punkt.x, 5), round(punkt.y, 5)]},
+        "land": wahl["country"],
         "tiefe": tiefe,
     }
     os.makedirs("regionen", exist_ok=True)

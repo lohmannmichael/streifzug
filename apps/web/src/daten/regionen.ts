@@ -20,6 +20,8 @@ export interface Region {
   wurzel: string;
   bbox: [number, number, number, number];
   stand: string;
+  /** Country code, e.g. "DE". */
+  land?: string;
 }
 
 export interface Regionen {

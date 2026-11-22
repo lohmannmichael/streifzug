@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: D1 Pass mit vier Bereichen
+- Oben rechts statt „…“ ein Knopf mit kleinem Heft (eigenes Zeichen, nicht entworfen). Er öffnet „Dein Pass“ (`seiten/Pass.tsx`) nach `Pass-kurz.png`: Schließen, drei Zahlen, vier Zeilen mit kleinem Bild
+- Zahlen: Kilometer in Gelb = alle gelben Stücke (Straßen gewichtet, Wege, auch außerhalb der Orte mit Daten); Orte = Orte mit mindestens einem Meter plus Orte „wird vorbereitet“; Länder = Länderkürzel der Orte. Dafür hat jede Region jetzt `land` (`regionen/<id>.json`, `index.json`; `finden.py` schreibt es, `region.ts` reicht es durch, fehlt es, gilt DE)
+- Zeilen: Orte (die drei größten), Stempel (Anzahl, der letzte als Bild), Rückblicke (letzter Tag mit Wegen), Einstellungen (Zustand der Aufzeichnung, Bild mit den eigenen Stiftfarben)
+- Navigation: Pass → Unterseite → „‹ Pass“ zurück, Wischen vom linken Rand geht ebenfalls zurück, Schließen am Pass führt immer zum Plan. Menü „…“ und die Reiter „Städte · Stempelpass“ sind weg
+- Bis D2–D4 zeigen die Unterseiten noch den alten Inhalt (Städte-Baum, alle Stempel, Wege aus C2)
+- Bewusst geblieben: Die Statuszeilen im Blatt („Aufzeichnung prüfen“) springen direkt zu Overland in den Einstellungen; das ist ein Hinweis mit Handlung, kein zweiter Weg im Sinn der Navigation
+
 ## 22.11.2026: C4 Zuhause-Zone entfernt
 - Vorher geprüft: In der Datenbank war keine Zone gesetzt (auch nicht für Michi), es ist also kein Punkt verloren gegangen
 - Verworfen wurde nicht in der Edge Function `overland`, sondern über den Datenbank-Trigger `received_points_privacy_zone`; dazu löschte `privacy_zones_purge_points` beim Anlegen einer Zone schon gespeicherte Punkte. Beide Trigger entfernt (Migration `20261122180000_zuhause_zone_aus.sql`), Sicherheits-Check ohne neue Hinweise

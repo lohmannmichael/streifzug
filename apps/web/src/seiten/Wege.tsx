@@ -5,7 +5,7 @@ import { ANDERE_GEAENDERT, fragen } from "../daten/arbeiter";
 import { korrekturEntfernen, korrekturSetzen, useKorrekturen } from "../daten/korrekturen";
 import { alsStrecke } from "../daten/regionen";
 import { t } from "../texte/de";
-import { IconSchliessen } from "../ui/Icons";
+import { PassUnterseite } from "./Pass";
 
 const tagName = new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "numeric", month: "short" });
 const uhr = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -15,7 +15,7 @@ const ARTEN: KorrekturArt[] = ["zuFuss", "rad", "gefahren"];
  * Ways of the last 30 days, by day (Bauplan 3, C2; becomes the "Rückblicke" list in D4).
  * Opening a way shows its legs; each can be set to "zu Fuß", "Rad" or "gefahren".
  */
-export function WegeSeite(props: { schliessen: () => void }) {
+export function WegeSeite(props: { zurueck: () => void }) {
   const [wege, setWege] = useState<WegKopf[] | null>(null);
   const [offen, setOffen] = useState<string | null>(null);
   useEffect(() => {
@@ -32,13 +32,7 @@ export function WegeSeite(props: { schliessen: () => void }) {
   }
 
   return (
-    <div className="app">
-      <section className="seite seite-voll" aria-labelledby="wege-titel">
-        <button type="button" className="zurueck" onClick={props.schliessen}>
-          <IconSchliessen />
-          <span>{t.ich.zurueck}</span>
-        </button>
-        <h1 id="wege-titel">{t.wege.titel}</h1>
+    <PassUnterseite titel={t.wege.titel} zurueck={props.zurueck}>
         <p className="leise seiten-unterzeile">{t.wege.unterzeile}</p>
         {wege === null && <p className="zeile-text leise">{t.blatt.nochOffenLaedt}</p>}
         {wege?.length === 0 && <p className="zeile-text leise">{t.blatt.keineWege}</p>}
@@ -58,8 +52,7 @@ export function WegeSeite(props: { schliessen: () => void }) {
             </ul>
           </div>
         ))}
-      </section>
-    </div>
+    </PassUnterseite>
   );
 }
 

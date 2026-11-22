@@ -9,11 +9,10 @@ import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
-import { IconMehr, IconSchliessen } from "../ui/Icons";
+import { PassUnterseite } from "./Pass";
 import { Stempel } from "../ui/Stempel";
 
 export type Hoehe = 1 | 2;
-export type SammlungTeil = "veedel" | "pass";
 
 const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
 const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long" });
@@ -63,8 +62,6 @@ export interface BlattProps {
   /** The replay waits for a tap (calculating took longer than 8 s). */
   rueckblickAngebot: boolean;
   rueckblickStarten: () => void;
-  teil: SammlungTeil;
-  setTeil: (t: SammlungTeil) => void;
   /** After the replay: count up from `von` (Bauplan 5, Nr. 6). */
   hochzaehlen: { von: number; nr: number } | null;
 }
@@ -399,54 +396,35 @@ function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten)
   return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
 }
 
-/**
- * Cities and Veedel, and the stamp passport, as a page over the plan (until the Pass in D1).
- * Opened from the menu; the full sheet height is gone (Bauplan 3, B2).
- */
-export function SammlungSeite(props: BlattProps & { schliessen: () => void }) {
+/** Places (until D2: cities with their Veedel), a page of the Pass. */
+export function OrteSeite(props: BlattProps & { zurueck: () => void; schliessen: () => void }) {
   const { daten } = props;
   abzugJetzt = props.fortschritt?.abzug;
+  if (!daten) return null;
+  return (
+    <PassUnterseite titel={t.pass.orteTitel} zurueck={props.zurueck} klasse="sammlung-seite">
+      <VeedelBaum
+        {...props}
+        daten={daten}
+        waehlen={(id) => {
+          props.waehlen(id);
+          props.schliessen();
+        }}
+      />
+    </PassUnterseite>
+  );
+}
+
+/** Stamps (until D3: all of them, newest first), a page of the Pass. */
+export function StempelSeite(props: BlattProps & { zurueck: () => void }) {
+  const { daten } = props;
   const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
   const gesetzt = useGesetzteStempel();
   if (!daten) return null;
   return (
-    <div className="app">
-      <section className="seite seite-voll sammlung-seite" aria-label={props.teil === "pass" ? t.sammlung.stempelpass : t.sammlung.veedel}>
-        <button type="button" className="zurueck" onClick={props.schliessen}>
-          <IconSchliessen />
-          <span>{t.ich.zurueck}</span>
-        </button>
-        <Sammlung
-          {...props}
-          daten={daten}
-          gesetzt={gesetzt}
-          naechste={stand ? naechsteStempel(stand) : []}
-          waehlen={(id) => {
-            props.waehlen(id);
-            props.schliessen();
-          }}
-        />
-      </section>
-    </div>
-  );
-}
-
-function Sammlung(props: BlattProps & { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[] }) {
-  const { teil, setTeil } = props;
-  return (
-    <div className="sammlung">
-      <div className="sammlung-kopf">
-        <div className="umschalter" role="tablist">
-          <button type="button" role="tab" aria-selected={teil === "veedel"} onClick={() => setTeil("veedel")}>{t.sammlung.veedel}</button>
-          <span aria-hidden="true">·</span>
-          <button type="button" role="tab" aria-selected={teil === "pass"} onClick={() => setTeil("pass")}>{t.sammlung.stempelpass}</button>
-        </div>
-        <button type="button" className="icon-knopf" aria-label={t.sammlung.mehr} onClick={() => props.einstellungen()}>
-          <IconMehr />
-        </button>
-      </div>
-      {teil === "veedel" ? <VeedelBaum {...props} /> : <Stempelpass daten={props.daten} gesetzt={props.gesetzt} naechste={props.naechste} />}
-    </div>
+    <PassUnterseite titel={t.pass.stempelTitel} zurueck={props.zurueck} klasse="sammlung-seite">
+      <Stempelpass daten={daten} gesetzt={gesetzt} naechste={stand ? naechsteStempel(stand) : []} />
+    </PassUnterseite>
   );
 }
 
