@@ -168,7 +168,8 @@ export function splitLegs(input: readonly Fix[]): Leg[] {
  * and "gefahren" (streets and motorways, 30 m to the side, points up to 50 m inaccurate).
  */
 export function seenByLegs(pieces: readonly Piece[], fixes: readonly Fix[], options: Partial<MatchOptions> = {}): { aktiv: Set<string>; gefahren: Set<string> } {
-  const strassen = pieces.filter((p) => p.kind === "street");
+  // Paths (park, Tierpark, forest) are recognised too: drawn, but they never count (only streets do).
+  const strassen = pieces.filter((p) => p.kind === "street" || p.kind === "path");
   const fahrbar = pieces.filter((p) => p.kind === "street" || p.kind === "drive");
   const aktiv = new Set<string>();
   const gefahren = new Set<string>();

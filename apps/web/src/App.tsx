@@ -104,9 +104,9 @@ export function App() {
   warAktiv.current = aufzeichnung.aktiv;
   // While out and about: what this outing has discovered so far (for the counter at the top).
   const vorherIds = useMemo(() => new Set((vorher.current?.stuecke ?? []).map((p) => p.id)), [vorher.current]);
-  // Only what counts turns yellow: streets, and paths only with the paths switch (never driveways, see rules.ts).
+  // Yellow: streets (they count) and paths (shown thinner, never counted).
   const zaehlendeStuecke = useMemo(
-    () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street"),
+    () => (fortschritt?.stuecke ?? []).filter((p) => p.kind === "street" || p.kind === "path"),
     [fortschritt],
   );
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
@@ -130,7 +130,7 @@ export function App() {
   useEffect(() => {
     if (!rueckblick || rbBereit !== rueckblick.nr || !daten || !gebiet || !fortschritt) return setZahlVorher(null);
     let lebt = true;
-    const alt = fortschritt.stuecke.filter((p, i) => p.kind === "street" && (fortschritt.erstesMal[i] ?? 0) < rueckblick.seit);
+    const alt = fortschritt.stuecke.filter((p, i) => (p.kind === "street" || p.kind === "path") && (fortschritt.erstesMal[i] ?? 0) < rueckblick.seit);
     void meterJeGebiet(alt, daten).then((m) => {
       if (lebt) setZahlVorher(prozent(zaehlendeMeter(m.get(gebiet.id) ?? { strasse_m: 0, weg_m: 0 }, false), gesamtMeter(gebiet, fortschritt.abzug)));
     });
@@ -144,8 +144,8 @@ export function App() {
     [einstellungen.marker, einstellungen.kuli, einstellungen.jahresFarben],
   );
   const neuUnterwegs = aufzeichnung.aktiv ? zaehlendeStuecke.filter((p) => !vorherIds.has(p.id)) : [];
-  const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + p.lengthM * p.weight, 0);
-  const neueStrassen = useNeueStrassen(neuUnterwegs);
+  const neuUnterwegsM = neuUnterwegs.reduce((m, p) => m + (p.kind === "street" ? p.lengthM * p.weight : 0), 0);
+  const neueStrassen = useNeueStrassen(neuUnterwegs.filter((p) => p.kind === "street"));
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [zentrieren, setZentrieren] = useState(0);
   const [standortFehler, setStandortFehler] = useState(false);

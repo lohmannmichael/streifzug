@@ -266,7 +266,9 @@ function eigenesZeichnen(karte: MapLibreMap) {
   karte.addSource("gefahren", { type: "geojson", data: LEER });
   karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.2, 16, 1.8, 18, 2.4], "line-offset": 1, "line-opacity": 0.95 } }, vorSchrift);
   karte.addSource("entdeckt", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": ["interpolate", ["linear"], ["zoom"], 11.4, 0, 12.4, 0.82] } }, vorSchrift);
+  karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", filter: ["!=", ["get", "weg"], true], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": ["interpolate", ["linear"], ["zoom"], 11.4, 0, 12.4, 0.82] } }, vorSchrift);
+  // Paths (parks, Tierpark): a thinner highlighter stroke; they are shown but never counted.
+  karte.addLayer({ id: "entdeckt-weg", type: "line", source: "entdeckt", filter: ["==", ["get", "weg"], true], minzoom: 13, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 13, 2, 16, 4, 18, 7], "line-opacity": 0.75 } }, vorSchrift);
   // Drawing moment: a soft glow and the highlighter stroke running along the new street (line-progress needs lineMetrics).
   karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
   karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
@@ -299,7 +301,7 @@ function linienSammlung(stuecke: readonly Piece[]) {
     type: "FeatureCollection",
     features: stuecke.map((p) => {
       const t = erstesMalJetzt.get(p.id);
-      return { type: "Feature", properties: { jahr: t ? new Date(t).getFullYear() : null }, geometry: { type: "LineString", coordinates: p.coords } };
+      return { type: "Feature", properties: { jahr: t ? new Date(t).getFullYear() : null, weg: p.kind === "path" }, geometry: { type: "LineString", coordinates: p.coords } };
     }),
   };
 }
@@ -646,6 +648,7 @@ function stifteSetzen(karte: MapLibreMap, st: Stifte) {
   KULI = st.kuli;
   if (!karte.getLayer("entdeckt")) return;
   karte.setPaintProperty("entdeckt", "line-color", markerFarbe(st) as never);
+  karte.setPaintProperty("entdeckt-weg", "line-color", markerFarbe(st) as never);
   karte.setPaintProperty("gefahren", "line-color", KULI);
   for (const l of ["rb", "rb-glanz", "neu-glanz"]) karte.setPaintProperty(l, "line-color", MARKER);
   schraffurBilder(karte, MARKER);

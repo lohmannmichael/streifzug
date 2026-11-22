@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 22.11.2026: Wege werden gezeichnet (zählen nicht), Ecken und Lücken werden geschlossen
+- Fuß- und Radwege, Parkwege (Stadtwald, Tierpark) werden beim Gehen erkannt und schmaler gelb gezeichnet. Sie zählen nie zu Prozent, Stempeln oder km (nur Straßen)
+- Ecken (`eckenSchliessen`): kurzes Straßenstück (bis 40 m) neben Gelb, mit einem genauen Punkt (bis 15 m Ungenauigkeit) höchstens 10 m neben seiner Mitte, wird gelb. Grund: bei Punkten im Abstand von 25 m schneidet die Linie die Kreuzung ab. Mit Michis Weg vom 22.11.: 6 von 11 weißen Eckstücken gefunden, kein falsches
+- Lücken (`lueckenSchliessen`): zusammenhängende ungegangene Stücke von höchstens 40 m, die an zwei Stellen an Gelb grenzen, werden gelb. Nie Autobahnen
+- `ABGLEICH_VERSION` 4
+
 ## 21.11.2026: Konto ging verloren, wiederhergestellt und abgesichert
 - Am 21.11. um 17:26 Uhr hat Michis iPhone die gespeicherten Daten der App verloren; die App legte ein neues anonymes Konto an (`50e0c8bc…`). Overland schickte weiter an das alte Konto (`a268989b…`), die App war leer
 - Wiederhergestellt auf dem Server: `received_points`, `receive_tokens`, `user_settings`, `tracks` auf das neue Konto umgehängt; die 7 Dateien in `spuren` kopiert (Originale im alten Ordner bleiben als Sicherung, das alte Konto wurde nicht gelöscht)
