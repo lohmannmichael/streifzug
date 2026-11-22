@@ -30,3 +30,9 @@ Gesammelte Ideen, noch nicht eingeplant. Neue Ideen oben ergänzen, mit Datum. B
 | 19.11.2026 | Hunde-Zielgruppe | Hundeschulen, „neue Gassi-Runden“ | Marketing |
 
 Mehr zu Marketing und Business: `docs/BUSINESSPLAN.md`.
+
+## 22.11.2026: Lücken über die Straßen nachzeichnen (Michi)
+- Wunsch: Overland seltener Punkte schicken lassen (z. B. 10 s) und die App zeichnet den Weg dazwischen selbst über die Straßen nach („Map Matching“)
+- Einschätzung: geht, wenn nur eindeutige Wege bis ca. 150 m gefüllt werden (kürzester Weg über das Straßennetz, höchstens 1,5-mal so lang wie die Luftlinie, keine zweite fast gleich lange Möglichkeit). Bei großen Lücken (Rad, 30 s, 200 m) würde geraten → falsches Gelb
+- Hinweis: „Min Time Between Points“ spart kaum Akku (das GPS läuft weiter); Akku spart „Desired Accuracy 10m“
+- Stand: vorgemerkt, nicht vor Etappe D (Regel aus Fassung 3), außer Michi zieht es vor
