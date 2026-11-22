@@ -8,6 +8,7 @@ import { t } from "../texte/de";
 
 export type EtikettZustand = { punkt: [number, number]; strasse: Etikett | null; art: string | null; name?: string | null };
 
+const datumLang = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", year: "numeric" });
 const tagMonatKurz = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
 
 /** Small white sign: name in bold; state in the second line; "Hier komme ich nicht hin" for counting streets. */
@@ -28,6 +29,7 @@ function Schild({ z, schliessen }: { z: EtikettZustand; schliessen: () => void }
     <div className="schild" role="dialog" aria-label={name} onClick={(e) => e.stopPropagation()}>
       <b>{name}</b>
       <span>{zeile}</span>
+      {s?.komplettSeit && !s.ausnahme && <span className="komplett">{tx.komplett(datumLang.format(s.komplettSeit))}</span>}
       {s && (
         <button
           type="button"

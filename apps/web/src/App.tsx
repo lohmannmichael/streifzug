@@ -175,6 +175,13 @@ export function App() {
   // line beside the yellow. Counting is not affected.
   const linien = useMemo(() => eineLinieJeStrasse(zaehlendeStuecke, fortschritt?.gefahren ?? []), [zaehlendeStuecke, fortschritt]);
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
+  // Complete streets with the lines of their pieces, for their names on the plan (Bauplan 3, F4).
+  const komplettLinien = useMemo(() => {
+    const k = fortschritt?.komplett ?? [];
+    if (k.length === 0) return [];
+    const nachId = new Map((fortschritt?.stuecke ?? []).map((p) => [p.id, p]));
+    return k.map((s) => ({ name: s.name, coords: s.ids.flatMap((id) => { const p = nachId.get(id); return p ? [p.coords] : []; }) }));
+  }, [fortschritt]);
   // During the Zeitreise only what was yellow by the chosen day; the red pen line is left out.
   const gelbZeitreise = useMemo(
     () => (zeitreise === null ? linien.gelb : linien.gelb.filter((p) => (erstesMalRoh(fortschritt, p.id) ?? 0) < zeitreise)),
@@ -437,6 +444,7 @@ export function App() {
           erstesMal={erstesMal}
           stifte={stifte}
           zeitraum={zeitraum}
+          komplett={zeitreise === null ? komplettLinien : []}
           onZeitraumDatum={setZrDatum}
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />

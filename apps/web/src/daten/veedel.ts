@@ -71,7 +71,7 @@ export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte: readonly F
     }),
     ...fremdeOrte.map((o) => ({ schluessel: `name:${o.name}`, gebietId: null, name: o.name, seit: o.seit })),
   ];
-  return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt, orte: mitWegen.length + fremdeOrte.length, laender, orteBetreten };
+  return { veedel, gruppen, strassenKomplett: f.komplett?.length ?? 0, aktivKmGesamt, orte: mitWegen.length + fremdeOrte.length, laender, orteBetreten };
 }
 
 /** Stamps given so far, read only (for pages that show them). */

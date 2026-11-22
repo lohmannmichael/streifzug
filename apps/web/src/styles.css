@@ -620,7 +620,8 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 /* Period playback: the date on top, the card at the end. */
 .zeitraum-datum { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 50%; z-index: 4; transform: translateX(-50%); padding: 8px 14px; border-radius: 12px; background: var(--flaeche); box-shadow: var(--schatten); font-family: var(--schrift-zahl); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .blatt.zeitraum-ende { height: auto; padding-top: 18px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); gap: 14px; }
-.zeitraum-zahlen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0; }
+.zeitraum-zahlen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
 .zeitraum-zahlen dt { font-size: var(--t-klein); color: var(--text-leise); }
 .zeitraum-zahlen dd { margin: 0; font-family: var(--schrift-zahl); font-size: var(--t-titel); font-weight: 800; font-variant-numeric: tabular-nums; }
 .monat-fertig { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -8px 0 8px; border-top: 1px solid var(--linie); }
+.schild .komplett { font-weight: 600; }

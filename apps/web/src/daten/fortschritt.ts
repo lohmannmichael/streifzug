@@ -1,8 +1,8 @@
-import type { Fix, Korrektur, Piece } from "@streifzug/core";
+import type { Fix, KompletteStrasse, Korrektur, Piece } from "@streifzug/core";
 import { pointInGeometry } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
-import { ANDERE_GEAENDERT, aufStandHoeren, fragen } from "./arbeiter";
+import { ANDERE_GEAENDERT, aufStandHoeren, fragen, KOMPLETT } from "./arbeiter";
 import { gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
 import { ortLadenAuf, regionenJetzt, type Regionen, type Summe } from "./regionen";
 import { standLaden, standMerken } from "./stand";
@@ -23,6 +23,8 @@ export interface Fortschritt {
   abzug: Map<string, Summe>;
   /** Walked places that have no region yet. */
   draussen: Draussen[];
+  /** Complete streets (Bauplan 3, F4); missing in a state stored before F4. */
+  komplett?: KompletteStrasse[];
 }
 
 /** One track to match: an outing (own or imported) or the one being recorded. */
@@ -43,6 +45,9 @@ export const ergebnisSchluessel = (fixes: Fix[], korrekturen?: readonly Korrektu
 export function meterJeGebiet(stuecke: Iterable<Piece>, daten: Regionen): Promise<Map<string, Summe>> {
   return meterJeGebietListe(stuecke, daten.liste);
 }
+
+// The number of the latest calculation (for answers that come afterwards).
+let aktuellRef: { current: number } = { current: 0 };
 
 // Own outings the worker already knows (id → number of fixes and corrections): sent without their data.
 const imWorker = new Map<string, string>();
@@ -68,6 +73,21 @@ export function useFortschritt(
       setVorlaeufig(true);
     });
   }, []);
+  // Complete streets arrive after the result (Bauplan 3, F4).
+  useEffect(() => {
+    const neu = (e: Event) => {
+      const a = (e as CustomEvent<{ nr: number; komplett: KompletteStrasse[] }>).detail;
+      if (a.nr !== aktuellRef.current) return;
+      setFortschritt((f) => {
+        if (!f) return f;
+        const mit = { ...f, komplett: a.komplett };
+        standMerken(mit);
+        return mit;
+      });
+    };
+    window.addEventListener(KOMPLETT, neu);
+    return () => window.removeEventListener(KOMPLETT, neu);
+  }, []);
   const [rechnet, setRechnet] = useState<{ fertig: number; gesamt: number } | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
   const [andereStand, setAndereStand] = useState(0);
@@ -82,6 +102,7 @@ export function useFortschritt(
   // Which outings and sources take part and, every 10 fixes, the live track.
   const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}:${versuch}`;
   const aktuell = useRef(0);
+  aktuellRef = aktuell;
   // Only the list of places matters here; loading more places does not start a new calculation.
   const liste = daten?.liste;
   useEffect(() => {
@@ -105,7 +126,7 @@ export function useFortschritt(
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
       setFehler(a.uebersprungen.length ? `${a.uebersprungen.length} übersprungen (Straßendaten nicht geladen)` : null);
-      const f: Fortschritt = { stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen };
+      const f: Fortschritt = { stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen, komplett: a.komplett };
       echtDa.current = true;
       setFortschritt(f);
       setVorlaeufig(false);

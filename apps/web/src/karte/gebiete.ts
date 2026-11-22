@@ -79,6 +79,18 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
       },
       unterStrassen,
     );
+    // A quarter at 100 %: finely hatched, also close up (Bauplan 3, F4).
+    karte.addLayer(
+      {
+        id: `komplett-${region.id}`,
+        type: "fill",
+        source: `gebiete-${region.id}`,
+        filter: ["all", ["==", ["get", "blatt"], true], ["==", ["coalesce", ["get", "stufe"], -1], 5]],
+        minzoom: 12,
+        paint: { "fill-pattern": "schraffur-fein", "fill-opacity": 0.45 },
+      },
+      unterStrassen,
+    );
     karte.addLayer(
       {
         id: `linie-${region.id}`,

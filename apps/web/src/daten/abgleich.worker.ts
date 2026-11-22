@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
-import { gefahrenJePunkt, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { gefahrenJePunkt, type KompletteStrasse, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
 import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
+import { kompletteBerechnen } from "./komplett";
 import type { Region, Summe } from "./regionen";
 import { alleLaden, einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
 
@@ -63,8 +64,9 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[] }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
+  | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
@@ -123,6 +125,8 @@ export interface Etikett {
   /** Open meters of this street nearby (same name). */
   restM: number;
   ausnahme: boolean;
+  /** The whole street (in its place) is yellow since then (Bauplan 3, F4). */
+  komplettSeit: number | null;
 }
 
 /** An outing reduced for the replay on opening the app (at most ~400 points). */
@@ -196,6 +200,8 @@ let zuletztGesehen = new Set<string>();
 let ersteAktiv = new Map<string, number>();
 let ersteGefahren = new Map<string, number>();
 let zuletztAusnahmen = new Set<string>();
+let zuletztKomplett: KompletteStrasse[] = [];
+let komplettSeit = new Map<string, number>();
 
 /** The counting piece nearest to a tapped point (within radiusM), with its state. */
 async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etikett | null> {
@@ -219,7 +225,7 @@ async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etik
       if (!zuletztGesehen.has(q.id) && !zuletztAusnahmen.has(q.id) && (await strassenName(q)) === name) restM += q.lengthM * q.weight;
   const zustand = zuletztGesehen.has(p.id) ? "aktiv" : ersteGefahren.has(p.id) ? "gefahren" : "offen";
   const zeit = zustand === "aktiv" ? (ersteAktiv.get(p.id) ?? null) : zustand === "gefahren" ? (ersteGefahren.get(p.id) ?? null) : null;
-  return { id: p.id, name, coords: p.coords.map((c) => [c[0], c[1]] as [number, number]), zustand, zeit, restM, ausnahme: zuletztAusnahmen.has(p.id) };
+  return { id: p.id, name, coords: p.coords.map((c) => [c[0], c[1]] as [number, number]), zustand, zeit, restM, ausnahme: zuletztAusnahmen.has(p.id), komplettSeit: komplettSeit.get(p.id) ?? null };
 }
 
 async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Region[]) {
@@ -319,7 +325,18 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     zellen.set(zelle, e);
   }
   const draussen = [...zellen.values()].filter((e) => e.m >= 200);
-  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen });
+  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen, komplett: zuletztKomplett });
+  // Complete streets afterwards (Bauplan 3, F4): the first time with many ways this takes a few
+  // seconds; the plan does not wait for it. A failure keeps the last list.
+  try {
+    const komplett = await kompletteBerechnen(gesehen, ausnahmen, aktivAb, liste);
+    if (nr !== neueste) return;
+    zuletztKomplett = komplett;
+    komplettSeit = new Map(komplett.flatMap((k) => k.ids.map((id) => [id, k.seit] as const)));
+    senden({ typ: "komplett", nr, komplett });
+  } catch {
+    // kept as it was
+  }
 }
 
 function wegeAus(quelle: ImportQuelle, fixes: Fix[]): Streifzug[] {

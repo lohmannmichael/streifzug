@@ -14,11 +14,12 @@ export function ZeitraumDatum(props: { t: number }) {
 
 /**
  * Bottom card of a period playback: the title while it runs; at the end the numbers (new
- * kilometres, new stamps) and "Fertig". Complete streets follow with F4.
+ * kilometres, complete streets, new stamps) and "Fertig".
  */
 export function ZeitraumKarte(props: { titel: string; von: number; bis: number; fortschritt: Fortschritt | null; fertig: boolean; schliessen: () => void }) {
   const gesetzt = useGesetzteStempel();
   const km = useMemo(() => neuInZeitraum(props.fortschritt, props), [props.fortschritt, props.von, props.bis]);
+  const komplett = (props.fortschritt?.komplett ?? []).filter((k) => k.seit >= props.von && k.seit < props.bis).length;
   const stempel = gesetzt.filter((s) => s.gestempeltAm >= props.von && s.gestempeltAm < props.bis).length;
   return (
     <section className="blatt zeitraum-ende" aria-labelledby="zeitraum-titel">
@@ -34,6 +35,10 @@ export function ZeitraumKarte(props: { titel: string; von: number; bis: number; 
             <div>
               <dt>{t.zeitraum.neueKm}</dt>
               <dd><span className="wisch">{alsStrecke(km)}</span></dd>
+            </div>
+            <div>
+              <dt>{t.zeitraum.komplett(komplett)}</dt>
+              <dd>{komplett}</dd>
             </div>
             <div>
               <dt>{t.zeitraum.neueStempel(stempel)}</dt>

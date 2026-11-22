@@ -12,6 +12,7 @@ function arbeiter(): Worker {
     worker.onmessage = (e: MessageEvent<Antwort>) => {
       const a = e.data;
       if (a.typ === "stand") for (const h of standHoerer) h(a);
+      else if (a.typ === "komplett") window.dispatchEvent(new CustomEvent(KOMPLETT, { detail: a }));
       else if (a.typ === "exportStand") window.dispatchEvent(new CustomEvent(EXPORT_STAND, { detail: a.anteil }));
       else {
         const w = wartend.get(a.nr);
@@ -37,6 +38,9 @@ export function aufStandHoeren(h: (a: Extract<Antwort, { typ: "stand" }>) => voi
   standHoerer.add(h);
   return () => standHoerer.delete(h);
 }
+
+/** Complete streets, sent after the result (Bauplan 3, F4), as an event with `detail`. */
+export const KOMPLETT = "streifzug:komplett";
 
 /** Progress of "Alles exportieren" (0–1), as an event with `detail`. */
 export const EXPORT_STAND = "streifzug:export-stand";

@@ -1,5 +1,15 @@
 # Entscheidungen
 
+## 22.11.2026: F4 Straße komplett
+- Regel: Eine benannte Straße ist in einem Ort komplett, wenn alle ihre zählenden Stücke dort gegangen sind; Stücke mit „Hier komme ich nicht hin“ fallen heraus. Gleicher Name in zwei Orten = zwei Straßen. Datum: der Tag, an dem das letzte fehlende Stück dazukam. Name je Stück: nächste benannte Linie der Karte (bis 15 m), Ort: das Stück liegt in der Grenze des Ortes. Nur zählende Straßen; Zufahrten und Wege gehören nicht dazu (Beispiel Testdaten: Erkelenzhofweg, benannter Teil rund 150 m)
+- Geht eine Straße in Kacheln weiter, die noch nicht geladen sind, lädt der Hintergrund sie nach (höchstens 60 je Rechnung); bleibt sie unklar, zählt sie nicht als komplett. Name und Ort je Stück bleiben im Hintergrund gespeichert
+- Die Rechnung läuft nach dem Ergebnis und kommt als eigene Nachricht, der Plan wartet nicht darauf
+- Plan: Name der kompletten Straße mit Textmarker unterlegt (ab Zoom 14); lange Straßen (ab 250 m) entlang der Linie, kurze waagerecht in ihrer Mitte; der normale Kartenname derselben Straße wird ausgeblendet
+- Viertel bei 100 %: feine Schraffur, auch nah dran (ab Zoom 12)
+- Etikett: „komplett seit 22. Nov. 2026“
+- Damit zählt jetzt auch der Stempel „Straßen komplett“ (10, 50, 100, 250, 500) und der Zeitraum-Rückblick zeigt die dritte Zahl „komplette Straßen“ (F2 nachgetragen)
+- Kern: `komplett.ts` (kompletteStrassen, randNachbarn, linienVerbinden; 10 Tests). Oberflächentest `e2e/komplett.spec.ts`: Tipp auf den Erkelenzhofweg zeigt „komplett seit“
+
 ## 22.11.2026: F2 „Dein November“ und die Kacheln
 - Rückblicke: oben drei Kacheln (Diese Woche ab Montag, laufender Monat, laufendes Jahr) mit den neuen Kilometern; vergangene Monate mit Neuem als Zeilen zwischen den Tagen („Oktober 2026 · 2,4 km neu“), jeweils vor ihren Tagen, ältere Monate am Ende
 - Tipp spielt den Zeitraum ab: Blatt weg, oben läuft das Datum des Wegs mit; je Gegend (Wege über etwa 40 km auseinander) ein eigener Abschnitt mit allen Wegen der Gegend im Bild (höchstens Zoom 15); darin alle Wege in zeitlicher Reihenfolge mit schmalem Textmarker-Strich; Neues des Zeitraums wird im selben Takt gelb. Etwa 10 s: die Zeit wird nach Länge verteilt, kurze Zeiträume werden auf 10 s gestreckt. Tipp auf den Plan beendet

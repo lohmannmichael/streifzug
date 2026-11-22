@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
-import type { Piece } from "@streifzug/core";
+import { lineLengthM, linienVerbinden, pointAlong, type LonLat, type Piece } from "@streifzug/core";
 import { ERSTES_JAHR, jahresFarbe, MARKER_FARBEN } from "../einstellungen";
 import { strassenBreite } from "./stil";
 
@@ -54,6 +54,57 @@ function schraffurBilder(karte: MapLibreMap, farbe: string) {
     if (karte.hasImage(name)) karte.updateImage(name, bild);
     else karte.addImage(name, bild, { pixelRatio: 2 });
   }
+  // A quarter at 100 %: fine hatching, also close up (Bauplan 3, F4).
+  const c = document.createElement("canvas");
+  c.width = c.height = g;
+  const x = c.getContext("2d")!;
+  x.strokeStyle = farbe;
+  x.lineWidth = 1.2;
+  for (let o = -g; o <= g * 2; o += 8) {
+    x.beginPath();
+    x.moveTo(o, g);
+    x.lineTo(o + g, 0);
+    x.stroke();
+  }
+  const fein = x.getImageData(0, 0, g, g);
+  if (karte.hasImage("schraffur-fein")) karte.updateImage("schraffur-fein", fein);
+  else karte.addImage("schraffur-fein", fein, { pixelRatio: 2 });
+}
+
+/**
+ * Complete streets (Bauplan 3, F4): their name on the plan, underlaid with the highlighter. The
+ * base map's label of the same street is hidden so the name does not stand twice.
+ */
+const namenFilter = new Map<string, unknown>();
+export function kompletteNamen(karte: MapLibreMap, strassen: readonly { name: string; coords: LonLat[][] }[]) {
+  if (!karte.getSource("komplett")) return;
+  // Long streets: the name along the line; short ones (the name would not fit): in their middle.
+  const lang: unknown[] = [];
+  const kurz: unknown[] = [];
+  for (const s of strassen) {
+    const linien = linienVerbinden(s.coords);
+    const laenge = linien.reduce((m, l) => m + lineLengthM(l), 0);
+    if (laenge >= 250) for (const l of linien) lang.push({ type: "Feature", properties: { name: s.name }, geometry: { type: "LineString", coordinates: l } });
+    else {
+      const l = [...linien].sort((a, b) => lineLengthM(b) - lineLengthM(a))[0];
+      if (l) kurz.push({ type: "Feature", properties: { name: s.name }, geometry: { type: "Point", coordinates: pointAlong(l, lineLengthM(l) / 2) } });
+    }
+  }
+  setzeDaten(karte, "komplett", { type: "FeatureCollection", features: lang } as never);
+  setzeDaten(karte, "komplett-punkt", { type: "FeatureCollection", features: kurz } as never);
+  const namen = strassen.map((s) => s.name);
+  for (const l of karte.getStyle().layers) {
+    if (l.type !== "symbol" || !("source-layer" in l) || l["source-layer"] !== "transportation_name") continue;
+    if (!namenFilter.has(l.id)) namenFilter.set(l.id, l.filter ?? null);
+    const alt = namenFilter.get(l.id);
+    const ohne = ["!", ["in", ["coalesce", ["get", "name:de"], ["get", "name_de"], ["get", "name"]], ["literal", namen]]];
+    karte.setFilter(l.id, (namen.length === 0 ? alt : alt ? ["all", alt, ohne] : ohne) as never);
+  }
+}
+
+/** After a new style the base map's filters are its own again. */
+export function namenFilterVergessen() {
+  namenFilter.clear();
 }
 
 
@@ -81,6 +132,25 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   karte.addSource("rb-kopf", { type: "geojson", data: LEER });
   karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": rbFarbe(), "line-width": ["interpolate", ["linear"], ["zoom"], 10, ["case", ["==", ["get", "zeitraum"], true], 2, ["==", ["get", "gefahren"], true], 2.4, 2], 15, ["case", ["==", ["get", "zeitraum"], true], 4, ["==", ["get", "gefahren"], true], 2.4, 2]], "line-opacity": 0.9 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 5, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
+  // Complete streets: the name along the street on a highlighter stroke (Bauplan 3, F4).
+  karte.addSource("komplett", { type: "geojson", data: LEER });
+  karte.addLayer({
+    id: "komplett-name",
+    type: "symbol",
+    source: "komplett",
+    minzoom: 14,
+    layout: { "symbol-placement": "line", "text-field": ["get", "name"], "text-font": ["Noto Sans Bold"], "text-size": ["interpolate", ["linear"], ["zoom"], 14, 11, 18, 15], "text-max-angle": 30, "symbol-spacing": 400 },
+    paint: { "text-color": TINTE, "text-halo-color": MARKER, "text-halo-width": 3 },
+  });
+  karte.addSource("komplett-punkt", { type: "geojson", data: LEER });
+  karte.addLayer({
+    id: "komplett-punkt",
+    type: "symbol",
+    source: "komplett-punkt",
+    minzoom: 14,
+    layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Bold"], "text-size": ["interpolate", ["linear"], ["zoom"], 14, 11, 18, 15] },
+    paint: { "text-color": TINTE, "text-halo-color": MARKER, "text-halo-width": 3 },
+  });
   // A tapped open street: black dashes along its middle (Bauplan 4.5).
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
@@ -127,6 +197,7 @@ export function stifteSetzen(karte: MapLibreMap, st: Stifte) {
   karte.setPaintProperty("entdeckt-weg", "line-color", markerFarbe(st) as never);
   karte.setPaintProperty("gefahren", "line-color", KULI);
   karte.setPaintProperty("neu-glanz", "line-color", MARKER);
+  for (const l of ["komplett-name", "komplett-punkt"]) if (karte.getLayer(l)) karte.setPaintProperty(l, "text-halo-color", MARKER);
   karte.setPaintProperty("rb", "line-color", rbFarbe());
   schraffurBilder(karte, MARKER);
 }

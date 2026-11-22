@@ -5,7 +5,7 @@ import { orteImBlick } from "@streifzug/core";
 import { orteLaden, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
-import { eigenesZeichnen, erstesMalSetzen, LEER, linienSammlung, setzeDaten, stifteSetzen } from "./ebenen";
+import { eigenesZeichnen, erstesMalSetzen, kompletteNamen, LEER, linienSammlung, namenFilterVergessen, setzeDaten, stifteSetzen } from "./ebenen";
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
 import { ruhig, zeigeGebiet } from "./kamera";
 import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
@@ -50,6 +50,8 @@ interface KartenProps {
   zeitraum: { wege: ZeitraumWeg[]; von: number; bis: number; nr: number } | null;
   onZeitraumDatum: (t: number) => void;
   onZeitraumEnde: () => void;
+  /** Complete streets: their name is underlaid with the highlighter (Bauplan 3, F4). */
+  komplett: { name: string; coords: LonLat[][] }[];
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
@@ -72,6 +74,8 @@ export function Karte(props: KartenProps) {
   gefahrenRef.current = props.gefahren;
   const prozenteRef = useRef(props.prozente);
   prozenteRef.current = props.prozente;
+  const komplettRef = useRef(props.komplett);
+  komplettRef.current = props.komplett;
   const stifteRef = useRef(props.stifte);
   stifteRef.current = props.stifte;
   erstesMalSetzen(props.erstesMal);
@@ -105,6 +109,8 @@ export function Karte(props: KartenProps) {
       animation.current?.ende();
       eigenesZeichnen(karte);
       stifteSetzen(karte, stifteRef.current);
+      namenFilterVergessen();
+      kompletteNamen(karte, komplettRef.current);
       setzeDaten(karte, "entdeckt", linienSammlung(entdecktRef.current));
       setzeDaten(karte, "gefahren", linienSammlung(gefahrenRef.current));
       if (datenRef.current)
@@ -175,6 +181,12 @@ export function Karte(props: KartenProps) {
       if (id && id !== gewaehltRef.current) waehlenRef.current(id, false);
     });
   }, [props.spur, props.folgen, props.position]);
+
+  // Names of complete streets.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (karte && stilDa.current()) kompletteNamen(karte, props.komplett);
+  }, [props.komplett]);
 
   // Driven streets as a pen line.
   useEffect(() => {

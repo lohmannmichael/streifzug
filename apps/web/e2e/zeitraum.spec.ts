@@ -24,6 +24,7 @@ test("Rückblicke (F2): drei Kacheln, Monatszeile, ein Zeitraum läuft ab und en
   const fertig = page.locator(".zeitraum-ende").getByRole("button", { name: "Fertig" });
   await expect(fertig).toBeVisible({ timeout: 30_000 });
   await expect(page.locator(".zeitraum-zahlen")).toContainText("neu gesehen");
+  await expect(page.locator(".zeitraum-zahlen")).toContainText(/komplette Straßen?/);
   await fertig.tap();
   await expect(page.locator(".zeitraum-ende")).toBeHidden();
   await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
