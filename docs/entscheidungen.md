@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: D5 Einstellungen
+- `seiten/Einstellungen.tsx` statt der langen Profilseite: Startseite mit vier Zeilen (Stifte, Aufzeichnung, Konto, Über), je eine Unterseite mit „‹ Einstellungen“ zurück, Wischen vom linken Rand geht auch
+- Aufzeichnung: Overland-Status, Anleitung, Verbindung trennen; darunter „Jetzt mit offener App aufzeichnen“ (Empfehlung D8: „Losziehen“ bleibt als Ersatz, falls Overland ausfällt, nur noch hier). Die Statuszeile im Blatt führt direkt hierher
+- Konto: Konto, Export, darunter unauffällig „Alte Wege importieren (GPX)“ als eigene kleine Seite
+- Über: Kartendaten, Lizenzen (MapLibre BSD-3, React, supabase-js, Vite MIT, Schrift Archivo OFL 1.1), Zustand (früher „Zustand (für Claude)“)
+- Prüfliste Overland: „Min Time Between Points“ jetzt 10 s (Messung Nachzeichnen 22.11.)
+
 ## 22.11.2026: D4 Rückblicke als Liste
 - Seite `seiten/Rueckblicke.tsx` (früher `Wege.tsx`): Tage der letzten 30 Tage mit Wegen, neueste zuerst; je Zeile Datum, Zahl der Wege, „N km neu“ (Stücke, deren erster Weg an dem Tag begann)
 - Tipp auf einen Tag: Pass schließt, der bestehende Rückblick spielt nur diesen Tag (`bis` im Rückblick: nur was an dem Tag neu war wird gelb, später Entdecktes wartet), danach wieder der aktuelle Stand. Kein Zoom zum gewählten Veedel und kein Hochzählen am Ende. Liegen die Wege eines Tages weit auseinander, zeigt er die Gegend mit den meisten

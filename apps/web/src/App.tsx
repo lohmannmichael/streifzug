@@ -13,15 +13,12 @@ import { useAusnahmen } from "./daten/ausnahmen";
 import { useKorrekturen } from "./daten/korrekturen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
-import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
 import { Blatt, type BlattProps, type Hoehe } from "./seiten/Blatt";
 import { StempelSeite } from "./seiten/Stempel";
 import { OrteSeite } from "./seiten/Orte";
-import { PassSeite, useRandWischen, ZurueckZumPass, type PassTeil } from "./seiten/Pass";
-import { Export } from "./seiten/Export";
-import { Konto } from "./seiten/Konto";
+import { PassSeite, type PassTeil } from "./seiten/Pass";
+import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { RueckblickeSeite, type Tag } from "./seiten/Rueckblicke";
-import { Stifte } from "./seiten/Stifte";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
 import { IconPass, IconStandort } from "./ui/Icons";
@@ -306,15 +303,22 @@ export function App() {
         }}
       />
     ) : pass === "einstellungen" ? (
-      <Profil
+      <EinstellungenSeite
         sitzung={sitzung}
         werte={einstellungen}
         aendern={aendern}
         daten={daten}
-        zumImport={importZeigen}
-        schliessen={() => {
+        overland={overland}
+        start={importZeigen === "overland" ? "aufzeichnung" : importZeigen === "gpx" ? "gpx" : null}
+        zumPass={() => {
           setPass("start");
           setImportZeigen(null);
+        }}
+        offeneApp={() => {
+          // Fallback when Overland fails (Bauplan 3, D8): record while the app is open.
+          setPass(null);
+          setImportZeigen(null);
+          aufzeichnung.starten();
         }}
         zustand={[
           [t.zustand.version, new Date(__BAUSTAND__).toLocaleString("de-DE")],
@@ -389,59 +393,4 @@ function prozenteJeGebiet(daten: Regionen | null, f: Fortschritt | null): Map<st
     if (g) m.set(id, prozent(zaehlendeMeter(gesehen, false), gesamtMeter(g, f.abzug)));
   }
   return m;
-}
-
-function Profil(props: {
-  sitzung: Sitzung;
-  werte: Einstellungen;
-  aendern: (teil: Partial<Einstellungen>) => void;
-  daten: Regionen | null;
-  zumImport: "overland" | "gpx" | null;
-  schliessen: () => void;
-  /** A few numbers to find problems from a screenshot. */
-  zustand: [string, string][];
-}) {
-  const userId = props.sitzung.status === "bereit" ? props.sitzung.session.user.id : null;
-  const importRef = useRef<HTMLHeadingElement>(null);
-  const overlandRef = useRef<HTMLHeadingElement>(null);
-  useEffect(() => {
-    if (props.zumImport === "gpx") importRef.current?.scrollIntoView({ block: "start" });
-    if (props.zumImport === "overland") overlandRef.current?.scrollIntoView({ block: "start" });
-  }, [props.zumImport]);
-  const { werte, aendern } = props;
-  const wischen = useRandWischen(props.schliessen);
-  return (
-    <div className="app">
-      <section className="seite seite-voll" aria-labelledby="profil-titel" {...wischen}>
-        <ZurueckZumPass onClick={props.schliessen} />
-        <h1 id="profil-titel">{t.ich.titel}</h1>
-        <h2>{t.ich.konto}</h2>
-        {props.sitzung.status === "offline" ? (
-          <div className="gruppe">
-            <p className="zeile-text">{t.ich.kontoOffline}</p>
-          </div>
-        ) : (
-          <Konto />
-        )}
-        <h2>{t.stifte.titel}</h2>
-        <Stifte werte={werte} aendern={aendern} />
-        <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
-        <OverlandEinrichten daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
-        <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
-        <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
-        <h2>{t.ich.daten}</h2>
-        <Export />
-        <h2>{t.zustand.titel}</h2>
-        <div className="gruppe">
-          {props.zustand.map(([k, v]) => (
-            <p key={k} className="zeile-text zustand-zeile">
-              <span>{k}</span>
-              <span>{v}</span>
-            </p>
-          ))}
-        </div>
-        <p className="quelle">{t.ich.quelle}</p>
-      </section>
-    </div>
-  );
 }

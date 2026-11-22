@@ -590,3 +590,7 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .tag-abspielen { flex: 1; display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 10px 0; border: 0; background: none; text-align: left; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
 .abspiel-zeichen { flex: none; display: grid; place-items: center; }
 .tag-pfeil { flex: none; width: 52px; border: 0; border-left: 1px solid var(--linie); background: none; color: var(--text-leise); font-size: 1.25rem; cursor: pointer; }
+
+/* Einstellungen (Bauplan 3, D5): four rows without pictures. */
+.pass-zeile.kurz { min-height: 72px; }
+.gruppe > .zeile-knopf.innen { padding: 0 16px; }

@@ -63,8 +63,7 @@ export function PassSeite(props: {
   const letzterName = letzter?.gebietId ? (daten.gebiete.get(letzter.gebietId)?.name ?? "") : "";
   const letzterWeg = wege?.[0];
   const o = props.overland;
-  const aufzeichnung =
-    o.verbunden === false ? t.pass.einrichten : overlandSteht(o) ? t.pass.pruefen(o.letzter ? zeitText(o.letzter) : null) : o.letzter ? t.pass.laeuft(zeitText(o.letzter)) : t.pass.laeuftKurz;
+  const aufzeichnung = aufzeichnungText(o);
   const wischen = useRandWischen(props.schliessen);
 
   return (
@@ -127,6 +126,13 @@ function PassZeile(props: { bild: ReactNode; titel: string; onClick: () => void;
       </button>
     </li>
   );
+}
+
+/** "Aufzeichnung läuft · letzter Punkt vor 12 Min." and the like (Pass, Einstellungen). */
+export function aufzeichnungText(o: OverlandStatus): string {
+  if (o.verbunden === false) return t.pass.einrichten;
+  if (overlandSteht(o)) return t.pass.pruefen(o.letzter ? zeitText(o.letzter) : null);
+  return o.letzter ? t.pass.laeuft(zeitText(o.letzter)) : t.pass.laeuftKurz;
 }
 
 /** Ways of the last 30 days, newest first (from the worker); null while loading. */
