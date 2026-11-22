@@ -68,6 +68,23 @@ test("ein Jahr Wege: Öffnen, Einrechnen, Speicher", async ({ page }) => {
   await page.goto("/");
   werte["Erster Start: alles eingerechnet (s)"] = (await bis(async () => (await prozent(page)) !== "0 Prozent" && !(await rechnetNoch(page)), 25 * 60_000)) / 1000;
   werte["Prozent Weiden"] = (await prozent(page)) ?? "";
+  // Complete streets come after the result (Bauplan 3, F4): how long after, and how many.
+  const komplettLesen = () =>
+    page.evaluate(
+      () =>
+        new Promise<number>((ok) => {
+          const req = indexedDB.open("streifzug-stand");
+          req.onsuccess = () => {
+            const g = req.result.transaction("stand").objectStore("stand").get("letzter");
+            g.onsuccess = () => ok(g.result?.stand?.komplett?.length ?? -1);
+          };
+          req.onerror = () => ok(-1);
+        }),
+    );
+  const tk = Date.now();
+  await bis(async () => (await komplettLesen()) >= 0 && (await komplettLesen()) !== 0, 10 * 60_000).catch(() => 0);
+  werte["Komplette Straßen: nach dem Ergebnis (s)"] = (Date.now() - tk) / 1000;
+  werte["Komplette Straßen: Anzahl"] = await komplettLesen();
 
   // 2. Opening again: plan with the last state, yellow, everything up to date.
   const t0 = Date.now();
