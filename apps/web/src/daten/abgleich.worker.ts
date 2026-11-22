@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { gefahrenJePunkt, type KompletteStrasse, type LonLat, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { gefahrenJePunkt, type KompletteStrasse, type LonLat, type ReiseWeg, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
 import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import { kompletteBerechnen } from "./komplett";
@@ -60,6 +60,7 @@ export type Anfrage =
   | { typ: "ortsName"; nr: number; punkt: [number, number] }
   | { typ: "export"; nr: number; extra: { name: string; text: string }[] }
   | { typ: "wegeListe"; nr: number; seit: number }
+  | { typ: "reiseWege"; nr: number }
   | { typ: "abschnitte"; nr: number; id: string; korrekturen: Korrektur[] };
 
 export type Antwort =
@@ -67,6 +68,7 @@ export type Antwort =
   | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[]; ueberblick: { gelb: LonLat[][]; rot: LonLat[][] } }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
+  | { typ: "reiseWege"; nr: number; wege: ReiseWeg[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
@@ -201,6 +203,7 @@ let ersteAktiv = new Map<string, number>();
 let ersteGefahren = new Map<string, number>();
 let zuletztAusnahmen = new Set<string>();
 let zuletztKomplett: KompletteStrasse[] = [];
+const mittelpunkte = new Map<string, LonLat>();
 let komplettSeit = new Map<string, number>();
 
 /** The counting piece nearest to a tapped point (within radiusM), with its state. */
@@ -491,6 +494,22 @@ async function antworten(a: Anfrage): Promise<void> {
         if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
       }
       return senden({ typ: "wege", nr: a.nr, wege });
+    }
+    case "reiseWege": {
+      // Every way with its time, middle point and length, for the trips (Bauplan 3, F6).
+      const wege: ReiseWeg[] = [];
+      for (const k of [...(await alleLaden()), ...(await andereLaden()).values()]) {
+        let punkt = mittelpunkte.get(k.id);
+        if (!punkt) {
+          const fixes = k.fixes?.length ? k.fixes : ((await einenLaden(k.id))?.fixes ?? []);
+          const f = fixes[Math.floor(fixes.length / 2)];
+          if (!f) continue;
+          punkt = [f.lon, f.lat];
+          mittelpunkte.set(k.id, punkt);
+        }
+        wege.push({ id: k.id, start: k.startedAt, ende: k.endedAt ?? k.startedAt, punkt, m: k.distanceM });
+      }
+      return senden({ typ: "reiseWege", nr: a.nr, wege });
     }
     case "wegeListe": {
       const eigene = (await alleLaden()).map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, quelle: s.quelle ?? "aufnahme" }));

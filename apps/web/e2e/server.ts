@@ -36,6 +36,8 @@ export interface ServerOptionen {
   strassenAus?: boolean;
   /** Moves single test ways this many days back (Zeitreise). */
   tageZurueck?: Record<string, number>;
+  /** Adds a copy of single test ways this many days earlier (a trip over a night, Reisen). */
+  kopien?: Record<string, number>;
 }
 
 export interface Server {
@@ -92,7 +94,8 @@ async function openfreemap(route: Route, s: Server) {
 
 function punkteAlsZeilen(s: Server, jetzt: number) {
   const namen = s.optionen.wege ?? TESTWEGE.map((w) => w.name);
-  return TESTWEGE.filter((w) => namen.includes(w.name))
+  const kopien = TESTWEGE.filter((w) => s.optionen.kopien?.[w.name]).map((w) => ({ ...w, punkte: w.punkte.map((p) => ({ ...p, vorMin: p.vorMin + s.optionen.kopien![w.name]! * 1440 })) }));
+  return [...TESTWEGE.filter((w) => namen.includes(w.name)), ...kopien]
     .flatMap((w) => w.punkte.map((p) => ({ ...p, vorMin: p.vorMin + (s.optionen.tageZurueck?.[w.name] ?? 0) * 1440 })))
     .map((p) => ({ t: new Date(jetzt - p.vorMin * 60_000).toISOString(), lon: p.lon, lat: p.lat, acc: p.acc, motion: p.motion, speed: p.speed }))
     .sort((a, b) => a.t.localeCompare(b.t));

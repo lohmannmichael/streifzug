@@ -7,7 +7,7 @@ import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
 import { eigenesZeichnen, erstesMalSetzen, kompletteNamen, LEER, linienSammlung, namenFilterVergessen, setzeDaten, stifteSetzen, ueberblickSetzen } from "./ebenen";
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
-import { ruhig, zeigeGebiet } from "./kamera";
+import { ruhig, zeigeBox, zeigeGebiet } from "./kamera";
 import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
 import { zeitraumAbspielen, type ZeitraumWeg } from "./zeitraum";
 import { SchildAnKarte, type EtikettZustand } from "./Schild";
@@ -56,6 +56,8 @@ interface KartenProps {
   ueberblick: { gelb: LonLat[][]; rot: LonLat[][] } | undefined;
   orte: { id: string; name: string; punkt: LonLat }[];
   onOrt: (id: string) => void;
+  /** Bring a box into view (a trip, Bauplan 3, F6); `nr` moves the map. */
+  box: { b: [[number, number], [number, number]]; nr: number } | null;
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
@@ -192,6 +194,15 @@ export function Karte(props: KartenProps) {
       if (id && id !== gewaehltRef.current) waehlenRef.current(id, false);
     });
   }, [props.spur, props.folgen, props.position]);
+
+  // A trip: all its places in view above the sheet.
+  useEffect(() => {
+    const karte = karteRef.current;
+    const b = props.box;
+    if (!karte || !b) return;
+    const h = karte.getContainer().clientHeight;
+    zeigeBox(karte, b.b, { top: 70, bottom: h * 0.45, left: 30, right: 30 }, { maxZoom: 14, duration: ruhig() ? 0 : 900 });
+  }, [props.box?.nr]);
 
   // Overview far out.
   useEffect(() => {

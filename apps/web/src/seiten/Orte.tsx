@@ -4,7 +4,17 @@ import type { Fortschritt } from "../daten/fortschritt";
 import type { FremderOrt } from "../daten/orte";
 import { alsKm, gesamtMeter, viertelWort, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Region, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
+import { useReisen, type ReiseZeile } from "../daten/reisen";
 import { orteMitWegen, PassUnterseite, tagText } from "./Pass";
+
+const datumKurz = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", year: "numeric" });
+const tagMonat = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short" });
+
+/** "12.–15. Okt. 2026" style, from first to last day. */
+function zeitraumText(von: number, bis: number): string {
+  if (new Date(von).toDateString() === new Date(bis).toDateString()) return datumKurz.format(von);
+  return `${tagMonat.format(von)} – ${datumKurz.format(bis)}`;
+}
 
 const LEER = { strasse_m: 0, weg_m: 0 };
 
@@ -19,8 +29,10 @@ export function OrteSeite(props: {
   fremdeOrte: FremderOrt[];
   zurueck: () => void;
   oeffnen: (wurzel: string) => void;
+  reiseOeffnen: (r: ReiseZeile) => void;
 }) {
   const { daten, fortschritt: f } = props;
+  const reisen = useReisen(daten, f, props.fremdeOrte);
   const { regionen, fremde } = useMemo(() => orteMitWegen(daten, f, props.fremdeOrte), [daten, f, props.fremdeOrte]);
   const [zuhause, ...weitere] = regionen;
   const zeile = (r: Region) => <OrtZeile key={r.id} region={r} daten={daten} fortschritt={f} oeffnen={() => props.oeffnen(r.wurzel)} />;
@@ -37,6 +49,24 @@ export function OrteSeite(props: {
         <>
           <h2>{t.orte.weitere}</h2>
           <ul className="orte-zeilen">{weitere.map((x) => zeile(x.r))}</ul>
+        </>
+      )}
+      {reisen.length > 0 && (
+        <>
+          <h2>{t.orte.reisen}</h2>
+          <ul className="orte-zeilen">
+            {reisen.map((r) => (
+              <li key={r.id}>
+                <button type="button" className="ort-zeile" onClick={() => props.reiseOeffnen(r)}>
+                  <span className="ort-text">
+                    <b>{r.name}</b>
+                    <span>{t.orte.reiseZeile(zeitraumText(r.von, r.bis), r.orte.length, alsKm(r.m))}</span>
+                  </span>
+                  <span className="pfeil" aria-hidden="true">›</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </>
       )}
       {fremde.length > 0 && (

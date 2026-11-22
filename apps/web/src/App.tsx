@@ -19,6 +19,7 @@ import { PassSeite, type PassTeil } from "./seiten/Pass";
 import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { neuInZeitraum, RueckblickeSeite, type Tag, type ZeitraumWahl } from "./seiten/Rueckblicke";
 import { ZeitraumDatum, ZeitraumKarte } from "./seiten/ZeitraumKarte";
+import { reiseUmbenennen, type ReiseZeile } from "./daten/reisen";
 import type { ZeitraumWeg } from "./karte/zeitraum";
 import { ZeitreiseLeiste } from "./seiten/Zeitreise";
 import { Karte } from "./karte/Karte";
@@ -43,6 +44,9 @@ export function App() {
   const overland = useOverlandStatus();
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   // One past day from "Rückblicke" (Bauplan 3, D4).
+  // A trip opened from Orte (Bauplan 3, F6): the map shows it, the sheet offers its replay.
+  const [reise, setReise] = useState<ReiseZeile | null>(null);
+  const [box, setBox] = useState<{ b: [[number, number], [number, number]]; nr: number } | null>(null);
   // A period played back (Bauplan 3, F2), and the date of the way being drawn.
   const [zeitraum, setZeitraum] = useState<(ZeitraumWahl & { wege: ZeitraumWeg[]; nr: number; fertig: boolean }) | null>(null);
   const [zrDatum, setZrDatum] = useState<number | null>(null);
@@ -64,6 +68,7 @@ export function App() {
   const springen = useRef(true);
   const waehlen = (id: string, sprung = true) => {
     springen.current = sprung;
+    setReise(null);
     setGewaehlt(id);
     localStorage.setItem(MERKEN, id);
     const ort = regionenJetzt()?.gebiete.get(id)?.regionId;
@@ -309,6 +314,22 @@ export function App() {
     hochzaehlen: hochzaehlen,
     rechenFehler: rechenFehler,
     monatFertig,
+    reise: reise
+      ? {
+          name: reise.name,
+          abspielen: () => {
+            const r = reise;
+            setReise(null);
+            zeitraumStarten({ von: r.von, bis: r.bis + 1, titel: r.name });
+          },
+          umbenennen: () => {
+            const neu = window.prompt(t.orte.neuerName, reise.name);
+            if (neu === null) return;
+            reiseUmbenennen(reise.id, neu);
+            setReise({ ...reise, name: neu.trim() || reise.name });
+          },
+        }
+      : null,
     quelle: () => {
       setImportZeigen("ueber");
       setPass("einstellungen");
@@ -358,6 +379,12 @@ export function App() {
         fortschritt={fortschritt}
         fremdeOrte={fremdeOrte}
         zurueck={zumPass}
+        reiseOeffnen={(r) => {
+          setPass(null);
+          setHoehe(1);
+          setReise(r);
+          setBox((alt) => ({ b: r.box, nr: (alt?.nr ?? 0) + 1 }));
+        }}
         oeffnen={(wurzel) => {
           // Pass closes, the plan goes to the whole place, the sheet shows it (Bauplan 3, D2).
           setPass(null);
@@ -460,6 +487,7 @@ export function App() {
           ueberblick={zeitreise === null ? fortschritt?.ueberblick : undefined}
           orte={ortePunkte}
           onOrt={ortOeffnen}
+          box={box}
           onZeitraumDatum={setZrDatum}
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />

@@ -10,7 +10,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (F1: jeder Weg einzeln nachgefahren, dünne Tintenlinie, Gelb im selben Takt, Auto rot und schnell)
 - Nach einem Flug: weiter Sprung nach mindestens 10 Min. Pause gilt als neuer Anfang, nicht als Ausreißer
 - Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit, Wirtschaftswege und Zufahrten ab 100 m schmal gelb (`ABGLEICH_VERSION` 10)
-- Oberflächentests (E1): 24 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
+- Oberflächentests (E1): 25 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
 - Öffnen zeigt sofort den letzten Stand (E3, Gerätedatenbank `streifzug-stand`); Messung mit einem Jahr Daten: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`
 - Orte bei Bedarf (E4): vorab nur die Orte-Liste; ein Ort wird geladen, wenn der Plan hinschaut, dort Wege liegen oder er geöffnet wird; danach bleibt er auf dem Gerät (Zwischenspeicher „orte“, bis etwa 100 Orte)
@@ -18,6 +18,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Rückblicke mit Kacheln (F2): Diese Woche, Monat, Jahr, vergangene Monate; Abspielen eines Zeitraums mit Datum oben und Zahlen am Ende; „Dein Oktober ist fertig“ im Blatt
 - Straße komplett (F4): Name mit Textmarker unterlegt, Etikett „komplett seit“, Viertel bei 100 % fein schraffiert, Stempel „Straßen komplett“ zählt
 - Deutschland-Blick (F5): unter Zoom 8,5 feine Linien aller Wege und ein Punkt je Ort, Tipp öffnet den Ort
+- Reisen (F6): Orte → Reisen (über 100 km von Zuhause, mindestens eine Nacht), Rückblick je Reise, umbenennbar
 - Zeitreise (F3): Rückblicke → Zeitreise, Schieber vom ersten Tag bis heute, Plan und Prozent laufen mit
 - Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb, kurze Stummel und Schlaufen an Kreuzungen werden nicht gezeichnet)
 - Orte ohne Region: behalten, „Wird vorbereitet“, Wünsche in `region_wishes`
@@ -31,9 +32,12 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | C Vertrauen | C1 Statuszeile Aufzeichnung · C2 Abschnitt umstellen · C3 Fehler und Wartezustände · C4 Zuhause-Zone entfernen | fertig (22.11.) |
 | D Aufbau | D1 Pass · D2 Orte · D3 Stempel · D4 Rückblicke · D5 Einstellungen · D6 Quellenhinweis · D7 Wörter · D8 Altes entfernen | fertig (22.11.), Michi prüft eine Woche |
 | E Robust | E1 Oberflächentests · E2 Karte aufteilen · E3 Tempo · E4 Orte bei Bedarf laden | erledigt (22.11.) |
-| F Neues | F1–F7 | F7, F3, F1, F2, F4, F5 erledigt (22.11.); weiter: F6 (Reisen; Schwellen legt Michi fest) |
+| F Neues | F1–F7 | alle erledigt (22.11.), Michi prüft am iPhone |
 
 ## Offene Fragen an Michi
+- Reisen (F6): Passen die Schwellen (über 100 km von Zuhause, mindestens eine Nacht)? Reisenamen sollen ins Konto?
+- Rückblick (F1): nah genug, zu schnell, zu langsam? (an drei echten Tagen prüfen)
+- Wirtschaftswege und Zufahrten ab 100 m werden schmal gelb gezeichnet: passt das so?
 - Notizen aus der Prüfwoche (Etappe D) fehlen noch; in der Sitzung vom 22.11. stand nur der Platzhalter
 - Eine Woche normal nutzen (Abschluss Etappe D) und aufschreiben, wo er sucht oder was hakt
 - Overland: „Min Time Between Points“ auf 10 s stellen; Mitteilungen von Overland ggf. aus (Statuszeile in Unterwegs reicht)

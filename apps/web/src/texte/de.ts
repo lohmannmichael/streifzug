@@ -259,6 +259,11 @@ export const de = {
     seite: (n: number, von: number) => `Seite ${n} von ${von}`,
   },
   orte: {
+    reisen: "Reisen",
+    reiseZeile: (zeit: string, orte: number, km: string) => `${zeit} · ${orte} ${orte === 1 ? "Ort" : "Orte"} · ${km}`,
+    reiseRueckblick: "Rückblick dieser Reise",
+    umbenennen: "Umbenennen",
+    neuerName: "Neuer Name für die Reise",
     titel: "Orte",
     zuhause: "Zuhause",
     weitere: "Weitere Orte",

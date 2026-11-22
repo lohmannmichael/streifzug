@@ -29,6 +29,8 @@ const gesamtM = (g: GebietDaten) => gesamtMeter(g, abzugJetzt);
 export interface BlattProps {
   /** First days of a month: "Dein November ist fertig" with a tap to play (Bauplan 3, F2). */
   monatFertig: { titel: string; abspielen: () => void } | null;
+  /** A trip opened from Orte (Bauplan 3, F6): its replay and renaming. */
+  reise: { name: string; abspielen: () => void; umbenennen: () => void } | null;
   hoehe: Hoehe;
   setHoehe: (h: Hoehe) => void;
   gebiet: GebietDaten | null;
@@ -109,6 +111,8 @@ export function Blatt(props: BlattProps) {
   const blattRef = useRef<HTMLElement>(null);
   const kopfRef = useRef<HTMLDivElement>(null);
   const aufnahmeRef = useRef<HTMLDivElement>(null);
+  // Offers under the head (a trip, a finished month) stay visible in the small sheet too.
+  const angebotRef = useRef<HTMLDivElement>(null);
   const inhaltRef = useRef<HTMLDivElement>(null);
   const [masse, setMasse] = useState({ halb: 0, klein: 0 });
   useLayoutEffect(() => {
@@ -117,14 +121,14 @@ export function Blatt(props: BlattProps) {
       const k = kopfRef.current;
       if (!b || !k) return;
       const unten = parseFloat(getComputedStyle(b).paddingBottom) || 0;
-      setMasse({ halb: b.offsetHeight, klein: k.offsetHeight + (aufnahmeRef.current?.offsetHeight ?? 0) + unten });
+      setMasse({ halb: b.offsetHeight, klein: k.offsetHeight + (aufnahmeRef.current?.offsetHeight ?? 0) + (angebotRef.current?.offsetHeight ?? 0) + unten });
     };
     messen();
     const ro = new ResizeObserver(messen);
     if (blattRef.current) ro.observe(blattRef.current);
     if (kopfRef.current) ro.observe(kopfRef.current);
     return () => ro.disconnect();
-  }, [a.aktiv]);
+  }, [a.aktiv, !!props.reise, !!props.monatFertig]);
   const tief = Math.max(0, masse.halb - masse.klein);
   const [zug, setZug] = useState<number | null>(null);
   const start = useRef<{ y: number; t: number; basis: number; letzteY: number; letzteT: number; v: number } | null>(null);
@@ -292,8 +296,18 @@ export function Blatt(props: BlattProps) {
         )}
       </div>
 
-      {!a.aktiv && props.monatFertig && (
-        <div className="monat-fertig">
+      {!a.aktiv && props.reise && (
+        <div ref={angebotRef} className="monat-fertig">
+          <span>{props.reise.name}</span>
+          <span>
+            <button type="button" className="text-knopf" onClick={props.reise.umbenennen}>{t.orte.umbenennen}</button>{" "}
+            <button type="button" className="text-knopf" onClick={props.reise.abspielen}>{t.orte.reiseRueckblick}</button>
+          </span>
+        </div>
+      )}
+
+      {!a.aktiv && !props.reise && props.monatFertig && (
+        <div ref={angebotRef} className="monat-fertig">
           <span>{t.zeitraum.fertigZeile(props.monatFertig.titel)}</span>
           <button type="button" className="text-knopf" onClick={props.monatFertig.abspielen}>{t.zeitraum.abspielen}</button>
         </div>

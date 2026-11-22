@@ -24,3 +24,4 @@ export * from "./nachfahren";
 export * from "./zeitraum";
 export * from "./komplett";
 export * from "./ueberblick";
+export * from "./reisen";

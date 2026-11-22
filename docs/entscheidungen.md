@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: F6 Reisen
+- Regel (Vorschlag aus dem Plan, **[ANNAHME]**, Michi legt die Schwellen fest; Werte in `packages/core/src/reisen.ts`): Eine Reise sind aufeinanderfolgende Wege mehr als 100 km von Zuhause, zwischen erstem und letztem liegt mindestens eine Nacht (anderer Kalendertag). Sie endet mit dem ersten Weg zurück im Umkreis; eine laufende Reise zählt schon. Zuhause = der Ort mit den meisten Metern (Mitte seiner Box). Je Weg zählt sein mittlerer Punkt
+- Name: ein Ort → sein Name; zwei → „A und B“; mehr in einem Land → das Land; sonst „A, B und weitere“. Orte: Ort mit Daten (Box) oder der nächste „wird vorbereitet“-Ort bis 25 km. Umbenennen im Blatt („Umbenennen“, einfache Eingabe), gespeichert auf dem Gerät (`streifzug.reisen-namen`, noch nicht im Konto)
+- Orte-Seite: Gruppe „Reisen“ nach „Weitere Orte“: Name, Zeitraum, Anzahl Orte, km. Tipp: Pass zu, Plan zeigt alle Wege der Reise; im Blatt (auch klein sichtbar) „Umbenennen“ und „Rückblick dieser Reise“ (spielt den Zeitraum wie F2 ab, mit dem Reisenamen als Titel)
+- Der Kopf des Blatts zeigt dabei weiter das gewählte Viertel (eine Reise ist kein Gebiet)
+- Reisen vor dem 19.11.2026 gibt es nur über importierte Wege (wie im Plan)
+- Kern: `reisen.ts` (6 Tests). Oberflächentest `e2e/reisen.spec.ts` mit neuer Server-Option `kopien` (Freising gestern und heute)
+
 ## 22.11.2026: F5 Deutschland-Blick
 - Weit herausgezoomt (unter Zoom 8,5) keine Viertel-Flächen, Grenzen und Schraffur mehr; stattdessen alle Wege als feine Linien (Gelb zu Fuß und Rad, Rot gefahren) und je Ort mit Wegen ein Punkt mit Namen (Mitte seiner Box). Tipp auf den Punkt öffnet den Ort (wie in Orte)
 - Abweichung: Grenze 8,5 statt 9, weil ganz Köln über dem halben Blatt auf dem iPhone bei Zoom 8,8 steht und sonst ohne Viertel wäre (ein Oberflächentest hat das gefunden)
