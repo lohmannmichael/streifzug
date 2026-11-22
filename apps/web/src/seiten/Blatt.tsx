@@ -5,7 +5,7 @@ import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
 import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { FremderOrt } from "../daten/orte";
-import { STILL_MS, zeitText, type OverlandStatus } from "../daten/import";
+import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
@@ -317,7 +317,7 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
           <span className="wert">›</span>
         </button>
       )}
-      {props.overland.verbunden && (props.overland.letzter === null || Date.now() - props.overland.letzter > STILL_MS) && (
+      {overlandSteht(props.overland) && (
         <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
           <span>{props.overland.letzter ? t.import.overland.still(zeitText(props.overland.letzter)) : t.import.overland.nochKeinPunkt}</span>
           <span className="wert">{t.import.overland.pruefen} ›</span>

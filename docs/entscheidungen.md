@@ -1,10 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: Seltener Punkte von Overland – Messung
+- Michis Weg vom 22.11. (9:20–11:35 Uhr, ca. 6 s Takt) künstlich ausgedünnt, gleiche Regeln: 10 s → 97 % der gelben Straßen, 15 s → 94 %, 30 s → 92 %. Die App füllt Lücken also schon weitgehend selbst (Verbindungslinie zwischen den Punkten, Ecken- und Lückenregel). Ein echtes Nachzeichnen über das Straßennetz (Ideenliste) würde den Rest holen
+
 ## 22.11.2026: C1 Statuszeile der Aufzeichnung
 - Die App fragt beim Öffnen, beim Zurückkommen und alle 5 Minuten den Server nach dem neuesten Punkt (`received_points`, nicht mehr den Gerätespeicher)
 - Overland nicht verbunden: Zeile „Automatisch aufzeichnen einrichten“. Letzter Punkt älter als **3 Stunden** (Michi, statt 24 im Plan): Zeile „Seit 13:49 keine Punkte von Overland · Prüfen ›“, führt zu Einstellungen → Overland. Sonst keine Zeile
 - Einstellungen → Overland: „Läuft · letzter Punkt vor 12 Min.“ bzw. „Seit … sind keine Punkte angekommen“, darunter die Prüfliste (klappt bei Stillstand von selbst auf): Overland öffnen bzw. Meldung antippen; Both, Pause No, Min Time 5 s; Ort Immer, Genauer Standort, Hintergrundaktualisierung; Stromsparmodus aus; nicht wegwischen
-- Hinweis: Nachts kommen meist keine Punkte (man bewegt sich nicht). Morgens kann die Zeile darum kurz stehen, bis man losgeht
+- Nachts zählt nicht (Michi): Für die 3 Stunden zählt nur die Zeit von 7 bis 22 Uhr (`wachZeitSeit`). Letzter Punkt um 22 Uhr → morgens um 8 keine Zeile, erst ab 10 Uhr
 - Geprüft: Testkonto mit 30 h altem Punkt zeigt die Zeile, nach einem neuen Punkt verschwindet sie. Testkonto gelöscht
 
 ## 22.11.2026: Etappe B (Blatt) umgesetzt

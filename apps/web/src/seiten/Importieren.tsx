@@ -10,7 +10,7 @@ import {
   uebernehmen,
   useOverlandStatus,
   useQuellenInfo,
-  STILL_MS,
+  overlandSteht,
   zeitText,
   type ImportVorschau,
   type QuellenInfo,
@@ -76,7 +76,7 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
   // Newest point from the server (Bauplan 3, C1).
   const status = useOverlandStatus();
   const letzterPunkt = status.letzter;
-  const steht = verbunden && (letzterPunkt === null || Date.now() - letzterPunkt > STILL_MS);
+  const steht = verbunden && overlandSteht(status);
 
   const verbinden = async () => {
     if (!props.userId) return setMeldung(tx.keinKonto);

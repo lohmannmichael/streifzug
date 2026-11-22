@@ -93,6 +93,28 @@ export const overlandLetzterPunkt = () => {
 /** After this long without a point, the sheet says so (Bauplan 3, C1; Michi: 3 hours, not 24). */
 export const STILL_MS = 3 * 3600_000;
 
+/**
+ * Time without points that counts: only daytime (7–22 h). At night you usually don't move, so a
+ * last point at 22 h shows no line in the morning before you set off (Michi, 22.11.2026).
+ */
+export function wachZeitSeit(t: number, jetzt = Date.now()): number {
+  let summe = 0;
+  for (let x = t; x < jetzt; ) {
+    const d = new Date(x);
+    const tagStart = new Date(d).setHours(7, 0, 0, 0);
+    const tagEnde = new Date(d).setHours(22, 0, 0, 0);
+    const morgen = new Date(d).setHours(24, 0, 0, 0);
+    const von = Math.max(x, tagStart);
+    const bis = Math.min(jetzt, tagEnde);
+    if (bis > von) summe += bis - von;
+    x = morgen;
+  }
+  return summe;
+}
+
+/** The recording looks stopped: set up, but no point for 3 hours of daytime. */
+export const overlandSteht = (s: OverlandStatus) => !!s.verbunden && (s.letzter === null || wachZeitSeit(s.letzter) > STILL_MS);
+
 export interface OverlandStatus {
   /** null while not known yet. */
   verbunden: boolean | null;
