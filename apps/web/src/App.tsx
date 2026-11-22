@@ -19,7 +19,6 @@ import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
 import { WegeSeite } from "./seiten/Wege";
 import { Stifte } from "./seiten/Stifte";
-import { Zuhause } from "./seiten/Zuhause";
 import { Karte } from "./karte/Karte";
 import { t } from "./texte/de";
 import { IconMehr, IconSchliessen, IconStandort } from "./ui/Icons";
@@ -433,8 +432,6 @@ function Profil(props: {
         <Stifte werte={werte} aendern={aendern} />
         <h2 ref={overlandRef} id="overland">{t.import.overland.ueberschrift}</h2>
         <OverlandEinrichten daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
-        <h2>{t.zuhause.titel}</h2>
-        <Zuhause userId={userId} />
         <h2 ref={importRef} id="importieren">{t.import.titel}</h2>
         <GpxImport daten={props.daten} userId={userId} werte={werte} aendern={aendern} />
         <h2>{t.ich.daten}</h2>

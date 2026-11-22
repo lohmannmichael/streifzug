@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: C4 Zuhause-Zone entfernt
+- Vorher geprüft: In der Datenbank war keine Zone gesetzt (auch nicht für Michi), es ist also kein Punkt verloren gegangen
+- Verworfen wurde nicht in der Edge Function `overland`, sondern über den Datenbank-Trigger `received_points_privacy_zone`; dazu löschte `privacy_zones_purge_points` beim Anlegen einer Zone schon gespeicherte Punkte. Beide Trigger entfernt (Migration `20261122180000_zuhause_zone_aus.sql`), Sicherheits-Check ohne neue Hinweise
+- Oberfläche: `seiten/Zuhause.tsx`, der Eintrag in den Einstellungen und die Texte sind weg
+- Tabelle `privacy_zones` und die Funktionen `drop_points_in_privacy_zone`, `purge_points_in_new_zone` bleiben vorerst (Regel 7), Entfernen in D8 nach Michis Ja
+- Geprüft: Testkonto mit Zone (200 m), Punkt mitten in der Zone über die echte Overland-Adresse geschickt → `{"result":"ok"}`, Punkt gespeichert. Testkonto gelöscht
+
 ## 22.11.2026: C3 Fehler und Wartezustände
 - Einrechnen schlägt fehl: Kopfzeile „Neue Wege ließen sich gerade nicht einrechnen. Deine Wege sind sicher.“ mit „Nochmal versuchen“, die technische Meldung klein im Blatt und unter Einstellungen → Zustand (Titel ohne „für Claude“). Kommt das Netz zurück, rechnet die App von selbst nochmal
 - Wichtig dabei: Kam eine Straßenkachel nicht an (Funkloch), wurde sie bisher still als „keine Straßen“ gezählt und das leere Ergebnis des Wegs gespeichert. Jetzt ist das ein Fehler: nichts wird gespeichert, der Weg wird beim nächsten Versuch neu gerechnet (`strassen.ts`, Worker meldet `uebersprungen`)
