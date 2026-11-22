@@ -5,11 +5,13 @@ import {
   overlandTrennen,
   overlandVerbinden,
   overlandVerbunden,
-  overlandLetzterPunkt,
   overlandZuletzt,
   quelleLoeschen,
   uebernehmen,
+  useOverlandStatus,
   useQuellenInfo,
+  STILL_MS,
+  zeitText,
   type ImportVorschau,
   type QuellenInfo,
 } from "../daten/import";
@@ -71,7 +73,10 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
   const [meldung, setMeldung] = useState<string | null>(null);
   const [trennenFragen, setTrennenFragen] = useState(false);
   const zuletzt = overlandZuletzt();
-  const letzterPunkt = overlandLetzterPunkt();
+  // Newest point from the server (Bauplan 3, C1).
+  const status = useOverlandStatus();
+  const letzterPunkt = status.letzter;
+  const steht = verbunden && (letzterPunkt === null || Date.now() - letzterPunkt > STILL_MS);
 
   const verbinden = async () => {
     if (!props.userId) return setMeldung(tx.keinKonto);
@@ -100,10 +105,14 @@ function Overland(props: { daten: Regionen | null; userId: string | null; werte:
 
       {verbunden && (
         <>
-          <p className="zeile-text">
-            {tx.verbunden} {letzterPunkt ? tx.letzterPunkt(zeitpunkt.format(letzterPunkt)) : tx.nochKeinPunkt}{" "}
-            {zuletzt ? tx.zuletzt(zeitpunkt.format(zuletzt)) : tx.nochNie}
+          <p className={steht ? "zeile-text fehler" : "zeile-text"} role="status">
+            {letzterPunkt === null ? tx.nochKeinPunkt : steht ? tx.steht(zeitText(letzterPunkt)) : tx.laeuft(zeitText(letzterPunkt))}
           </p>
+          <details className="anleitung pruefliste" open={steht}>
+            <summary>{tx.prueflisteTitel}</summary>
+            <ol>{tx.pruefliste.map((s) => <li key={s}>{s}</li>)}</ol>
+          </details>
+          {zuletzt && <p className="zeile-text klein">{tx.zuletzt(zeitpunkt.format(zuletzt))}</p>}
           <Bestand empfangen info={props.info.overland} />
         </>
       )}

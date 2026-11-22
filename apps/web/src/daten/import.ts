@@ -90,11 +90,54 @@ export const overlandLetzterPunkt = () => {
   const t = Date.parse(localStorage.getItem(OVERLAND_SEIT) ?? "");
   return Number.isNaN(t) ? null : t;
 };
-/** Connected, but no new point for 48 hours: something is wrong with the recording. */
-export const overlandStill = () => {
-  const t = overlandLetzterPunkt();
-  return overlandVerbunden() && t !== null && Date.now() - t > 48 * 3600_000 ? t : null;
-};
+/** After this long without a point, the sheet says so (Bauplan 3, C1; Michi: 3 hours, not 24). */
+export const STILL_MS = 3 * 3600_000;
+
+export interface OverlandStatus {
+  /** null while not known yet. */
+  verbunden: boolean | null;
+  /** Time of the newest point the server has for this account. */
+  letzter: number | null;
+}
+
+/** The newest point on the server (not the device): asked on opening, coming back and every 5 minutes. */
+export function useOverlandStatus(): OverlandStatus {
+  const [status, setStatus] = useState<OverlandStatus>({ verbunden: overlandVerbunden() || null, letzter: overlandLetzterPunkt() });
+  useEffect(() => {
+    let lebt = true;
+    const fragenServer = async () => {
+      if (!navigator.onLine) return;
+      if (!(await sitzungAbwarten())) return;
+      const verbunden = await verbindungPruefen();
+      const { data } = await supabase.from("received_points").select("t").order("t", { ascending: false }).limit(1).maybeSingle();
+      const t = data?.t ? Date.parse(data.t as string) : null;
+      if (lebt) setStatus({ verbunden, letzter: t });
+    };
+    void fragenServer();
+    const takt = window.setInterval(() => void fragenServer(), 5 * 60_000);
+    const zurueck = () => document.visibilityState === "visible" && void fragenServer();
+    document.addEventListener("visibilitychange", zurueck);
+    window.addEventListener(ANDERE_GEAENDERT, fragenServer);
+    return () => {
+      lebt = false;
+      window.clearInterval(takt);
+      document.removeEventListener("visibilitychange", zurueck);
+      window.removeEventListener(ANDERE_GEAENDERT, fragenServer);
+    };
+  }, []);
+  return status;
+}
+
+/** "vor 12 Min.", "13:49", "gestern 23:10", "20. Nov., 18:40". */
+const uhr = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" });
+const tagUhr = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+export function zeitText(t: number): string {
+  const min = Math.round((Date.now() - t) / 60_000);
+  if (min < 60) return `vor ${Math.max(1, min)} Min.`;
+  const tage = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(t).setHours(0, 0, 0, 0)) / 86400_000);
+  return tage === 0 ? uhr.format(t) : tage === 1 ? `gestern ${uhr.format(t)}` : tagUhr.format(t);
+}
+
 
 let holt = false;
 

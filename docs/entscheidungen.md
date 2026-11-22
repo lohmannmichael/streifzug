@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: C1 Statuszeile der Aufzeichnung
+- Die App fragt beim Öffnen, beim Zurückkommen und alle 5 Minuten den Server nach dem neuesten Punkt (`received_points`, nicht mehr den Gerätespeicher)
+- Overland nicht verbunden: Zeile „Automatisch aufzeichnen einrichten“. Letzter Punkt älter als **3 Stunden** (Michi, statt 24 im Plan): Zeile „Seit 13:49 keine Punkte von Overland · Prüfen ›“, führt zu Einstellungen → Overland. Sonst keine Zeile
+- Einstellungen → Overland: „Läuft · letzter Punkt vor 12 Min.“ bzw. „Seit … sind keine Punkte angekommen“, darunter die Prüfliste (klappt bei Stillstand von selbst auf): Overland öffnen bzw. Meldung antippen; Both, Pause No, Min Time 5 s; Ort Immer, Genauer Standort, Hintergrundaktualisierung; Stromsparmodus aus; nicht wegwischen
+- Hinweis: Nachts kommen meist keine Punkte (man bewegt sich nicht). Morgens kann die Zeile darum kurz stehen, bis man losgeht
+- Geprüft: Testkonto mit 30 h altem Punkt zeigt die Zeile, nach einem neuen Punkt verschwindet sie. Testkonto gelöscht
+
 ## 22.11.2026: Etappe B (Blatt) umgesetzt
 - B1: Halbes Blatt nur noch Kilometer, Stempelkarte und bei Bedarf eine Statuszeile („Automatisch aufzeichnen einrichten“, solange Overland nicht verbunden ist; Overland still; neuer Ort). „Zuletzt“, „Noch offen“, „Jetzt mit offener App aufzeichnen“ und die Zeile „Deine Städte und Veedel“ sind raus; „Noch offen“ wird nicht mehr berechnet (Code bleibt bis D8). Stempelkarte als Reihe aus sechs Kreisen (Bild `Viertel.png`): erreicht = Stempel, offen = leerer Kreis, kein „noch x km“. Menüpunkt „Letzte Wege“ entfällt bis D4 (Rückblicke)
 - B2: Zwei Höhen. Das Blatt ist aufgezogen 75 % hoch (Michi: „etwas höher, aber nicht ganz“; vorher 64 %) und wird für „klein“ nach unten geschoben; beim Ziehen folgt es dem Finger, beim Loslassen rastet es auf der näheren Höhe ein (200 ms). Ein Wisch über 0,5 px/ms entscheidet nach Richtung (bei kurzen Bewegungen unter 0,3 s zählt die Geschwindigkeit der ganzen Bewegung). Der ganze Kopf ist Griff, Tippen auf den Kopf wechselt die Höhe, der Griff-Knopf bleibt für VoiceOver

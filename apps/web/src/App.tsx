@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
-import { overlandStill, useOverlandAbholen, type KurzWeg } from "./daten/import";
+import { useOverlandAbholen, useOverlandStatus, type KurzWeg } from "./daten/import";
 import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
 import { useSitzung, type Sitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, prozent, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
@@ -30,6 +30,7 @@ export function App() {
   const [hoehe, setHoehe] = useState<Hoehe>(1);
   const [teil, setTeil] = useState<SammlungTeil>("veedel");
   const [menueOffen, setMenueOffen] = useState(false);
+  const overland = useOverlandStatus();
   const [sammlungOffen, setSammlungOffen] = useState(false);
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
@@ -201,7 +202,7 @@ export function App() {
     neueStrassen: neueStrassen,
     rueckblick: rueckblick && !aufzeichnung.aktiv ? rueckblick : null,
     rueckblickBeenden: rueckblickBeenden,
-    overlandStill: overlandStill(),
+    overland,
     einstellungen: (ziel?: "overland") => {
             setImportZeigen(ziel ?? null);
             setProfilOffen(true);

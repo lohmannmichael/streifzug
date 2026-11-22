@@ -16,8 +16,8 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | Etappe | Schritte | Stand |
 |---|---|---|
 | A Sichern | A1 Repo bereinigen · A2 Konto (Mail + Passwort) · A3 Exportieren | erledigt und von Michi geprüft (22.11.) |
-| B Blatt | B1 Inhalt kürzen · B2 zwei Höhen, folgt dem Finger · B3 Herunterziehen aus dem Inhalt | gebaut (22.11.), wartet auf Michis Prüfung am iPhone |
-| C Vertrauen | C1 Statuszeile Aufzeichnung · C2 Abschnitt umstellen · C3 Fehler und Wartezustände · C4 Zuhause-Zone entfernen | offen |
+| B Blatt | B1 Inhalt kürzen · B2 zwei Höhen, folgt dem Finger · B3 Herunterziehen aus dem Inhalt | erledigt (22.11., Höhe 75 % nach Michis Wunsch) |
+| C Vertrauen | C1 Statuszeile Aufzeichnung · C2 Abschnitt umstellen · C3 Fehler und Wartezustände · C4 Zuhause-Zone entfernen | C1 gebaut (22.11., 3 h), Rest offen |
 | D Aufbau | D1 Pass · D2 Orte · D3 Stempel · D4 Rückblicke · D5 Einstellungen · D6 Quellenhinweis · D7 Wörter · D8 Altes entfernen | offen |
 | E Robust | E1 Oberflächentests · E2 Karte aufteilen · E3 Tempo · E4 Orte bei Bedarf laden | offen |
 | F Neues | F1–F7 | offen |

@@ -5,7 +5,7 @@ import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
 import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { FremderOrt } from "../daten/orte";
-import { overlandVerbunden } from "../daten/import";
+import { STILL_MS, zeitText, type OverlandStatus } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
 import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
@@ -43,7 +43,8 @@ export interface BlattProps {
   neueStrassen: number;
   rueckblick: Rueckblick | null;
   rueckblickBeenden: () => void;
-  overlandStill: number | null;
+  /** Is Overland set up, and when did the newest point arrive (from the server)? */
+  overland: OverlandStatus;
   einstellungen: (ziel?: "overland") => void;
   eigeneWege: KurzWeg[];
   abspielen: (w: KurzWeg) => void;
@@ -309,17 +310,18 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
           {t.blatt.belohnung(alsStrecke(neuM), prozentText(prozent(vorherM, props.gesamt)), prozentText(prozent(props.gesehen, props.gesamt)))}
         </p>
       )}
-      {!overlandVerbunden() && (
+      {/* Status line (Bauplan 3, C1): only when the recording needs attention. */}
+      {props.overland.verbunden === false && (
         <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
           <span>{t.blatt.einrichten}</span>
           <span className="wert">›</span>
         </button>
       )}
-      {props.overlandStill && (
-        <p className="zeile-text">
-          {t.import.overland.still(seitText(props.overlandStill))}{" "}
-          <button type="button" className="text-knopf" onClick={() => props.einstellungen("overland")}>{t.import.overland.pruefen}</button>
-        </p>
+      {props.overland.verbunden && (props.overland.letzter === null || Date.now() - props.overland.letzter > STILL_MS) && (
+        <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
+          <span>{props.overland.letzter ? t.import.overland.still(zeitText(props.overland.letzter)) : t.import.overland.nochKeinPunkt}</span>
+          <span className="wert">{t.import.overland.pruefen} ›</span>
+        </button>
       )}
       {props.standortFehler && <p className="zeile-text">{t.karte.standortFehler}</p>}
       {props.fremdeOrte
