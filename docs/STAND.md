@@ -23,9 +23,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | F Neues | F1–F7 | offen |
 
 ## Offene Fragen an Michi
-- Zielbilder (`Plan.png`, `Viertel.png`, `Stempelpass.png`, `Pass-kurz.png`, `Orte.png`, `Logo-Blatt.png`) fehlen noch → `docs/design/`
-- A2: Supabase verschickt im kostenlosen Tarif nur Links, keine Codes; Mail-Texte ändern geht nur mit eigenem Mail-Versand (SMTP). Einverstanden mit einem SMTP-Dienst?
-- F1: Rückblick mit dünner Tintenlinie, obwohl am 22.11. „nur das Gelb“ gewünscht war?
+- A2: Michi will einen einfachen Login ohne Mail-Dienst → Vorschlag Mail + Passwort ohne Bestätigungs-Mail (Supabase: Bestätigung ausschalten). Wartet auf Michis ausdrückliches Ja zur Einstellung
 
 ## Zu Beginn jeder Sitzung
 - `select name, meters, first_seen from region_wishes` prüfen und Orte mit `npm run region` aufnehmen

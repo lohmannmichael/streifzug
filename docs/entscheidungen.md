@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 22.11.2026: Antworten zu Fassung 3
+- Rückblick (F1): nur Gelb, keine Tintenlinie, kein Stift. Je Weg einzeln und näher heran bleibt
+- Nie dunkler bei oft Gegangenem; „Trampelpfade“ im Backlog ist damit verworfen
+- Konto (A2): einfacher Login ohne Mail-Dienst gewünscht → Mail-Adresse + Passwort, ohne Bestätigungs-Mail (noch nicht umgesetzt)
+- Zielbilder liegen in `docs/design/` (Plan, Viertel, Stempelpass, Pass-kurz, Orte, Logo-Blatt). Hinweis: „Viertel.png“ und „Stempelpass.png“ zeigen noch „Zuletzt“, „Noch offen“, „Als Nächstes“ und die Reiter, die laut Fassung 3 entfallen; es gilt der Text
+
 ## 22.11.2026: Bauplan Fassung 3 (Umbauplan) gilt
 - `docs/PLAN-3.md`: erst verlässlich, dann ruhig, dann neu (Etappen A–F). Fassung 2 gilt weiter, wo Fassung 3 nichts anderes sagt. Kein Apple-Entwicklerkonto, keine native App, Overland bleibt
 - A1: Skills für native Apps (expo-*, eas-*, react-native-*) und ihre Lizenzdateien entfernt, alter Stand nach `docs/archiv/`, `CLAUDE.md` auf Fassung 3 umgestellt
