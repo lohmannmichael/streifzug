@@ -81,7 +81,8 @@ function strassenEbenen(f: Farben): LayerSpecification[] {
       type: "line",
       source: QUELLE,
       "source-layer": "transportation",
-      minzoom: 15,
+      // From zoom 14, so a walked path in a park is visible under its yellow line.
+      minzoom: 14,
       filter: ["all", LINIE, ["match", klasse, ["service", "track", "path"], true, false]],
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": f.nebenweg, "line-width": 0.8 },
