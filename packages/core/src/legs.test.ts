@@ -100,8 +100,12 @@ describe("seenByLegs", () => {
 });
 
 describe("Overland motion words", () => {
-  it('"driving" from Overland counts as gefahren even at 28 km/h in a side street', () => {
-    expect(arten(strecke(0, 0, 28, 300, 6, ["driving"]))).toEqual(["gefahren"]);
+  it('"driving" at 25 km/h is a (cargo) bike, not a car', () => {
+    expect(arten(strecke(0, 0, 25, 300, 6, ["driving"]))).toEqual(["aktiv"]);
+  });
+
+  it('"driving" over 30 km/h is a car', () => {
+    expect(arten(strecke(0, 0, 45, 300, 6, ["driving"]))).toEqual(["gefahren"]);
   });
 });
 

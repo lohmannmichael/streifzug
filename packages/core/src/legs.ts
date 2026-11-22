@@ -27,6 +27,10 @@ const HALT_SPEED_MS = 0.4;
 const HALT_MS = 30_000;
 const GAP_MS = 60_000;
 const MOTION_SWITCH_MS = 20_000;
+/** Above this now and then (98 %), "car" from the phone is believed. */
+const TOP_MS = 40 / 3.6;
+/** From here a "car" could also be a bike. */
+const RAD_MIN_MS = 12 / 3.6;
 const FAST_MS = 30 / 3.6;
 const SURE_FAST_MS = 38 / 3.6;
 const SHORT_MS = 60_000;
@@ -88,12 +92,18 @@ function quantil(werte: number[], q: number): number {
 
 function einstufen(fixes: Fix[], tempi: number[]): { art: Art; unsicher: boolean } {
   const bekannt = fixes.map(motionArt).filter((a): a is Art => a !== null);
+  const p90 = quantil(tempi, 0.9);
+  const spitze = quantil(tempi, 0.98);
   if (bekannt.length >= fixes.length / 2) {
     const auto = bekannt.filter((a) => a === "gefahren").length / bekannt.length;
-    if (auto >= 0.5) return { art: "gefahren", unsicher: false };
+    // The phone often takes a (cargo or e-)bike at 20–25 km/h for a car (Michi, 22.11.2026): in the
+    // bike range (12–30 km/h, never over 40) "car" is not believed. Slower is a traffic jam, faster a car.
+    if (auto >= 0.5) {
+      const radTempo = p90 >= RAD_MIN_MS && p90 <= FAST_MS && spitze <= TOP_MS;
+      return radTempo ? { art: "aktiv", unsicher: true } : { art: "gefahren", unsicher: false };
+    }
     if (1 - auto >= 0.6) return { art: "aktiv", unsicher: false };
   }
-  const p90 = quantil(tempi, 0.9);
   if (p90 > SURE_FAST_MS) return { art: "gefahren", unsicher: false };
   if (p90 > FAST_MS) return { art: "gefahren", unsicher: true };
   return { art: "aktiv", unsicher: false };

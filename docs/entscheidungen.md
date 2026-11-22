@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 22.11.2026: Lastenrad – „Auto“ vom iPhone nur glauben, wenn das Tempo passt
+- Michi fährt ein Lastenrad (um 25 km/h); das iPhone meldet dabei oft „driving“. Regel jetzt: Meldet das iPhone Auto, gilt der Abschnitt nur dann als gefahren, wenn er meist über 30 km/h (90 %) oder zeitweise über 40 km/h (98 %) liegt, oder sehr langsam ist (unter 12 km/h, Stau). Dazwischen ist es Rad (gelb, als „unsicher“ markiert). Ohne iOS-Angabe wie bisher: über 30 km/h gefahren
+- Michis Fahrt am 22.11. 11:03–11:09 Uhr ist damit wieder gelb. `ABGLEICH_VERSION` 6
+
 ## 22.11.2026: Overland meldet Autofahrten als „driving“
 - iOS nennt es „automotive“, Overland schickt aber „driving“. Das wurde nicht erkannt; Autofahrten in Wohnstraßen (25–30 km/h) galten nach dem Tempo als Rad und wurden gelb. Jetzt zählt „driving“ wie „automotive“ als gefahren (Test dazu). Bei Michis Daten bis 22.11.: 7,9 → 5,1 km gelb, der Rest wird rot
 - `ABGLEICH_VERSION` 5
