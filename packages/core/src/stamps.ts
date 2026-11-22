@@ -5,6 +5,8 @@
 
 export type StempelArt =
   | "betreten"
+  | "ort"
+  | "land"
   | "prozent"
   | "veedel-anzahl"
   | "orte-anzahl"
@@ -22,6 +24,22 @@ export interface Stempel {
   gebietId: string | null;
   /** Threshold (percent, count or km), if any. */
   stufe: number | null;
+  /** Name for stamps without an area: a place without data yet, or a country code ("DE"). */
+  name?: string;
+  /** When it was first earned (first walk in the place or country); the stamp shows this date. */
+  seit?: number;
+}
+
+/** A place with at least one walked meter (Bauplan 3, F7), with or without quarter data. */
+export interface OrtBetreten {
+  /** Stable key: the area id of the whole place, or "name:<Name>" for a place without data. */
+  schluessel: string;
+  gebietId: string | null;
+  name?: string;
+  /** Country code ("DE"); missing when not known (places without data). */
+  land?: string;
+  /** First walk there. */
+  seit?: number;
 }
 
 export const VEEDEL_PROZENT = [10, 25, 50, 75, 100] as const;
@@ -55,6 +73,8 @@ export interface Stand {
   /** Places with at least one walked meter (also those without data yet), and their countries. */
   orte?: number;
   laender?: number;
+  /** The walked places themselves, for one stamp per place and per country (Bauplan 3, F7). */
+  orteBetreten?: OrtBetreten[];
 }
 
 const prozent = (v: VeedelStand) => (v.gesamtM > 0 ? (v.aktivM / v.gesamtM) * 100 : 0);
@@ -78,6 +98,15 @@ export function verdienteStempel(s: Stand): Stempel[] {
       if (stufe < g.veedel.length && drin >= stufe) out.push({ id: `veedel-anzahl:${g.id}:${stufe}`, art: "veedel-anzahl", gebietId: g.id, stufe });
     if (drin === g.veedel.length) out.push({ id: `veedel-anzahl:${g.id}:alle`, art: "veedel-anzahl", gebietId: g.id, stufe: g.veedel.length });
   }
+  // One stamp per walked place and one per country, dated with the first walk there (Bauplan 3, F7).
+  const laender = new Map<string, number | undefined>();
+  for (const o of s.orteBetreten ?? []) {
+    out.push({ id: `ort:${o.schluessel}`, art: "ort", gebietId: o.gebietId, stufe: null, ...(o.name ? { name: o.name } : {}), ...(o.seit !== undefined ? { seit: o.seit } : {}) });
+    if (!o.land) continue;
+    const bisher = laender.get(o.land);
+    laender.set(o.land, bisher === undefined ? o.seit : o.seit === undefined ? bisher : Math.min(bisher, o.seit));
+  }
+  for (const [land, seit] of laender) out.push({ id: `land:${land}`, art: "land", gebietId: null, stufe: null, name: land, ...(seit !== undefined ? { seit } : {}) });
   for (const stufe of ORTE_ANZAHL) if ((s.orte ?? 0) >= stufe) out.push({ id: `orte-anzahl:${stufe}`, art: "orte-anzahl", gebietId: null, stufe });
   for (const stufe of LAENDER_ANZAHL) if ((s.laender ?? 0) >= stufe) out.push({ id: `laender-anzahl:${stufe}`, art: "laender-anzahl", gebietId: null, stufe });
   for (const stufe of STRASSEN_KOMPLETT) if (s.strassenKomplett >= stufe) out.push({ id: `strassen-komplett:${stufe}`, art: "strassen-komplett", gebietId: null, stufe });

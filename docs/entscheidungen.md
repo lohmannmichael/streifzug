@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 22.11.2026: F7 Stempel für Orte und Länder
+- Neu: Jeder Ort mit gegangenen Metern bekommt einen Stempel „betreten“ (Rechteck mit doppeltem Rahmen, damit er sich vom Viertel-Stempel unterscheidet), auch Orte ohne Daten („Wird vorbereitet“). Jedes Land bekommt einen Einreise-Stempel (abgerundetes Rechteck, „EINREISE“, Länderkürzel, blau)
+- Datum auf beiden: der Tag des ersten Wegs dort, nicht der Tag des Stempelns. Dafür rechnet der Hintergrund je Gebiet das erste Datum mit (`seit`)
+- Der auf dem Gerät gespeicherte Stand aus der Zeit vor F7 kennt dieses Datum nicht: Bis die App einmal neu gerechnet hat, gibt es keinen Ort-Stempel (sonst stünde dauerhaft das heutige Datum darauf)
+- Platz im Stempelpass: Ort-Stempel auf der Seite des Ortes, Länder und Orte ohne Daten auf der ersten Seite („Sonderstempel“). Die Stufen (5, 10, 25, 50 Orte; 2, 3, 5, 10 Länder) gibt es schon seit D3
+- Grenzen: Orte ohne Daten haben noch kein bekanntes Land, zählen also erst für ein Land, wenn der Ort aufgenommen ist. Wird ein solcher Ort später aufgenommen, kann er zwei Ort-Stempel haben (einen nach Name, einen nach Ort); Stempel werden nie weggenommen
+- Kern: `stamps.ts` (Arten „ort“ und „land“, 4 neue Tests); Oberflächentest: Pass → Stempel zeigt „Köln betreten“, „Freising betreten“, „Einreise Deutschland“
+
 ## 22.11.2026: E4 Orte nur bei Bedarf laden
 - Bisher: Beim Start holte die App alle 5 Orte komplett (Summen, Grenzen, Namen), und der Service Worker legte alle Orte-Dateien schon bei der Installation aufs Gerät. Bei 50+ Orten zu viel
 - Neu: Vorab auf dem Gerät liegt nur noch `regionen/index.json` (Name, Box, Land je Ort). Ein Ort wird geladen,

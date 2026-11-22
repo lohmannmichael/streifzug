@@ -22,3 +22,18 @@ test("Pass → Orte → Freising: der Plan zeigt Freising", async ({ page }) => 
   // The entered quarter is hatched in highlighter yellow when the whole town is in view.
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT), { timeout: 10_000 }).toBeGreaterThan(50);
 });
+
+test("Stempel für Orte und Länder (F7): Köln, Freising, Einreise Deutschland", async ({ page }) => {
+  await serverErsetzen(page);
+  await ohneRueckblick(page);
+  await page.goto("/");
+  await planDa(page);
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+
+  await page.getByRole("button", { name: "Pass öffnen" }).tap();
+  await page.locator(".pass-zeile", { hasText: "Stempel" }).tap();
+  // Köln on its own page, Freising on its own, the country on the first page.
+  await expect(page.getByRole("img", { name: "Stempel: Einreise Deutschland" })).toHaveCount(1);
+  await expect(page.getByRole("img", { name: "Stempel: Köln betreten" })).toHaveCount(1);
+  await expect(page.getByRole("img", { name: "Stempel: Freising betreten" })).toHaveCount(1);
+});

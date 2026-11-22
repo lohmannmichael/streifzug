@@ -6,6 +6,8 @@ export { ortDatei };
 export interface Summe {
   strasse_m: number;
   weg_m: number;
+  /** First walk in the area (only in the seen meters; for the place and country stamps, F7). */
+  seit?: number;
 }
 
 export interface GebietDaten extends Summe {

@@ -116,6 +116,7 @@ export const de = {
   },
   stempel: {
     betreten: "BETRETEN",
+    einreise: "EINREISE",
     orte: "ORTE",
     laender: "LÄNDER",
     strassenKomplett: "STRASSEN KOMPLETT",
@@ -125,8 +126,10 @@ export const de = {
     label: (gebiet: string, art: string, stufe: number | null, wort: string) =>
       art === "prozent"
         ? `Stempel: ${gebiet} zu ${stufe} Prozent`
-        : art === "betreten"
+        : art === "betreten" || art === "ort"
           ? `Stempel: ${gebiet} betreten`
+          : art === "land"
+            ? `Stempel: Einreise ${gebiet}`
           : art === "veedel-anzahl"
             ? `Stempel: ${stufe} ${wort} betreten`
             : art === "orte-anzahl"
@@ -269,6 +272,7 @@ export const de = {
     heute: "heute",
     gestern: "gestern",
     betreten: "betreten",
+    einreise: (land: string) => `Einreise ${land}`,
     rundum: "rundum",
     viertelAnzahl: (n: number, wort: string) => `${n} ${wort}`,
     alleViertel: (ort: string, wort: string) => `${ort} alle ${wort}`,

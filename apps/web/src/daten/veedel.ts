@@ -1,9 +1,10 @@
-import { faelligeStempel, stempelUmstellen, type Gruppe, type Stand, type Stempel } from "@streifzug/core";
+import { faelligeStempel, stempelUmstellen, type Gruppe, type OrtBetreten, type Stand, type Stempel } from "@streifzug/core";
 import { useEffect, useState } from "react";
 import type { Etikett, KurzWeg } from "./abgleich.worker";
 import { fragen } from "./arbeiter";
 import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 import type { Fortschritt } from "./fortschritt";
+import type { FremderOrt } from "./orte";
 import { gesamtMeter, zaehlendeMeter, type Regionen } from "./regionen";
 
 export type { Etikett } from "./abgleich.worker";
@@ -45,7 +46,7 @@ function lesen(): GesetzterStempel[] {
 }
 
 /** Progress as the stamp rules need it: quarter (smallest areas), districts, cities, km. */
-export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte = 0): Stand {
+export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte: readonly FremderOrt[] = []): Stand {
   koelnWurzel ??= daten.liste.find((r) => r.id === "koeln")?.wurzel ?? null;
   const veedel = [...daten.gebiete.values()]
     .filter((g) => g.kinder.length === 0)
@@ -61,7 +62,16 @@ export function standAus(daten: Regionen, f: Fortschritt, fremdeOrte = 0): Stand
   // Places with walked meters (with data, plus those being prepared) and their countries.
   const mitWegen = daten.liste.filter((r) => zaehlendeMeter(f.proGebiet.get(r.wurzel) ?? { strasse_m: 0, weg_m: 0 }, false) >= 1);
   const laender = new Set(mitWegen.map((r) => r.land ?? "DE")).size;
-  return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt, orte: mitWegen.length + fremdeOrte, laender };
+  // One stamp per place and per country (Bauplan 3, F7). Places without data have no known country yet.
+  // Only with the date of the first walk: a state stored before F7 has none (no stamp dated today).
+  const orteBetreten: OrtBetreten[] = [
+    ...mitWegen.flatMap((r) => {
+      const seit = f.proGebiet.get(r.wurzel)?.seit;
+      return seit === undefined ? [] : [{ schluessel: r.wurzel, gebietId: r.wurzel, land: r.land ?? "DE", seit }];
+    }),
+    ...fremdeOrte.map((o) => ({ schluessel: `name:${o.name}`, gebietId: null, name: o.name, seit: o.seit })),
+  ];
+  return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt, orte: mitWegen.length + fremdeOrte.length, laender, orteBetreten };
 }
 
 /** Stamps given so far, read only (for pages that show them). */
@@ -101,7 +111,8 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[] }
         const h = [...s.id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7 + k);
         return (h % 1000) / 1000;
       };
-      return { ...s, gestempeltAm: jetzt, x: zufall(1), y: (gesetzt.length + i) * 0.13 + zufall(2) * 0.08, drehung: zufall(3) * 24 - 12 };
+      // Place and country stamps carry the day of the first walk there, like an entry stamp.
+      return { ...s, gestempeltAm: s.seit ?? jetzt, x: zufall(1), y: (gesetzt.length + i) * 0.13 + zufall(2) * 0.08, drehung: zufall(3) * 24 - 12 };
     });
     const alle = [...gesetzt, ...dazu];
     localStorage.setItem(STEMPEL, JSON.stringify(alle));
@@ -115,4 +126,19 @@ export function useStempel(stand: Stand | null): { gesetzt: GesetzterStempel[] }
 /** The street at a tapped point (within radiusM), for the label. */
 export async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etikett | null> {
   return (await fragen<"etikett">({ typ: "etikett", punkt, radiusM }).antwort).etikett;
+}
+
+const laenderNamen = new Intl.DisplayNames(["de"], { type: "region" });
+
+/** The name a stamp shows: its area, a place without data, or a country ("Deutschland"). */
+export function stempelName(daten: Regionen, s: Stempel): string {
+  if (s.gebietId) return daten.gebiete.get(s.gebietId)?.name ?? "";
+  if (s.art === "land" && s.name) {
+    try {
+      return laenderNamen.of(s.name) ?? s.name;
+    } catch {
+      return s.name;
+    }
+  }
+  return s.name ?? "";
 }

@@ -291,7 +291,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   ersteAktiv = aktivAb;
   ersteGefahren = gefahrenAb;
   zuletztAusnahmen = ausnahmen;
-  const proGebiet = await meterJeGebiet(gesehen.values(), liste);
+  const proGebiet = await meterJeGebiet(gesehen.values(), liste, (p) => aktivAb.get(p.id));
   const abzug = ausnahmen.size ? await meterJeGebiet(await stueckeFuerIds([...ausnahmen]), liste) : new Map<string, Summe>();
   const stuecke = [...gesehen.values()];
   const erstesMal = stuecke.map((p) => aktivAb.get(p.id) ?? Date.now());

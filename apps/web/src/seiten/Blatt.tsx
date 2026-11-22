@@ -97,7 +97,7 @@ export function Blatt(props: BlattProps) {
   const p = prozent(gesehen, gesamt);
   const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
   const stand = useMemo(
-    () => (daten && props.fortschritt ? standAus(daten, props.fortschritt, props.fremdeOrte.length) : null),
+    () => (daten && props.fortschritt ? standAus(daten, props.fortschritt, props.fremdeOrte) : null),
     [daten, props.fortschritt, props.fremdeOrte.length],
   );
   const stempel = useStempel(stand);

@@ -6,7 +6,7 @@ import type { Fortschritt } from "../daten/fortschritt";
 import { overlandSteht, zeitText, type OverlandStatus } from "../daten/import";
 import type { FremderOrt } from "../daten/orte";
 import { alsStrecke, viertelWort, zaehlendeMeter, type Regionen } from "../daten/regionen";
-import { useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
+import { stempelName, useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
 import { t } from "../texte/de";
 import { IconSchliessen, IconZurueck } from "../ui/Icons";
 import { Stempel } from "../ui/Stempel";
@@ -31,7 +31,8 @@ export function orteMitWegen(daten: Regionen, f: Fortschritt | null, fremde: Fre
 /** Short words for a stamp ("Weiden 25 %"). */
 function stempelKurz(s: GesetzterStempel, name: string, wort: string): string {
   if (s.art === "prozent") return `${name} ${s.stufe} %`;
-  if (s.art === "betreten") return `${name} ${t.pass.betreten}`;
+  if (s.art === "betreten" || s.art === "ort") return `${name} ${t.pass.betreten}`;
+  if (s.art === "land") return t.pass.einreise(name);
   if (s.art === "veedel-anzahl") return s.id.endsWith(":alle") ? t.pass.alleViertel(name, wort) : `${name} ${t.pass.viertelAnzahl(s.stufe ?? 0, wort)}`;
   if (s.art === "orte-anzahl") return t.pass.orteAnzahl(s.stufe ?? 0);
   if (s.art === "laender-anzahl") return t.pass.laenderAnzahl(s.stufe ?? 0);
@@ -60,7 +61,7 @@ export function PassSeite(props: {
   const laender = new Set(orte.regionen.map((x) => x.r.land ?? "DE")).size;
   const ortNamen = [...orte.regionen.map((x) => x.r.name), ...orte.fremde.map((o) => o.name)].slice(0, 3);
   const letzter = [...gesetzt].sort((a, b) => b.gestempeltAm - a.gestempeltAm)[0];
-  const letzterName = letzter?.gebietId ? (daten.gebiete.get(letzter.gebietId)?.name ?? "") : "";
+  const letzterName = letzter ? stempelName(daten, letzter) : "";
   const letzterWeg = wege?.[0];
   const o = props.overland;
   const aufzeichnung = aufzeichnungText(o);

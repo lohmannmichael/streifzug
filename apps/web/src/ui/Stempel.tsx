@@ -8,6 +8,8 @@ const datumKurz = new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-d
 const TINTE: Record<StempelDaten["art"], string> = {
   prozent: "#24388f",
   betreten: "#1c1c1c",
+  ort: "#1c1c1c",
+  land: "#24388f",
   "veedel-anzahl": "#c42b22",
   "orte-anzahl": "#c42b22",
   "laender-anzahl": "#24388f",
@@ -68,6 +70,29 @@ export function Stempel({ stempel: s, gebietName, stadtName, datum, groesse = 12
         <text x="60" y="66" fontSize="8.5" fontWeight="700" letterSpacing="2" fill={farbe} textAnchor="middle">{t.stempel.betreten}</text>
         <line x1="14" y1="74" x2="106" y2="74" stroke={farbe} strokeWidth="1.4" />
         <text x="60" y="86" fontSize="9" fontWeight="600" letterSpacing="1" fill={farbe} textAnchor="middle">{tag}</text>
+      </>
+    );
+  } else if (s.art === "ort") {
+    // A whole place (Bauplan 3, F7): rectangle with a double frame, so it stands apart from a quarter.
+    form = (
+      <>
+        <rect x="4" y="24" width="112" height="72" rx="3" fill="none" stroke={farbe} strokeWidth="3.5" />
+        <rect x="10" y="30" width="100" height="60" rx="2" fill="none" stroke={farbe} strokeWidth="1.2" />
+        <text x="60" y="54" fontSize={gebietName.length > 12 ? 11 : 15} fontWeight="800" letterSpacing="1" fill={farbe} textAnchor="middle" {...(gebietName.length > 9 ? { textLength: 88, lengthAdjust: "spacingAndGlyphs" } : {})}>{gebietName.toUpperCase()}</text>
+        <text x="60" y="67" fontSize="8.5" fontWeight="700" letterSpacing="2" fill={farbe} textAnchor="middle">{t.stempel.betreten}</text>
+        <line x1="18" y1="74" x2="102" y2="74" stroke={farbe} strokeWidth="1.2" />
+        <text x="60" y="85" fontSize="9" fontWeight="600" letterSpacing="1" fill={farbe} textAnchor="middle">{tag}</text>
+      </>
+    );
+  } else if (s.art === "land") {
+    // Entry stamp as in a passport: country code, "EINREISE" and the day of the first walk there.
+    form = (
+      <>
+        <rect x="8" y="16" width="104" height="88" rx="22" fill="none" stroke={farbe} strokeWidth="3.5" />
+        <text x="60" y="38" fontSize="9" fontWeight="700" letterSpacing="2.5" fill={farbe} textAnchor="middle">{t.stempel.einreise}</text>
+        <line x1="22" y1="44" x2="98" y2="44" stroke={farbe} strokeWidth="1.2" />
+        <text x="60" y="76" fontSize="32" fontWeight="800" letterSpacing="3" fill={farbe} textAnchor="middle">{(s.name ?? "").toUpperCase()}</text>
+        <text x="60" y="94" fontSize="8.5" fontWeight="600" letterSpacing="1" fill={farbe} textAnchor="middle">{tag}</text>
       </>
     );
   } else if (s.art === "veedel-anzahl" || s.art === "orte-anzahl" || s.art === "laender-anzahl") {

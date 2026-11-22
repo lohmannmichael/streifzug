@@ -129,3 +129,41 @@ describe("stempelUmstellen", () => {
     expect(neu[0]!.gestempeltAm).toBe(4);
   });
 });
+
+describe("Orte und Länder (Bauplan 3, F7)", () => {
+  const tag = (d: number) => Date.UTC(2026, 10, d);
+  const mitOrten = stand({
+    orteBetreten: [
+      { schluessel: "koeln-wurzel", gebietId: "koeln-wurzel", land: "DE", seit: tag(3) },
+      { schluessel: "freising-wurzel", gebietId: "freising-wurzel", land: "DE", seit: tag(1) },
+      { schluessel: "name:Lissabon", gebietId: null, name: "Lissabon", seit: tag(10) },
+      { schluessel: "nyc-wurzel", gebietId: "nyc-wurzel", land: "US", seit: tag(20) },
+    ],
+  });
+  const verdient = verdienteStempel(mitOrten);
+
+  it("gives every walked place a stamp, also places without quarter data", () => {
+    const orte = verdient.filter((s) => s.art === "ort");
+    expect(orte.map((s) => s.id)).toEqual(["ort:koeln-wurzel", "ort:freising-wurzel", "ort:name:Lissabon", "ort:nyc-wurzel"]);
+    expect(orte.find((s) => s.id === "ort:name:Lissabon")).toMatchObject({ gebietId: null, name: "Lissabon", seit: tag(10) });
+    expect(orte.find((s) => s.id === "ort:koeln-wurzel")).toMatchObject({ gebietId: "koeln-wurzel", seit: tag(3) });
+  });
+
+  it("gives every country one stamp with the date of the first entry", () => {
+    const laender = verdient.filter((s) => s.art === "land");
+    expect(laender).toEqual([
+      { id: "land:DE", art: "land", gebietId: null, stufe: null, name: "DE", seit: tag(1) },
+      { id: "land:US", art: "land", gebietId: null, stufe: null, name: "US", seit: tag(20) },
+    ]);
+  });
+
+  it("gives no country stamp for a place whose country is not known", () => {
+    const nur = verdienteStempel(stand({ orteBetreten: [{ schluessel: "name:Lissabon", gebietId: null, name: "Lissabon", seit: tag(10) }] }));
+    expect(nur.filter((s) => s.art === "land")).toEqual([]);
+  });
+
+  it("keeps place and country stamps in the passport next to everything else", () => {
+    const gegeben = verdient.map((s) => ({ ...s, gestempeltAm: 1 }));
+    expect(besteStempel(gegeben).filter((s) => s.art === "ort" || s.art === "land")).toHaveLength(6);
+  });
+});

@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { FremderOrt } from "../daten/orte";
 import { viertelWort, type Regionen } from "../daten/regionen";
-import { useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
+import { stempelName, useGesetzteStempel, type GesetzterStempel } from "../daten/veedel";
 import { t } from "../texte/de";
 import { Stempel } from "../ui/Stempel";
 import { orteMitWegen, PassUnterseite } from "./Pass";
@@ -37,7 +37,6 @@ export function StempelSeite(props: { daten: Regionen; fortschritt: Fortschritt 
       ...reihe.filter((w) => jeOrt.has(w)).map((w) => ({ id: w, titel: daten.gebiete.get(w)?.name ?? "", stempel: jeOrt.get(w)! })),
     ];
   }, [gesetzt, daten, props.fortschritt, props.fremdeOrte]);
-  const name = (id: string | null) => (id ? (daten.gebiete.get(id)?.name ?? "") : "");
 
   // Pages side by side; the dots show where you are.
   const leiste = useRef<HTMLDivElement>(null);
@@ -77,7 +76,7 @@ export function StempelSeite(props: { daten: Regionen; fortschritt: Fortschritt 
                     // Slightly offset, alternating left and right, like stamped by hand.
                     style={{ transform: `translate(${(x.x - 0.5) * 24 + (j % 2 ? 6 : -6)}px, ${((x.y * 7) % 1) * 18 - 9}px)` }}
                   >
-                    <Stempel stempel={x} gebietName={name(x.gebietId)} stadtName={x.gebietId && x.art === "prozent" ? stadt(daten, x.gebietId) : undefined} datum={x.gestempeltAm} groesse={x.art === "prozent" ? 150 : 124} drehung={x.drehung} viertelWort={viertelWort(daten, x.gebietId).viele} />
+                    <Stempel stempel={x} gebietName={stempelName(daten, x)} stadtName={x.gebietId && x.art === "prozent" ? stadt(daten, x.gebietId) : undefined} datum={x.gestempeltAm} groesse={x.art === "prozent" ? 150 : 124} drehung={x.drehung} viertelWort={viertelWort(daten, x.gebietId).viele} />
                   </div>
                 ))}
               </section>
