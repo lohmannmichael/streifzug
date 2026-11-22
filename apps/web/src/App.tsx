@@ -175,6 +175,18 @@ export function App() {
   // line beside the yellow. Counting is not affected.
   const linien = useMemo(() => eineLinieJeStrasse(zaehlendeStuecke, fortschritt?.gefahren ?? []), [zaehlendeStuecke, fortschritt]);
   const fremdeOrte = useFremdeOrte(fortschritt?.draussen, benutzer);
+  // Places with ways, as points for the overview far out (Bauplan 3, F5): the middle of their box.
+  const ortePunkte = useMemo(
+    () =>
+      (daten?.liste ?? [])
+        .filter((r) => zaehlendeMeter(fortschritt?.proGebiet.get(r.wurzel) ?? { strasse_m: 0, weg_m: 0 }, false) >= 1)
+        .map((r) => ({ id: r.id, name: r.name, punkt: [(r.bbox[0] + r.bbox[2]) / 2, (r.bbox[1] + r.bbox[3]) / 2] as [number, number] })),
+    [daten?.liste, fortschritt],
+  );
+  const ortOeffnen = (id: string) => {
+    const r = daten?.liste.find((x) => x.id === id);
+    if (r) void ortLadenAuf(r.id).then(() => waehlen(r.wurzel), () => undefined);
+  };
   // Complete streets with the lines of their pieces, for their names on the plan (Bauplan 3, F4).
   const komplettLinien = useMemo(() => {
     const k = fortschritt?.komplett ?? [];
@@ -445,6 +457,9 @@ export function App() {
           stifte={stifte}
           zeitraum={zeitraum}
           komplett={zeitreise === null ? komplettLinien : []}
+          ueberblick={zeitreise === null ? fortschritt?.ueberblick : undefined}
+          orte={ortePunkte}
+          onOrt={ortOeffnen}
           onZeitraumDatum={setZrDatum}
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />

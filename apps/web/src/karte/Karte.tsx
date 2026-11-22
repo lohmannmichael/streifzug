@@ -5,7 +5,7 @@ import { orteImBlick } from "@streifzug/core";
 import { orteLaden, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
-import { eigenesZeichnen, erstesMalSetzen, kompletteNamen, LEER, linienSammlung, namenFilterVergessen, setzeDaten, stifteSetzen } from "./ebenen";
+import { eigenesZeichnen, erstesMalSetzen, kompletteNamen, LEER, linienSammlung, namenFilterVergessen, setzeDaten, stifteSetzen, ueberblickSetzen } from "./ebenen";
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
 import { ruhig, zeigeGebiet } from "./kamera";
 import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
@@ -52,6 +52,10 @@ interface KartenProps {
   onZeitraumEnde: () => void;
   /** Complete streets: their name is underlaid with the highlighter (Bauplan 3, F4). */
   komplett: { name: string; coords: LonLat[][] }[];
+  /** Far out (Bauplan 3, F5): fine lines of all ways and a point per place with ways; a tap opens the place. */
+  ueberblick: { gelb: LonLat[][]; rot: LonLat[][] } | undefined;
+  orte: { id: string; name: string; punkt: LonLat }[];
+  onOrt: (id: string) => void;
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
@@ -74,6 +78,10 @@ export function Karte(props: KartenProps) {
   gefahrenRef.current = props.gefahren;
   const prozenteRef = useRef(props.prozente);
   prozenteRef.current = props.prozente;
+  const ueberblickRef = useRef({ linien: props.ueberblick, orte: props.orte });
+  ueberblickRef.current = { linien: props.ueberblick, orte: props.orte };
+  const ortRef = useRef(props.onOrt);
+  ortRef.current = props.onOrt;
   const komplettRef = useRef(props.komplett);
   komplettRef.current = props.komplett;
   const stifteRef = useRef(props.stifte);
@@ -100,6 +108,8 @@ export function Karte(props: KartenProps) {
     dunkelRef.current = dunkel.matches;
     const { karte, stilDa: da, aufhoeren } = karteBauen(box.current, () => dunkelRef.current, setKaputt);
     karteRef.current = karte;
+    // Browser tests (automated browser only) move the map directly.
+    if (navigator.webdriver) (window as unknown as { __karte?: MapLibreMap }).__karte = karte;
     stilDa.current = da;
     setKarteDa(karte);
 
@@ -111,6 +121,7 @@ export function Karte(props: KartenProps) {
       stifteSetzen(karte, stifteRef.current);
       namenFilterVergessen();
       kompletteNamen(karte, komplettRef.current);
+      ueberblickSetzen(karte, ueberblickRef.current.linien, ueberblickRef.current.orte);
       setzeDaten(karte, "entdeckt", linienSammlung(entdecktRef.current));
       setzeDaten(karte, "gefahren", linienSammlung(gefahrenRef.current));
       if (datenRef.current)
@@ -120,7 +131,7 @@ export function Karte(props: KartenProps) {
     const imBlick = () => orteImBlickLaden(karte, datenRef.current);
     karte.on("moveend", imBlick);
     karte.on("load", imBlick);
-    tippenEinrichten(karte, { daten: () => datenRef.current, etikett: setEtikett, waehlen: (id) => waehlenRef.current(id) });
+    tippenEinrichten(karte, { daten: () => datenRef.current, etikett: setEtikett, waehlen: (id) => waehlenRef.current(id), ort: (id) => ortRef.current(id) });
 
     const wechsel = (e: MediaQueryListEvent) => {
       dunkelRef.current = e.matches;
@@ -181,6 +192,12 @@ export function Karte(props: KartenProps) {
       if (id && id !== gewaehltRef.current) waehlenRef.current(id, false);
     });
   }, [props.spur, props.folgen, props.position]);
+
+  // Overview far out.
+  useEffect(() => {
+    const karte = karteRef.current;
+    if (karte && stilDa.current()) ueberblickSetzen(karte, props.ueberblick, props.orte);
+  }, [props.ueberblick, props.orte]);
 
   // Names of complete streets.
   useEffect(() => {

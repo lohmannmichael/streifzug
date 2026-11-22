@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { lineLengthM, linienVerbinden, pointAlong, type LonLat, type Piece } from "@streifzug/core";
+import { lineLengthM, linienVerbinden, pointAlong, UEBERBLICK_ZOOM, type LonLat, type Piece } from "@streifzug/core";
 import { ERSTES_JAHR, jahresFarbe, MARKER_FARBEN } from "../einstellungen";
 import { strassenBreite } from "./stil";
 
@@ -116,8 +116,21 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   // Pen line and highlighter lie under the street names, so names stay readable (Bauplan 4.5).
   const vorSchrift = karte.getStyle().layers.find((l) => l.type === "symbol")?.id;
   // Driven streets: a thin pen line (Kuli), under the highlighter, so walking later paints over it.
+  // Far out (below zoom 8.5, Bauplan 3, F5): all ways as fine lines, and a point per place.
+  karte.addSource("ueberblick", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "ueberblick", type: "line", source: "ueberblick", maxzoom: UEBERBLICK_ZOOM, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": ueberblickFarbe(), "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1, 9, 1.6] } }, vorSchrift);
+  karte.addSource("orte-punkte", { type: "geojson", data: LEER });
+  karte.addLayer({ id: "orte-punkt", type: "circle", source: "orte-punkte", maxzoom: UEBERBLICK_ZOOM, paint: { "circle-radius": 6, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
+  karte.addLayer({
+    id: "orte-name",
+    type: "symbol",
+    source: "orte-punkte",
+    maxzoom: UEBERBLICK_ZOOM,
+    layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Bold"], "text-size": 13, "text-offset": [0, 1.1], "text-anchor": "top" },
+    paint: { "text-color": TINTE, "text-halo-color": "#ffffff", "text-halo-width": 1.6 },
+  });
   karte.addSource("gefahren", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.2, 16, 1.8, 18, 2.4], "line-offset": 1, "line-opacity": 0.95 } }, vorSchrift);
+  karte.addLayer({ id: "gefahren", type: "line", source: "gefahren", minzoom: UEBERBLICK_ZOOM, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": KULI, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.2, 16, 1.8, 18, 2.4], "line-offset": 1, "line-opacity": 0.95 } }, vorSchrift);
   karte.addSource("entdeckt", { type: "geojson", data: LEER });
   karte.addLayer({ id: "entdeckt", type: "line", source: "entdeckt", filter: ["!=", ["get", "weg"], true], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": ["interpolate", ["linear"], ["zoom"], 11.4, 0, 12.4, 1] } }, vorSchrift);
   // Paths (parks, Tierpark): a thinner highlighter stroke; they are shown but never counted.
@@ -160,6 +173,27 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   karte.addLayer({ id: "ich", type: "circle", source: "ich", paint: { "circle-radius": 7, "circle-color": "#2b6ef2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
 }
 
+/** Overview lines: highlighter for walked, pen for driven. */
+function ueberblickFarbe() {
+  return ["case", ["==", ["get", "rot"], true], KULI, MARKER] as never;
+}
+
+/** Overview far out: fine lines of all ways and a point per place with ways (Bauplan 3, F5). */
+export function ueberblickSetzen(karte: MapLibreMap, linien: { gelb: LonLat[][]; rot: LonLat[][] } | undefined, orte: readonly { id: string; name: string; punkt: LonLat }[]) {
+  if (!karte.getSource("ueberblick")) return;
+  setzeDaten(karte, "ueberblick", {
+    type: "FeatureCollection",
+    features: [
+      ...(linien?.rot.length ? [{ type: "Feature", properties: { rot: true }, geometry: { type: "MultiLineString", coordinates: linien.rot } }] : []),
+      ...(linien?.gelb.length ? [{ type: "Feature", properties: { rot: false }, geometry: { type: "MultiLineString", coordinates: linien.gelb } }] : []),
+    ],
+  });
+  setzeDaten(karte, "orte-punkte", {
+    type: "FeatureCollection",
+    features: orte.map((o) => ({ type: "Feature", properties: { id: o.id, name: o.name }, geometry: { type: "Point", coordinates: o.punkt } })),
+  });
+}
+
 /** Replay line: ink, red pen for car rides. */
 function rbFarbe() {
   return ["case", ["==", ["get", "zeitraum"], true], MARKER, ["==", ["get", "gefahren"], true], KULI, TINTE] as never;
@@ -197,6 +231,7 @@ export function stifteSetzen(karte: MapLibreMap, st: Stifte) {
   karte.setPaintProperty("entdeckt-weg", "line-color", markerFarbe(st) as never);
   karte.setPaintProperty("gefahren", "line-color", KULI);
   karte.setPaintProperty("neu-glanz", "line-color", MARKER);
+  karte.setPaintProperty("ueberblick", "line-color", ueberblickFarbe());
   for (const l of ["komplett-name", "komplett-punkt"]) if (karte.getLayer(l)) karte.setPaintProperty(l, "text-halo-color", MARKER);
   karte.setPaintProperty("rb", "line-color", rbFarbe());
   schraffurBilder(karte, MARKER);

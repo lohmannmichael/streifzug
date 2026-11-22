@@ -1,4 +1,4 @@
-import type { Fix, KompletteStrasse, Korrektur, Piece } from "@streifzug/core";
+import type { Fix, KompletteStrasse, Korrektur, LonLat, Piece } from "@streifzug/core";
 import { pointInGeometry } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
@@ -25,6 +25,8 @@ export interface Fortschritt {
   draussen: Draussen[];
   /** Complete streets (Bauplan 3, F4); missing in a state stored before F4. */
   komplett?: KompletteStrasse[];
+  /** Fine lines for the overview far out (Bauplan 3, F5); missing in a state stored before F5. */
+  ueberblick?: { gelb: LonLat[][]; rot: LonLat[][] };
 }
 
 /** One track to match: an outing (own or imported) or the one being recorded. */
@@ -126,7 +128,7 @@ export function useFortschritt(
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
       setFehler(a.uebersprungen.length ? `${a.uebersprungen.length} übersprungen (Straßendaten nicht geladen)` : null);
-      const f: Fortschritt = { stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen, komplett: a.komplett };
+      const f: Fortschritt = { stuecke: a.stuecke, erstesMal: a.erstesMal, gefahren: a.gefahren, proGebiet: new Map(a.proGebiet), abzug: new Map(a.abzug), draussen: a.draussen, komplett: a.komplett, ueberblick: a.ueberblick };
       echtDa.current = true;
       setFortschritt(f);
       setVorlaeufig(false);

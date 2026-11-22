@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: F5 Deutschland-Blick
+- Weit herausgezoomt (unter Zoom 8,5) keine Viertel-Flächen, Grenzen und Schraffur mehr; stattdessen alle Wege als feine Linien (Gelb zu Fuß und Rad, Rot gefahren) und je Ort mit Wegen ein Punkt mit Namen (Mitte seiner Box). Tipp auf den Punkt öffnet den Ort (wie in Orte)
+- Abweichung: Grenze 8,5 statt 9, weil ganz Köln über dem halben Blatt auf dem iPhone bei Zoom 8,8 steht und sonst ohne Viertel wäre (ein Oberflächentest hat das gefunden)
+- Die feinen Linien entstehen einmal je Rechnung im Hintergrund aus den gesehenen Stücken: Enden auf ein Raster von etwa 100 m gerundet, jede Strecke einmal (Kern `ueberblick.ts`, 3 Tests); sie werden mit dem Stand auf dem Gerät gespeichert
+- Für Oberflächentests ist die Karte im automatisierten Test-Browser als `window.__karte` erreichbar (nur wenn `navigator.webdriver` gesetzt ist)
+- Oberflächentest `e2e/ueberblick.spec.ts`: Zoom 8 über Köln zeigt die feinen Linien, keine Viertel-Ebene; Tipp auf den Punkt öffnet Köln
+
 ## 22.11.2026: F4 Straße komplett
 - Regel: Eine benannte Straße ist in einem Ort komplett, wenn alle ihre zählenden Stücke dort gegangen sind; Stücke mit „Hier komme ich nicht hin“ fallen heraus. Gleicher Name in zwei Orten = zwei Straßen. Datum: der Tag, an dem das letzte fehlende Stück dazukam. Name je Stück: nächste benannte Linie der Karte (bis 15 m), Ort: das Stück liegt in der Grenze des Ortes. Nur zählende Straßen; Zufahrten und Wege gehören nicht dazu (Beispiel Testdaten: Erkelenzhofweg, benannter Teil rund 150 m)
 - Geht eine Straße in Kacheln weiter, die noch nicht geladen sind, lädt der Hintergrund sie nach (höchstens 60 je Rechnung); bleibt sie unklar, zählt sie nicht als komplett. Name und Ort je Stück bleiben im Hintergrund gespeichert

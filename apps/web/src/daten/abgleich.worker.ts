@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { gefahrenJePunkt, type KompletteStrasse, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { gefahrenJePunkt, type KompletteStrasse, type LonLat, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
 import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import { kompletteBerechnen } from "./komplett";
@@ -64,7 +64,7 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[] }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[]; ueberblick: { gelb: LonLat[][]; rot: LonLat[][] } }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
@@ -325,7 +325,9 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
     zellen.set(zelle, e);
   }
   const draussen = [...zellen.values()].filter((e) => e.m >= 200);
-  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen, komplett: zuletztKomplett });
+  // Fine lines for the overview far out (Bauplan 3, F5), worked out once per calculation.
+  const ueberblick = { gelb: ueberblickLinien(stuecke.filter((p) => p.kind !== "drive")), rot: ueberblickLinien(gefahren.values()) };
+  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen, komplett: zuletztKomplett, ueberblick });
   // Complete streets afterwards (Bauplan 3, F4): the first time with many ways this takes a few
   // seconds; the plan does not wait for it. A failure keeps the last list.
   try {

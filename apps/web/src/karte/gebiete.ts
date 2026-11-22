@@ -1,3 +1,4 @@
+import { UEBERBLICK_ZOOM } from "@streifzug/core";
 import type { FilterSpecification, Map as MapLibreMap } from "maplibre-gl";
 import { ortDatei, prozentText, type Regionen } from "../daten/regionen";
 import { setzeDaten } from "./ebenen";
@@ -55,6 +56,8 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
     karte.addLayer(
       {
         id: `flaeche-${region.id}`,
+        // Far out the overview takes over (Bauplan 3, F5).
+        minzoom: UEBERBLICK_ZOOM,
         type: "fill",
         source: `gebiete-${region.id}`,
         filter: ["==", ["get", "blatt"], true],
@@ -69,6 +72,8 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
     karte.addLayer(
       {
         id: `schraffur-${region.id}`,
+        // Far out the overview takes over (Bauplan 3, F5).
+        minzoom: UEBERBLICK_ZOOM,
         type: "fill",
         source: `gebiete-${region.id}`,
         filter: ["all", ["==", ["get", "blatt"], true], [">=", ["coalesce", ["get", "stufe"], -1], 0]],
@@ -94,6 +99,8 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
     karte.addLayer(
       {
         id: `linie-${region.id}`,
+        // Far out the overview takes over (Bauplan 3, F5).
+        minzoom: UEBERBLICK_ZOOM,
         type: "line",
         source: `gebiete-${region.id}`,
         // quarter border: dash-dot, 1.1 px (Bauplan 4.2); districts a little stronger.
@@ -108,6 +115,8 @@ export async function gebieteZeichnen(karte: MapLibreMap, dunkel: boolean, daten
     );
     karte.addLayer({
       id: `gewaehlt-${region.id}`,
+        // Far out the overview takes over (Bauplan 3, F5).
+        minzoom: UEBERBLICK_ZOOM,
       type: "line",
       source: `gebiete-${region.id}`,
       filter: ["==", ["get", "id"], gewaehlt ?? ""],

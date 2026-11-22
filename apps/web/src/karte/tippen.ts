@@ -1,3 +1,4 @@
+import { UEBERBLICK_ZOOM } from "@streifzug/core";
 import type { Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import type { Regionen } from "../daten/regionen";
 import { etikettAn } from "../daten/veedel";
@@ -17,9 +18,16 @@ export function gebietAnPunkt(karte: MapLibreMap, daten: Regionen | null, punkt:
  */
 export function tippenEinrichten(
   karte: MapLibreMap,
-  ziel: { daten: () => Regionen | null; etikett: (e: EtikettZustand | null) => void; waehlen: (id: string) => void },
+  ziel: { daten: () => Regionen | null; etikett: (e: EtikettZustand | null) => void; waehlen: (id: string) => void; ort: (id: string) => void },
 ) {
   karte.on("click", async (e: MapLayerMouseEvent) => {
+    // Far out: a tap on a place's point opens the place (Bauplan 3, F5).
+    if (karte.getZoom() < UEBERBLICK_ZOOM && karte.getLayer("orte-punkt")) {
+      const pad = 16;
+      const box: [[number, number], [number, number]] = [[e.point.x - pad, e.point.y - pad], [e.point.x + pad, e.point.y + pad]];
+      const ort = karte.queryRenderedFeatures(box, { layers: ["orte-punkt", "orte-name"] })[0]?.properties?.id;
+      if (ort) return ziel.ort(String(ort));
+    }
     if (karte.getZoom() >= 14) {
       const punkt: [number, number] = [e.lngLat.lng, e.lngLat.lat];
       const meterProPixel = (40075016 * Math.cos((punkt[1] * Math.PI) / 180)) / (512 * 2 ** karte.getZoom());
