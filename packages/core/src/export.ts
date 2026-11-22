@@ -51,7 +51,7 @@ export interface ZipDatei {
 async function deflate(daten: Uint8Array): Promise<Uint8Array | null> {
   if (typeof CompressionStream === "undefined") return null;
   try {
-    const strom = new Blob([daten as BlobPart]).stream().pipeThrough(new CompressionStream("deflate-raw" as CompressionFormat));
+    const strom = new Blob([daten as never]).stream().pipeThrough(new CompressionStream("deflate-raw" as never));
     return new Uint8Array(await new Response(strom).arrayBuffer());
   } catch {
     return null;
