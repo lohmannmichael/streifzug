@@ -79,6 +79,17 @@ export function standAus(daten: Regionen, f: Fortschritt): Stand {
   return { veedel, gruppen, strassenKomplett: 0, aktivKmGesamt };
 }
 
+/** Stamps given so far, read only (for pages that show them). */
+export function useGesetzteStempel(): GesetzterStempel[] {
+  const [gesetzt, setGesetzt] = useState<GesetzterStempel[]>(lesen);
+  useEffect(() => {
+    const neu = () => setGesetzt(lesen());
+    window.addEventListener(KONTO_DATEN, neu);
+    return () => window.removeEventListener(KONTO_DATEN, neu);
+  }, []);
+  return gesetzt;
+}
+
 /**
  * Stamps: given ones from the device; newly earned ones are laid into the passport right away
  * for now (Phase 2). Stamping by hand with sound comes in Phase 3 (Bauplan 5.2).

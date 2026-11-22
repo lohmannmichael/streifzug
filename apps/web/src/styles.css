@@ -294,11 +294,12 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
   background: var(--flaeche);
   border-radius: 26px 26px 0 0;
   box-shadow: var(--schatten);
-  transition: height 0.28s cubic-bezier(0.2, 0.8, 0.3, 1);
+  /* Always half height; "small" moves it down so only the head shows (Bauplan 3, B2). */
+  height: 64%;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
+  will-change: transform;
 }
-.blatt.hoehe-1 { min-height: calc(128px + env(safe-area-inset-bottom)); }
-.blatt.hoehe-2 { height: 64%; }
-.blatt.hoehe-3 { height: calc(100% - 12px - env(safe-area-inset-top)); }
+.blatt.zieht { transition: none; }
 .blatt-zug { flex: none; display: grid; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; padding-bottom: 14px; }
 .griff {
   justify-self: center;
@@ -480,3 +481,13 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .eingabe { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--linie); border-radius: 10px; background: var(--flaeche); color: var(--text); font: inherit; font-size: 16px; }
 .leer { color: var(--text-leise); }
 .leer.gross { font-size: var(--t-gross); line-height: 1.4; margin: 12px 0 20px; }
+
+/* Stamp card in one row (Bauplan 3, B1; picture Viertel.png): reached = stamp, open = empty grey circle. */
+.stempelkarte { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin: 10px 0 4px; padding: 0; border: 0; }
+.stempelkarte .feld { display: grid; justify-items: center; gap: 6px; height: auto; padding: 0; border: 0; overflow: visible; }
+.feld-kreis { display: grid; place-items: center; width: 52px; height: 52px; border: 1.5px solid var(--linie); border-radius: 50%; }
+.feld.voll .feld-kreis { border-color: transparent; }
+.feld.voll .feld-kreis .stempel-svg { margin: 0; }
+.stempelkarte .feld-titel { position: static; font-size: var(--t-klein); font-weight: 500; color: var(--text-leise); }
+.stempelkarte .feld.voll .feld-titel { position: static; color: var(--text); }
+.status-zeile { border-top: 1px solid var(--linie); border-bottom: 1px solid var(--linie); margin-top: 8px; }

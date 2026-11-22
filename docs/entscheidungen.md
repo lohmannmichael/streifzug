@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 22.11.2026: Etappe B (Blatt) umgesetzt
+- B1: Halbes Blatt nur noch Kilometer, Stempelkarte und bei Bedarf eine Statuszeile („Automatisch aufzeichnen einrichten“, solange Overland nicht verbunden ist; Overland still; neuer Ort). „Zuletzt“, „Noch offen“, „Jetzt mit offener App aufzeichnen“ und die Zeile „Deine Städte und Veedel“ sind raus; „Noch offen“ wird nicht mehr berechnet (Code bleibt bis D8). Stempelkarte als Reihe aus sechs Kreisen (Bild `Viertel.png`): erreicht = Stempel, offen = leerer Kreis, kein „noch x km“. Menüpunkt „Letzte Wege“ entfällt bis D4 (Rückblicke)
+- B2: Zwei Höhen. Das Blatt ist immer halb hoch und wird für „klein“ nach unten geschoben; beim Ziehen folgt es dem Finger, beim Loslassen rastet es auf der näheren Höhe ein (200 ms). Ein Wisch über 0,5 px/ms entscheidet nach Richtung (bei kurzen Bewegungen unter 0,3 s zählt die Geschwindigkeit der ganzen Bewegung). Der ganze Kopf ist Griff, Tippen auf den Kopf wechselt die Höhe, der Griff-Knopf bleibt für VoiceOver
+- B3: Im Inhalt zieht eine Bewegung nach unten das Blatt, wenn der Inhalt oben steht. Ein Tipp auf das schon gewählte Veedel setzt das Blatt auf klein
+- Städte und Stempelpass liegen bis D1 als eigene Seite hinter dem Menü
+- Geprüft mit Touch-Gesten im iPhone-Format (CDP): schnell hoch, schnell runter (60 px in 50 ms), langsames Ziehen folgt dem Finger, Herunterziehen aus dem Inhalt, halbes Blatt passt ohne Scrollen (390 × 844)
+
 ## 22.11.2026: A3 Alles exportieren
 - Einstellungen → Deine Daten → „Export vorbereiten“: der Hintergrund-Worker packt alle Wege (eigene, Overland, GPX) als GPX-Dateien (`wege/JJJJ-MM-TT_HHMM_<Herkunft>.gpx`), dazu `unterwegs.json` (Einstellungen, Ausnahmen, Stempel mit Datum) und `LIESMICH.txt` in eine Zip-Datei. Danach öffnet „Sichern oder teilen“ den Teilen-Dialog (iOS verlangt dafür einen eigenen Tipp), ohne ihn wird die Datei geladen
 - Ohne Bibliothek: GPX-Schreiber und Zip-Packer in `packages/core/src/export.ts` (mit Tests), Komprimierung über `CompressionStream`. GPX enthält Genauigkeit, Bewegungsart und Tempo als Erweiterung; der GPX-Import liest sie wieder, damit dieselben Abschnitte (Rad/Auto) erkannt werden

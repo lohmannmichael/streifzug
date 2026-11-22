@@ -496,7 +496,9 @@ export function Karte(props: KartenProps) {
     const karte = karteRef.current;
     const rb = props.rueckblick;
     if (!karte || !rb || rb.wege.length === 0) return;
-    const blatt = document.querySelector(".blatt")?.getBoundingClientRect().height ?? 160;
+    // Visible part of the sheet (it is moved down when small).
+    const rahmen = document.querySelector(".blatt")?.getBoundingClientRect();
+    const blatt = rahmen ? Math.max(0, karte.getContainer().getBoundingClientRect().bottom - rahmen.top) : 160;
     return rueckblickAbspielen(
       karte,
       { wege: rb.wege, seit: rb.seit },

@@ -1,17 +1,18 @@
-import { fehlendeMeter, type Naechster } from "@streifzug/core";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { naechsteStempel, VEEDEL_PROZENT, type Naechster } from "@streifzug/core";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Aufzeichnung } from "../daten/aufzeichnung";
 import type { Fortschritt } from "../daten/fortschritt";
 import type { KurzWeg } from "../daten/import";
 import { alsKm, alsStrecke, elternText, gesamtMeter, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Regionen } from "../daten/regionen";
 import type { FremderOrt } from "../daten/orte";
+import { overlandVerbunden } from "../daten/import";
 import type { Rueckblick } from "../daten/rueckblick";
-import { standAus, useLetzteWege, useOffeneStrassen, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
+import { standAus, useGesetzteStempel, useStempel, type GesetzterStempel, type OffeneStrasse } from "../daten/veedel";
 import { t } from "../texte/de";
-import { IconMehr } from "../ui/Icons";
+import { IconMehr, IconSchliessen } from "../ui/Icons";
 import { Stempel } from "../ui/Stempel";
 
-export type Hoehe = 1 | 2 | 3;
+export type Hoehe = 1 | 2;
 export type SammlungTeil = "veedel" | "pass";
 
 const wochentag = new Intl.DateTimeFormat("de-DE", { weekday: "long" });
@@ -97,21 +98,104 @@ export function Blatt(props: BlattProps) {
   const angezeigt = useAngezeigt(p, props.zahlVorher, props.hochzaehlen);
   const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
   const stempel = useStempel(stand);
-  // Which part of the collection is open (set from the overview row and from the menu).
-  const { teil, setTeil } = props;
 
-  // Pulling the handle or the head moves one height up or down; tapping the head opens height 2.
-  const zug = useRef<number | null>(null);
-  const zugEnde = (y: number) => {
-    if (zug.current === null) return false;
-    const weg = y - zug.current;
-    zug.current = null;
-    if (weg < -36) setHoehe(Math.min(3, hoehe + 1) as Hoehe);
-    else if (weg > 36) setHoehe(Math.max(1, hoehe - 1) as Hoehe);
-    else return false;
+  // Two heights (Bauplan 3, B2): the sheet follows the finger and snaps to the nearer height;
+  // a quick flick decides by its direction. Small = only the head is visible (moved down).
+  const blattRef = useRef<HTMLElement>(null);
+  const kopfRef = useRef<HTMLDivElement>(null);
+  const aufnahmeRef = useRef<HTMLDivElement>(null);
+  const inhaltRef = useRef<HTMLDivElement>(null);
+  const [masse, setMasse] = useState({ halb: 0, klein: 0 });
+  useLayoutEffect(() => {
+    const messen = () => {
+      const b = blattRef.current;
+      const k = kopfRef.current;
+      if (!b || !k) return;
+      const unten = parseFloat(getComputedStyle(b).paddingBottom) || 0;
+      setMasse({ halb: b.offsetHeight, klein: k.offsetHeight + (aufnahmeRef.current?.offsetHeight ?? 0) + unten });
+    };
+    messen();
+    const ro = new ResizeObserver(messen);
+    if (blattRef.current) ro.observe(blattRef.current);
+    if (kopfRef.current) ro.observe(kopfRef.current);
+    return () => ro.disconnect();
+  }, [a.aktiv]);
+  const tief = Math.max(0, masse.halb - masse.klein);
+  const [zug, setZug] = useState<number | null>(null);
+  const start = useRef<{ y: number; t: number; basis: number; letzteY: number; letzteT: number; v: number } | null>(null);
+  const beginnen = (y: number) => {
+    const jetzt = performance.now();
+    start.current = { y, t: jetzt, basis: hoehe === 1 ? tief : 0, letzteY: y, letzteT: jetzt, v: 0 };
+  };
+  const bewegen = (y: number) => {
+    const s0 = start.current;
+    if (!s0) return;
+    const jetzt = performance.now();
+    if (jetzt - s0.letzteT > 8) {
+      s0.v = (y - s0.letzteY) / (jetzt - s0.letzteT);
+      s0.letzteY = y;
+      s0.letzteT = jetzt;
+    }
+    if (Math.abs(y - s0.y) > 4) setZug(Math.min(tief, Math.max(0, s0.basis + y - s0.y)));
+  };
+  /** Ends a pull; true if it was one (not a tap). */
+  const enden = (y: number) => {
+    const s0 = start.current;
+    start.current = null;
+    setZug(null);
+    if (!s0) return false;
+    const weg = y - s0.y;
+    // Speed: of the last part of the move, or of the whole move when it was short (a flick).
+    const dauer = performance.now() - s0.t;
+    const v = dauer < 300 && Math.abs(weg / dauer) > Math.abs(s0.v) ? weg / dauer : s0.v;
+    if (Math.abs(weg) <= 4 && Math.abs(v) < 0.5) return false;
+    setHoehe(Math.abs(v) > 0.5 ? (v > 0 ? 1 : 2) : s0.basis + weg > tief / 2 ? 1 : 2);
     return true;
   };
   const gezogen = useRef(false);
+
+  // B3: in the content, a pull down at its top moves the sheet; otherwise the content scrolls.
+  useEffect(() => {
+    const el = inhaltRef.current;
+    if (!el) return;
+    let y0: number | null = null;
+    let zieht = false;
+    const anfang = (e: TouchEvent) => {
+      y0 = el.scrollTop <= 0 ? e.touches[0]!.clientY : null;
+      zieht = false;
+    };
+    const weiter = (e: TouchEvent) => {
+      if (y0 === null) return;
+      const y = e.touches[0]!.clientY;
+      if (!zieht) {
+        if (y - y0 > 6 && el.scrollTop <= 0) {
+          zieht = true;
+          beginnen(y0);
+        } else if (y0 - y > 6) {
+          y0 = null;
+          return;
+        } else return;
+      }
+      e.preventDefault();
+      bewegen(y);
+    };
+    const schluss = (e: TouchEvent) => {
+      if (zieht) enden(e.changedTouches[0]!.clientY);
+      y0 = null;
+      zieht = false;
+    };
+    el.addEventListener("touchstart", anfang, { passive: true });
+    el.addEventListener("touchmove", weiter, { passive: false });
+    el.addEventListener("touchend", schluss);
+    el.addEventListener("touchcancel", schluss);
+    return () => {
+      el.removeEventListener("touchstart", anfang);
+      el.removeEventListener("touchmove", weiter);
+      el.removeEventListener("touchend", schluss);
+      el.removeEventListener("touchcancel", schluss);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoehe, tief]);
 
   const status = a.aktiv
     ? t.blatt.unterwegs(alsStrecke(props.neuUnterwegsM), props.neueStrassen)
@@ -126,34 +210,44 @@ export function Blatt(props: BlattProps) {
           : " ";
 
   return (
-    <section className={`blatt hoehe-${hoehe}`} aria-labelledby="gebiet-name">
+    <section
+      ref={blattRef}
+      className={zug !== null ? "blatt zieht" : "blatt"}
+      aria-labelledby="gebiet-name"
+      style={{ transform: `translateY(${zug ?? (hoehe === 1 ? tief : 0)}px)` }}
+    >
       <div
+        ref={kopfRef}
         className="blatt-zug"
         onPointerDown={(e) => {
-          zug.current = e.clientY;
           gezogen.current = false;
+          if ((e.target as HTMLElement).closest("button:not(.griff)")) return;
+          beginnen(e.clientY);
+          e.currentTarget.setPointerCapture(e.pointerId);
         }}
-        onPointerMove={(e) => {
-          // Once it is a real pull, keep the pointer even when it leaves the head.
-          if (zug.current !== null && Math.abs(e.clientY - zug.current) > 8 && !e.currentTarget.hasPointerCapture(e.pointerId))
-            e.currentTarget.setPointerCapture(e.pointerId);
+        onPointerMove={(e) => bewegen(e.clientY)}
+        onPointerUp={(e) => (gezogen.current = enden(e.clientY))}
+        onPointerCancel={() => {
+          start.current = null;
+          setZug(null);
         }}
-        onPointerUp={(e) => (gezogen.current = zugEnde(e.clientY))}
-        onPointerCancel={() => (zug.current = null)}
         onClick={(e) => {
           if (gezogen.current || (e.target as HTMLElement).closest("button")) return;
-          if (hoehe === 1) setHoehe(2);
+          setHoehe(hoehe === 1 ? 2 : 1);
         }}
       >
+        {/* The handle stays a button for the keyboard and VoiceOver. */}
         <button
           type="button"
           className="griff"
           aria-label={hoehe === 1 ? t.blatt.hoeher : t.blatt.tiefer}
-          onClick={() => !gezogen.current && setHoehe(hoehe === 1 ? 2 : hoehe === 2 ? 1 : 2)}
+          aria-expanded={hoehe === 2}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!gezogen.current) setHoehe(hoehe === 1 ? 2 : 1);
+          }}
         />
-        {hoehe === 3 ? (
-          <h1 id="gebiet-name" className="sr-only">{t.sammlung.veedel}</h1>
-        ) : (
+        {(
           <div className="blatt-kopf">
             <div className="kopf-links">
               <h1 id="gebiet-name" className="gebiet">{gebiet?.name ?? " "}</h1>
@@ -175,14 +269,14 @@ export function Blatt(props: BlattProps) {
       </div>
 
       {a.aktiv && (
-        <div className="aufnahme-zeile">
+        <div ref={aufnahmeRef} className="aufnahme-zeile">
           <span className={`gps gps-${a.gps}`}>{t.karte.gps[a.gps]}</span>
           <button type="button" className="text-knopf" onClick={a.beenden}>{t.blatt.beenden}</button>
         </div>
       )}
 
-      {hoehe === 2 && gebiet && daten && (
-        <div className="blatt-inhalt">
+      {gebiet && daten && (
+        <div ref={inhaltRef} className="blatt-inhalt" aria-hidden={hoehe === 1}>
           <VeedelInhalt
             {...props}
             gebiet={gebiet}
@@ -190,40 +284,36 @@ export function Blatt(props: BlattProps) {
             gesehen={gesehen}
             gesamt={gesamt}
             gesetzt={stempel.gesetzt}
-            zurUebersicht={() => {
-              setTeil("veedel");
-              setHoehe(3);
-            }}
           />
         </div>
       )}
-      {hoehe === 3 && daten && <Sammlung {...props} daten={daten} gesetzt={stempel.gesetzt} naechste={stempel.naechste} teil={teil} setTeil={setTeil} />}
     </section>
   );
 }
 
-function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[]; zurUebersicht: () => void }) {
+function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[] }) {
   const { gebiet, daten, aufzeichnung: a } = props;
-  const wege = useLetzteWege(props.eigeneWege);
   const istVeedel = gebiet.kinder.length === 0;
-  const offen = useOffeneStrassen(daten, istVeedel ? gebiet.id : null, props.position, props.fortschritt, istVeedel && !a.aktiv);
-  const erstesMal = props.gesehen < 1 && wege.length === 0;
   const vorherM = props.vorher ? zaehlendeMeter(props.vorher.proGebiet.get(gebiet.id) ?? LEER, false) : null;
   const neuM = vorherM !== null && a.letzter ? props.gesehen - vorherM : 0;
 
+  // Half height (Bauplan 3, 3.2): km, stamp card, and a status line only when something needs attention.
   return (
     <>
       <p className="zahlen-zeile">
         <span className="wert">{t.blatt.kmVon(alsKm(props.gesehen), alsKm(props.gesamt))}</span>
       </p>
-      <button type="button" className="zeile-knopf uebersicht-zeile" onClick={props.zurUebersicht}>
-        <span>{t.blatt.uebersicht}</span>
-        <span className="wert">{uebersichtText(daten, props.fortschritt)} ›</span>
-      </button>
+      {props.gesehen < 1 && <p className="zeile-text">{t.blatt.ersterSatz}</p>}
       {neuM >= 1 && vorherM !== null && (
         <p className="zeile-text" role="status">
           {t.blatt.belohnung(alsStrecke(neuM), prozentText(prozent(vorherM, props.gesamt)), prozentText(prozent(props.gesehen, props.gesamt)))}
         </p>
+      )}
+      {!overlandVerbunden() && (
+        <button type="button" className="zeile-knopf status-zeile" onClick={() => props.einstellungen("overland")}>
+          <span>{t.blatt.einrichten}</span>
+          <span className="wert">›</span>
+        </button>
       )}
       {props.overlandStill && (
         <p className="zeile-text">
@@ -234,93 +324,38 @@ function VeedelInhalt(props: BlattProps & { gebiet: GebietDaten; daten: Regionen
       {props.standortFehler && <p className="zeile-text">{t.karte.standortFehler}</p>}
       {props.fremdeOrte
         .filter((o) => Date.now() - o.seit < 7 * 86400_000)
-        .slice(0, 2)
+        .slice(0, 1)
         .map((o) => (
           <p key={o.name} className="zeile-text">{t.blatt.vorbereitet(o.name)}</p>
         ))}
       {a.aktiv && <p className="zeile-text leise">{t.karte.hinweisOffen}</p>}
 
-      {erstesMal && (
-        <div className="abschnitt">
-          <p className="zeile-text">{t.blatt.ersterSatz}</p>
-          <button type="button" className="zeile-knopf" onClick={() => props.einstellungen("overland")}>{t.blatt.einrichten}</button>
-        </div>
-      )}
-
       {istVeedel && <Stempelkarte gebiet={gebiet} daten={daten} gesehen={props.gesehen} gesamt={props.gesamt} gesetzt={props.gesetzt} />}
-
-      <h2 id="zuletzt" className="abschnitt-titel">{t.blatt.zuletzt}</h2>
-      {wege.length === 0 ? (
-        <p className="zeile-text leise">{t.blatt.keineWege}</p>
-      ) : (
-        <ul className="zeilen">
-          {wege.map((w) => (
-            <li key={w.id}>
-              <button type="button" className="zeile-knopf" onClick={() => props.abspielen(w)}>
-                <span>{t.blatt.zuletztZeile(seitText(w.startedAt), alsStrecke(w.distanceM))}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {istVeedel && (
-        <>
-          <h2 className="abschnitt-titel">{t.blatt.nochOffen}</h2>
-          {offen === null ? (
-            <p className="zeile-text leise">{t.blatt.nochOffenLaedt}</p>
-          ) : offen.length === 0 ? (
-            <p className="zeile-text leise">{t.blatt.nochOffenLeer}</p>
-          ) : (
-            <ul className="zeilen">
-              {offen.map((s) => (
-                <li key={s.name}>
-                  <button
-                    type="button"
-                    className="zeile-knopf"
-                    aria-pressed={props.offen === s.name}
-                    onClick={() => props.offenZeigen(props.offen === s.name ? null : s)}
-                  >
-                    <span>{s.name}</span>
-                    <span className="wert">{alsStrecke(s.restM)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
-
-      {!a.aktiv && (
-        <button type="button" className="text-knopf fuss" onClick={a.starten}>{t.blatt.jetztAufzeichnen}</button>
-      )}
     </>
   );
 }
 
-/** Six fields: entered, 10, 25, 50, 75, 100 %. Stamped ones show the stamp, open ones the missing km. */
+/** Six fields: entered, 10, 25, 50, 75, 100 %. Reached ones show the stamp, open ones only the step in grey. */
 function Stempelkarte(props: { gebiet: GebietDaten; daten: Regionen; gesehen: number; gesamt: number; gesetzt: GesetzterStempel[] }) {
   const { gebiet } = props;
   const jeId = new Map(props.gesetzt.filter((s) => s.gebietId === gebiet.id).map((s) => [s.id, s]));
   const stadt = stadtName(props.daten, gebiet.id);
   const felder = [
-    { id: `betreten:${gebiet.id}`, titel: t.blatt.betreten, restM: props.gesehen > 0 ? 0 : null },
-    ...fehlendeMeter({ id: gebiet.id, aktivM: props.gesehen, gesamtM: props.gesamt }).map((f) => ({ id: `prozent:${gebiet.id}:${f.stufe}`, titel: `${f.stufe} %`, restM: f.restM })),
+    { id: `betreten:${gebiet.id}`, titel: t.blatt.betreten },
+    ...VEEDEL_PROZENT.map((stufe) => ({ id: `prozent:${gebiet.id}:${stufe}`, titel: `${stufe} %` })),
   ];
   return (
     <>
-      <h2 className="abschnitt-titel">{t.blatt.stempelkarte}</h2>
+      <h2 className="sr-only">{t.blatt.stempelkarte}</h2>
       <ol className="stempelkarte">
         {felder.map((f) => {
           const s = jeId.get(f.id);
           return (
             <li key={f.id} className={s ? "feld voll" : "feld"}>
+              <span className="feld-kreis">
+                {s && <Stempel stempel={s} gebietName={gebiet.name} stadtName={stadt} datum={s.gestempeltAm} groesse={56} drehung={s.drehung} />}
+              </span>
               <span className="feld-titel">{f.titel}</span>
-              {s ? (
-                <Stempel stempel={s} gebietName={gebiet.name} stadtName={stadt} datum={s.gestempeltAm} groesse={74} drehung={s.drehung} />
-              ) : (
-                <span className="feld-rest">{f.restM ? t.blatt.noch(alsKm(f.restM)) : " "}</span>
-              )}
             </li>
           );
         })}
@@ -335,28 +370,48 @@ function stadtName(daten: Regionen, id: string): string | undefined {
   return g?.name;
 }
 
-/** "2 Städte · 5 Veedel": what has been entered so far. */
-function uebersichtText(daten: Regionen, f: Fortschritt | null): string {
-  let staedte = 0;
-  let veedel = 0;
-  for (const r of daten.liste) {
-    const w = daten.gebiete.get(r.wurzel);
-    if (w && gesehenM(f, w) >= 1) staedte++;
-  }
-  for (const g of daten.gebiete.values()) if (g.kinder.length === 0 && gesehenM(f, g) >= 1) veedel++;
-  return t.blatt.uebersichtWert(staedte, veedel);
-}
-
 /** Number of entered Veedel below an area. */
 function betreteneVeedel(daten: Regionen, f: Fortschritt | null, g: GebietDaten): number {
   if (g.kinder.length === 0) return gesehenM(f, g) >= 1 ? 1 : 0;
   return g.kinder.reduce((n, id) => n + betreteneVeedel(daten, f, daten.gebiete.get(id)!), 0);
 }
 
-function Sammlung(props: BlattProps & { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[]; teil: "veedel" | "pass"; setTeil: (t: "veedel" | "pass") => void }) {
+/**
+ * Cities and Veedel, and the stamp passport, as a page over the plan (until the Pass in D1).
+ * Opened from the menu; the full sheet height is gone (Bauplan 3, B2).
+ */
+export function SammlungSeite(props: BlattProps & { schliessen: () => void }) {
+  const { daten } = props;
+  abzugJetzt = props.fortschritt?.abzug;
+  const stand = useMemo(() => (daten && props.fortschritt ? standAus(daten, props.fortschritt) : null), [daten, props.fortschritt]);
+  const gesetzt = useGesetzteStempel();
+  if (!daten) return null;
+  return (
+    <div className="app">
+      <section className="seite seite-voll sammlung-seite" aria-label={props.teil === "pass" ? t.sammlung.stempelpass : t.sammlung.veedel}>
+        <button type="button" className="zurueck" onClick={props.schliessen}>
+          <IconSchliessen />
+          <span>{t.ich.zurueck}</span>
+        </button>
+        <Sammlung
+          {...props}
+          daten={daten}
+          gesetzt={gesetzt}
+          naechste={stand ? naechsteStempel(stand) : []}
+          waehlen={(id) => {
+            props.waehlen(id);
+            props.schliessen();
+          }}
+        />
+      </section>
+    </div>
+  );
+}
+
+function Sammlung(props: BlattProps & { daten: Regionen; gesetzt: GesetzterStempel[]; naechste: Naechster[] }) {
   const { teil, setTeil } = props;
   return (
-    <div className="blatt-inhalt sammlung">
+    <div className="sammlung">
       <div className="sammlung-kopf">
         <div className="umschalter" role="tablist">
           <button type="button" role="tab" aria-selected={teil === "veedel"} onClick={() => setTeil("veedel")}>{t.sammlung.veedel}</button>

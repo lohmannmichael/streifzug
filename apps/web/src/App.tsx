@@ -12,7 +12,7 @@ import { useAusnahmen } from "./daten/ausnahmen";
 import { useFremdeOrte } from "./daten/orte";
 import { markerJetzt, useEinstellungen, type Einstellungen } from "./einstellungen";
 import { GpxImport, OverlandEinrichten } from "./seiten/Importieren";
-import { Blatt, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
+import { Blatt, SammlungSeite, type BlattProps, type Hoehe, type SammlungTeil } from "./seiten/Blatt";
 import { Export } from "./seiten/Export";
 import { Konto } from "./seiten/Konto";
 import { Stifte } from "./seiten/Stifte";
@@ -30,6 +30,7 @@ export function App() {
   const [hoehe, setHoehe] = useState<Hoehe>(1);
   const [teil, setTeil] = useState<SammlungTeil>("veedel");
   const [menueOffen, setMenueOffen] = useState(false);
+  const [sammlungOffen, setSammlungOffen] = useState(false);
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; nr: number } | null>(null);
   const [offen, setOffen] = useState<OffeneStrasse | null>(null);
@@ -186,6 +187,42 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daten]);
 
+  const blattProps: BlattProps = {
+    hoehe: hoehe,
+    setHoehe: setHoehe,
+    gebiet: gebiet,
+    daten: daten,
+    fortschritt: fortschritt,
+    vorher: vorher.current,
+    rechnet: rechnet,
+    aufzeichnung: aufzeichnung,
+    standortFehler: standortFehler,
+    neuUnterwegsM: neuUnterwegsM,
+    neueStrassen: neueStrassen,
+    rueckblick: rueckblick && !aufzeichnung.aktiv ? rueckblick : null,
+    rueckblickBeenden: rueckblickBeenden,
+    overlandStill: overlandStill(),
+    einstellungen: (ziel?: "overland") => {
+            setImportZeigen(ziel ?? null);
+            setProfilOffen(true);
+          },
+    eigeneWege: eigeneWege,
+    abspielen: (w: KurzWeg) => {
+            setHoehe(1);
+            setEinzeln((alt) => ({ wege: [w.coords], seit: w.startedAt, nr: (alt?.nr ?? 1000) + 1 }));
+          },
+    position: position,
+    offen: offen?.name ?? null,
+    offenZeigen: setOffen,
+    waehlen: (id: string) => waehlen(id),
+    fremdeOrte: fremdeOrte,
+    zahlVorher: rueckblick && !aufzeichnung.aktiv ? zahlVorher : null,
+    hochzaehlen: hochzaehlen,
+    rechenFehler: rechenFehler,
+    teil: teil,
+    setTeil: setTeil,
+  };
+
   // Opened from the confirmation link (in Safari): say where to go on.
   if (safariHinweis)
     return (
@@ -206,6 +243,8 @@ export function App() {
         </section>
       </div>
     );
+
+  if (sammlungOffen) return <SammlungSeite {...blattProps} schliessen={() => setSammlungOffen(false)} />;
 
   if (profilOffen)
     return (
@@ -239,6 +278,8 @@ export function App() {
           gewaehlt={gebiet?.id ?? null}
           gewaehltName={gebiet?.name ?? ""}
           onWaehlen={(id, sprung) => {
+            // A tap on the Veedel already shown puts the sheet down (Bauplan 3, B3).
+            if (id === gebiet?.id && sprung === undefined) setHoehe(1);
             waehlen(id, sprung);
             setOffen(null);
           }}
@@ -284,12 +325,8 @@ export function App() {
             <nav className="menue" role="menu" aria-label={t.menue.titel}>
               {(
                 [
-                  [t.menue.staedte, () => { setTeil("veedel"); setHoehe(3); }],
-                  [t.menue.wege, () => {
-                    setHoehe(2);
-                    window.setTimeout(() => document.getElementById("zuletzt")?.scrollIntoView({ block: "start", behavior: "smooth" }), 350);
-                  }],
-                  [t.menue.stempelpass, () => { setTeil("pass"); setHoehe(3); }],
+                  [t.menue.staedte, () => { setTeil("veedel"); setSammlungOffen(true); }],
+                  [t.menue.stempelpass, () => { setTeil("pass"); setSammlungOffen(true); }],
                   [t.menue.einstellungen, () => { setImportZeigen(null); setProfilOffen(true); }],
                 ] as const
               ).map(([text, tun]) => (
@@ -309,41 +346,7 @@ export function App() {
             </nav>
           </>
         )}
-        <Blatt
-          hoehe={hoehe}
-          setHoehe={setHoehe}
-          gebiet={gebiet}
-          daten={daten}
-          fortschritt={fortschritt}
-          vorher={vorher.current}
-          rechnet={rechnet}
-          aufzeichnung={aufzeichnung}
-          standortFehler={standortFehler}
-          neuUnterwegsM={neuUnterwegsM}
-          neueStrassen={neueStrassen}
-          rueckblick={rueckblick && !aufzeichnung.aktiv ? rueckblick : null}
-          rueckblickBeenden={rueckblickBeenden}
-          overlandStill={overlandStill()}
-          einstellungen={(ziel) => {
-            setImportZeigen(ziel ?? null);
-            setProfilOffen(true);
-          }}
-          eigeneWege={eigeneWege}
-          abspielen={(w) => {
-            setHoehe(1);
-            setEinzeln((alt) => ({ wege: [w.coords], seit: w.startedAt, nr: (alt?.nr ?? 1000) + 1 }));
-          }}
-          position={position}
-          offen={offen?.name ?? null}
-          offenZeigen={setOffen}
-          waehlen={(id) => waehlen(id)}
-          fremdeOrte={fremdeOrte}
-          zahlVorher={rueckblick && !aufzeichnung.aktiv ? zahlVorher : null}
-          hochzaehlen={hochzaehlen}
-          rechenFehler={rechenFehler}
-          teil={teil}
-          setTeil={setTeil}
-        />
+        <Blatt {...blattProps} />
       </main>
     </div>
   );
