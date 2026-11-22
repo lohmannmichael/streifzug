@@ -75,12 +75,12 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   karte.addSource("neu", { type: "geojson", data: LEER, lineMetrics: true });
   karte.addLayer({ id: "neu-glanz", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 10, 16, 26], "line-blur": 8, "line-opacity": 0 } });
   karte.addLayer({ id: "neu", type: "line", source: "neu", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-width": MARKER_BREITE, "line-opacity": 0.9, "line-gradient": strich(0) } });
-  // Replay on opening: a highlighter trail with a glow and an ink dot at its head.
+  // Replay (Bauplan 3, F1): a thin ink line grows with the pen tip, a pen line for car rides;
+  // it runs visibly over the yellow. An ink dot marks the tip.
   karte.addSource("rb", { type: "geojson", data: LEER });
   karte.addSource("rb-kopf", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "rb-glanz", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 9, 16, 24], "line-blur": 7, "line-opacity": 0.45 } });
-  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": MARKER, "line-width": MARKER_BREITE, "line-opacity": 1 } });
-  karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 7, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": rbFarbe(), "line-width": ["case", ["==", ["get", "gefahren"], true], 2.4, 2], "line-opacity": 0.9 } });
+  karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 5, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
   // A tapped open street: black dashes along its middle (Bauplan 4.5).
   karte.addSource("spur", { type: "geojson", data: LEER });
   karte.addSource("ich", { type: "geojson", data: LEER });
@@ -88,6 +88,11 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   karte.addLayer({ id: "spur-kern", type: "line", source: "spur", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": TINTE, "line-width": 2, "line-dasharray": [2, 1.5] } });
   karte.addLayer({ id: "ich-hof", type: "circle", source: "ich", paint: { "circle-radius": 14, "circle-color": "#2b6ef2", "circle-opacity": 0.18 } });
   karte.addLayer({ id: "ich", type: "circle", source: "ich", paint: { "circle-radius": 7, "circle-color": "#2b6ef2", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+}
+
+/** Replay line: ink, red pen for car rides. */
+function rbFarbe() {
+  return ["case", ["==", ["get", "gefahren"], true], KULI, TINTE] as never;
 }
 
 /** Highlighter stroke up to share p (0–1) of each line. */
@@ -121,6 +126,7 @@ export function stifteSetzen(karte: MapLibreMap, st: Stifte) {
   karte.setPaintProperty("entdeckt", "line-color", markerFarbe(st) as never);
   karte.setPaintProperty("entdeckt-weg", "line-color", markerFarbe(st) as never);
   karte.setPaintProperty("gefahren", "line-color", KULI);
-  for (const l of ["rb", "rb-glanz", "neu-glanz"]) karte.setPaintProperty(l, "line-color", MARKER);
+  karte.setPaintProperty("neu-glanz", "line-color", MARKER);
+  karte.setPaintProperty("rb", "line-color", rbFarbe());
   schraffurBilder(karte, MARKER);
 }

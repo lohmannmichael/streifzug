@@ -1,5 +1,16 @@
 # Entscheidungen
 
+## 22.11.2026: F1 Rückblick näher heran, nachfahren
+- Jeder Weg einzeln, in zeitlicher Reihenfolge, alle Wege seit dem letzten Besuch (auch ohne Neues), harter Schnitt dazwischen
+- Bildausschnitt: Passt der Weg bei Zoom 15,5 über dem Blatt aufs Bild, steht die Karte still (eingepasst, höchstens Zoom 17). Sonst fährt sie mit: Zoom 16, Norden oben, Strichspitze bei 40 % vom hinteren Rand; Richtung aus 40 m hinter bis 80 m vor der Spitze, Bewegung geglättet (keine Rucke an Ecken)
+- Strich: dünne Tintenlinie (2 px) wächst mit der Spitze und läuft sichtbar über schon gelbe Straßen; Neues wird im selben Takt gelb. Autofahrten: rote Kuli-Linie, achtfach so schnell, Karte auf die ganze Fahrt herausgezoomt, kein Mitfahren. Welche Punkte gefahren sind, kommt aus der Abschnitt-Erkennung (mit Michis Korrekturen)
+- Tempo gleichmäßig (150 m/s, etwa 200 Pixel je Sekunde bei Zoom 16), höchstens 20 s zusammen; mindestens 2 s je Weg mit Neuem, 1 s ohne. Passen nicht einmal die Mindestzeiten in 20 s (über 10 Wege), werden sie anteilig gekürzt (Kern `nachfahren.ts`, 9 Tests)
+- Bedienung: Tipp überspringt alles, Gedrückthalten spielt dreifach schnell. Die Karte lässt sich währenddessen nicht verschieben
+- „Bewegung reduzieren“: kein Mitfahren, kein Wachsen, je Weg eine Sekunde der Endstand
+- Abweichung: Am Ende zoomt die Karte auf das gewählte Viertel (dessen Zahl hochzählt), nicht auf das Viertel mit dem meisten Neuen
+- Die alte gelbe Leuchtspur ist entfernt
+- Oberflächentest: Rückblick läuft ohne Tipp durch und endet mit dem normalen Stand (9,8 %)
+
 ## 22.11.2026: F3 Zeitreise
 - Rückblicke hat oben die Zeile „Zeitreise“. Ein Tipp schließt den Pass; statt des Blatts steht unten eine Leiste: Viertel, Datum, Prozent, Schieber vom ersten Tag mit Gelb bis heute, „Fertig“
 - Der Plan zeigt nur Gelb, das bis zum Ende des gewählten Tages zum ersten Mal gegangen wurde (gespeichertes erstes Datum je Stück). Die rote Kuli-Linie ist während der Zeitreise ausgeblendet (für sie gibt es kein Datum je Stück)

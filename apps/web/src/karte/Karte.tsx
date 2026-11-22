@@ -8,7 +8,7 @@ import { karteBauen, stilNeu } from "./aufbau";
 import { eigenesZeichnen, erstesMalSetzen, LEER, linienSammlung, setzeDaten, stifteSetzen } from "./ebenen";
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
 import { ruhig, zeigeGebiet } from "./kamera";
-import { rueckblickAbspielen } from "./rueckblick";
+import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
 import { SchildAnKarte, type EtikettZustand } from "./Schild";
 import { gebietAnPunkt, tippenEinrichten } from "./tippen";
 import { zeichenMoment } from "./zeichenMoment";
@@ -43,7 +43,7 @@ interface KartenProps {
   position: [number, number] | null;
   zentrieren: number;
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
-  rueckblick: { wege: LonLat[][]; seit: number; bis?: number; nr: number } | null;
+  rueckblick: { wege: RueckblickWeg[]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;

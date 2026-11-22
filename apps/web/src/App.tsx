@@ -5,7 +5,7 @@ import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
 import { useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import";
 import { useOnline } from "./daten/netz";
-import { alsGesehenMerken, kuerzen, useRueckblick } from "./daten/rueckblick";
+import { alsGesehenMerken, kurzMitArt, useRueckblick } from "./daten/rueckblick";
 import { useSitzung } from "./daten/supabase";
 import { findeNachName, gesamtMeter, orteLaden, ortLadenAuf, prozent, regionenJetzt, useRegionen, zaehlendeMeter, type Regionen } from "./daten/regionen";
 import { useAusnahmen } from "./daten/ausnahmen";
@@ -20,6 +20,7 @@ import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { RueckblickeSeite, type Tag } from "./seiten/Rueckblicke";
 import { ZeitreiseLeiste } from "./seiten/Zeitreise";
 import { Karte } from "./karte/Karte";
+import type { RueckblickWeg } from "./karte/rueckblick";
 import { t } from "./texte/de";
 import { IconPass, IconStandort } from "./ui/Icons";
 
@@ -40,7 +41,7 @@ export function App() {
   // One past day from "Rückblicke" (Bauplan 3, D4).
   // Zeitreise (Bauplan 3, F3): end of the chosen day, or null.
   const [zeitreise, setZeitreise] = useState<number | null>(null);
-  const [einzeln, setEinzeln] = useState<{ wege: LonLat[][]; seit: number; bis: number; nr: number } | null>(null);
+  const [einzeln, setEinzeln] = useState<{ wege: RueckblickWeg[]; seit: number; bis: number; nr: number } | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
   const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
@@ -329,8 +330,8 @@ export function App() {
           // The pass closes and the day runs on the plan: its ways, only what was new that day.
           void wegeSeit(tag.von - 86400_000).then((andere) => {
             const wege = [
-              ...andere.filter((w) => w.startedAt >= tag.von && w.startedAt < tag.bis).map((w) => w.coords),
-              ...streifzuege.filter((s) => s.status !== "aktiv" && s.startedAt >= tag.von && s.startedAt < tag.bis && s.fixes.length > 1).map((s) => kuerzen(s.fixes)),
+              ...andere.filter((w) => w.startedAt >= tag.von && w.startedAt < tag.bis).map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })),
+              ...streifzuege.filter((s) => s.status !== "aktiv" && s.startedAt >= tag.von && s.startedAt < tag.bis && s.fixes.length > 1).map((s) => kurzMitArt(s.fixes)),
             ];
             setPass(null);
             setHoehe(1);
@@ -368,7 +369,7 @@ export function App() {
 
   // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
   const abspielen =
-    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => w.coords), seit: rueckblick.seit, nr: rueckblick.nr } : null);
+    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr } : null);
   // Pages of the Pass lie over the plan; the plan stays as it is underneath (Bauplan 3, D2).
   return (
     <>

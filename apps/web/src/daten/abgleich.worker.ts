@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { gefahrenJePunkt, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
 import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import type { Region, Summe } from "./regionen";
@@ -132,15 +132,28 @@ export interface KurzWeg {
   endedAt: number;
   distanceM: number;
   coords: [number, number][];
+  /** Per coordinate: part of a car, bus or train leg (replay, Bauplan 3, F1). */
+  gefahren?: boolean[];
+}
+
+/** At most about 400 points of a way, for drawing. */
+function kurzIndizes(n: number): number[] {
+  const schritt = Math.max(1, Math.ceil(n / 400));
+  const out: number[] = [];
+  for (let i = 0; i < n; i += schritt) out.push(i);
+  if (n > 0 && (n - 1) % schritt !== 0) out.push(n - 1);
+  return out;
 }
 
 export function kuerzen(fixes: Fix[]): [number, number][] {
-  const schritt = Math.max(1, Math.ceil(fixes.length / 400));
-  const out: [number, number][] = [];
-  for (let i = 0; i < fixes.length; i += schritt) out.push([fixes[i]!.lon, fixes[i]!.lat]);
-  const letzter = fixes.at(-1);
-  if (letzter && (fixes.length - 1) % schritt !== 0) out.push([letzter.lon, letzter.lat]);
-  return out;
+  return kurzIndizes(fixes.length).map((i) => [fixes[i]!.lon, fixes[i]!.lat]);
+}
+
+/** Shortened way with the car legs marked (with Michi's corrections). */
+function kurzMitArt(fixes: Fix[], korrekturen: readonly Korrektur[] = []): { coords: [number, number][]; gefahren: boolean[] } {
+  const g = gefahrenJePunkt(fixes, korrekturen);
+  const idx = kurzIndizes(fixes.length);
+  return { coords: idx.map((i) => [fixes[i]!.lon, fixes[i]!.lat]), gefahren: idx.map((i) => g[i]!) };
 }
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);
@@ -446,7 +459,7 @@ async function antworten(a: Anfrage): Promise<void> {
       for (const k of (await andereLaden()).values()) {
         if ((k.empfangenAm ?? k.endedAt ?? k.startedAt) <= a.seit) continue;
         const fixes = k.fixes ?? (await einenLaden(k.id))?.fixes ?? [];
-        if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
+        if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, ...kurzMitArt(fixes, korrekturenJetzt[k.id]) });
       }
       return senden({ typ: "wege", nr: a.nr, wege });
     }

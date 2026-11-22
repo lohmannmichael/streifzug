@@ -1,4 +1,4 @@
-import type { Fix } from "@streifzug/core";
+import { gefahrenJePunkt, type Fix } from "@streifzug/core";
 import { useCallback, useState } from "react";
 import { wegeSeit, type KurzWeg } from "./import";
 import { alleLaden } from "./speicher";
@@ -20,12 +20,22 @@ export interface Rueckblick {
 }
 
 export function kuerzen(fixes: Fix[]): [number, number][] {
-  const schritt = Math.max(1, Math.ceil(fixes.length / 400));
-  const out: [number, number][] = [];
-  for (let i = 0; i < fixes.length; i += schritt) out.push([fixes[i]!.lon, fixes[i]!.lat]);
-  const letzter = fixes.at(-1);
-  if (letzter && (fixes.length - 1) % schritt !== 0) out.push([letzter.lon, letzter.lat]);
+  return kurzIndizes(fixes.length).map((i) => [fixes[i]!.lon, fixes[i]!.lat]);
+}
+
+function kurzIndizes(n: number): number[] {
+  const schritt = Math.max(1, Math.ceil(n / 400));
+  const out: number[] = [];
+  for (let i = 0; i < n; i += schritt) out.push(i);
+  if (n > 0 && (n - 1) % schritt !== 0) out.push(n - 1);
   return out;
+}
+
+/** Shortened own way for the replay, with its car legs marked (Bauplan 3, F1). */
+export function kurzMitArt(fixes: Fix[]): { coords: [number, number][]; gefahren: boolean[] } {
+  const g = gefahrenJePunkt(fixes);
+  const idx = kurzIndizes(fixes.length);
+  return { coords: idx.map((i) => [fixes[i]!.lon, fixes[i]!.lat]), gefahren: idx.map((i) => g[i]!) };
 }
 
 /** Everything up to now counts as seen (e.g. after an outing that was watched live). */
@@ -41,7 +51,7 @@ export function useRueckblick() {
       ...andere,
       ...eigene
         .filter((s) => s.status !== "aktiv" && (s.endedAt ?? s.startedAt) > seit && s.fixes.length > 1)
-        .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, coords: kuerzen(s.fixes) })),
+        .map((s) => ({ id: s.id, startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, ...kurzMitArt(s.fixes) })),
     ].sort((a, b) => a.startedAt - b.startedAt);
     alsGesehenMerken();
     if (neu.length === 0) return;

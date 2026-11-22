@@ -27,3 +27,18 @@ test("Rückblick läuft, Tipp überspringt, Endstand stimmt", async ({ page }) =
   await page.waitForTimeout(3000);
   await expect(page.getByRole("button", { name: "Überspringen" })).toBeHidden();
 });
+
+test("Rückblick fährt alle Wege nach (F1): unter 20 Sekunden, Endstand wie sonst", async ({ page }) => {
+  await serverErsetzen(page);
+  await page.goto("/");
+  await planDa(page);
+  const ueberspringen = page.getByRole("button", { name: "Überspringen" });
+  await expect(ueberspringen).toBeVisible();
+  const start = Date.now();
+  await expect(ueberspringen).toBeHidden({ timeout: 45_000 });
+  // 20 s for the ways (exactly checked in the core tests), plus the short look before and the
+  // closing zoom; the test browser draws without a graphics chip, slower when tests run side by side.
+  expect(Date.now() - start).toBeLessThan(35_000);
+  await expect(page.getByRole("heading", { name: "Weiden" })).toBeVisible();
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+});
