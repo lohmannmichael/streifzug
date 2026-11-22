@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 22.11.2026: Textmarker deckend, ohne Verdunkelung (Abweichung vom Bauplan 4.5)
+- Michi: durchgezogene Linie, keine Punkte, und oft gegangene Straßen werden **nicht** dunkler. Das Gelb ist deckend (Deckkraft 1), Straßen und Wege gleich. Der Bauplan wollte Überlagerung dunkler – gilt nicht mehr
+
 ## 22.11.2026: Autofahrt = einmal schneller als 40 km/h
 - Eine Fahrt sind Abschnitte mit höchstens 5 Minuten Halt dazwischen. War man darin einmal über 40 km/h (98-%-Wert), werden auch ihre langsamen Abschnitte gefahren (rot), wenn das iPhone dort „Auto“ meldet oder ohne Angabe Radtempo hatte. Gehen nach dem Parken (iPhone meldet „walking“) bleibt gelb. Lastenrad (um 25 km/h, nie über 40) bleibt gelb. Tests dazu. `ABGLEICH_VERSION` 7
 
