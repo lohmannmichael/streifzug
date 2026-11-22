@@ -79,7 +79,7 @@ export function eigenesZeichnen(karte: MapLibreMap) {
   // it runs visibly over the yellow. An ink dot marks the tip.
   karte.addSource("rb", { type: "geojson", data: LEER });
   karte.addSource("rb-kopf", { type: "geojson", data: LEER });
-  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": rbFarbe(), "line-width": ["case", ["==", ["get", "gefahren"], true], 2.4, 2], "line-opacity": 0.9 } });
+  karte.addLayer({ id: "rb", type: "line", source: "rb", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": rbFarbe(), "line-width": ["interpolate", ["linear"], ["zoom"], 10, ["case", ["==", ["get", "zeitraum"], true], 2, ["==", ["get", "gefahren"], true], 2.4, 2], 15, ["case", ["==", ["get", "zeitraum"], true], 4, ["==", ["get", "gefahren"], true], 2.4, 2]], "line-opacity": 0.9 } });
   karte.addLayer({ id: "rb-kopf", type: "circle", source: "rb-kopf", paint: { "circle-radius": 5, "circle-color": TINTE, "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
   // A tapped open street: black dashes along its middle (Bauplan 4.5).
   karte.addSource("spur", { type: "geojson", data: LEER });
@@ -92,7 +92,7 @@ export function eigenesZeichnen(karte: MapLibreMap) {
 
 /** Replay line: ink, red pen for car rides. */
 function rbFarbe() {
-  return ["case", ["==", ["get", "gefahren"], true], KULI, TINTE] as never;
+  return ["case", ["==", ["get", "zeitraum"], true], MARKER, ["==", ["get", "gefahren"], true], KULI, TINTE] as never;
 }
 
 /** Highlighter stroke up to share p (0–1) of each line. */

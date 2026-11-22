@@ -1,4 +1,4 @@
-import { eineLinieJeStrasse, type LonLat } from "@streifzug/core";
+import { eineLinieJeStrasse, vormonat } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
@@ -17,7 +17,9 @@ import { StempelSeite } from "./seiten/Stempel";
 import { OrteSeite } from "./seiten/Orte";
 import { PassSeite, type PassTeil } from "./seiten/Pass";
 import { EinstellungenSeite } from "./seiten/Einstellungen";
-import { RueckblickeSeite, type Tag } from "./seiten/Rueckblicke";
+import { neuInZeitraum, RueckblickeSeite, type Tag, type ZeitraumWahl } from "./seiten/Rueckblicke";
+import { ZeitraumDatum, ZeitraumKarte } from "./seiten/ZeitraumKarte";
+import type { ZeitraumWeg } from "./karte/zeitraum";
 import { ZeitreiseLeiste } from "./seiten/Zeitreise";
 import { Karte } from "./karte/Karte";
 import type { RueckblickWeg } from "./karte/rueckblick";
@@ -27,6 +29,8 @@ import { IconPass, IconStandort } from "./ui/Icons";
 // Until the location is used, the map starts at home; the last chosen area is remembered.
 const START_NAME = "Weiden";
 const START_ORT = "koeln";
+const MONAT_GESEHEN = "streifzug.monat-gesehen";
+const monatLang = new Intl.DateTimeFormat("de-DE", { month: "long" });
 // The place of the chosen area, so it can be loaded on opening (Bauplan 3, E4).
 const MERKEN_ORT = "streifzug.gebietOrt";
 const MERKEN = "streifzug.gebiet";
@@ -39,6 +43,9 @@ export function App() {
   const overland = useOverlandStatus();
   const [safariHinweis, setSafariHinweis] = useState(() => new URLSearchParams(location.search).get("konto") === "bestaetigt");
   // One past day from "Rückblicke" (Bauplan 3, D4).
+  // A period played back (Bauplan 3, F2), and the date of the way being drawn.
+  const [zeitraum, setZeitraum] = useState<(ZeitraumWahl & { wege: ZeitraumWeg[]; nr: number; fertig: boolean }) | null>(null);
+  const [zrDatum, setZrDatum] = useState<number | null>(null);
   // Zeitreise (Bauplan 3, F3): end of the chosen day, or null.
   const [zeitreise, setZeitreise] = useState<number | null>(null);
   const [einzeln, setEinzeln] = useState<{ wege: RueckblickWeg[]; seit: number; bis: number; nr: number } | null>(null);
@@ -115,6 +122,30 @@ export function App() {
     if (!daten || !fortschritt) return;
     orteLaden(daten.liste.filter((r) => zaehlendeMeter(fortschritt.proGebiet.get(r.wurzel) ?? { strasse_m: 0, weg_m: 0 }, false) >= 1).map((r) => r.id));
   }, [daten?.liste, fortschritt]);
+  const zeitraumStarten = (z: ZeitraumWahl) => {
+    void wegeSeit(z.von - 86400_000).then((andere) => {
+      const wege: ZeitraumWeg[] = [
+        ...andere.filter((w) => w.startedAt >= z.von && w.startedAt < z.bis).map((w) => ({ coords: w.coords, startedAt: w.startedAt })),
+        ...streifzuege.filter((s) => s.status !== "aktiv" && s.startedAt >= z.von && s.startedAt < z.bis && s.fixes.length > 1).map((s) => ({ coords: kurzMitArt(s.fixes).coords, startedAt: s.startedAt })),
+      ];
+      setPass(null);
+      setZrDatum(null);
+      setZeitraum((alt) => ({ ...z, wege, nr: (alt?.nr ?? 0) + 1, fertig: false }));
+    });
+  };
+  // First days of a new month: "Dein November ist fertig" in the sheet, played only on a tap.
+  const vm = vormonat(Date.now());
+  const vormonatM = useMemo(() => neuInZeitraum(fortschritt, vormonat(Date.now())), [fortschritt]);
+  const monatFertig =
+    new Date().getDate() <= 7 && localStorage.getItem(MONAT_GESEHEN) !== String(vm.von) && vormonatM >= 1
+      ? {
+          titel: monatLang.format(vm.von),
+          abspielen: () => {
+            localStorage.setItem(MONAT_GESEHEN, String(vm.von));
+            zeitraumStarten({ ...vm, titel: t.zeitraum.dein(monatLang.format(vm.von)) });
+          },
+        }
+      : null;
   const online = useOnline();
   // Back online after a failed calculation: try again by itself.
   useEffect(() => {
@@ -258,6 +289,7 @@ export function App() {
     zahlVorher: rueckblick && !aufzeichnung.aktiv ? zahlVorher : null,
     hochzaehlen: hochzaehlen,
     rechenFehler: rechenFehler,
+    monatFertig,
     quelle: () => {
       setImportZeigen("ueber");
       setPass("einstellungen");
@@ -321,6 +353,7 @@ export function App() {
       <RueckblickeSeite
         fortschritt={fortschritt}
         zurueck={zumPass}
+        zeitraum={zeitraumStarten}
         zeitreise={() => {
           // Starts today; the slider goes back from there.
           setPass(null);
@@ -403,7 +436,11 @@ export function App() {
           }}
           erstesMal={erstesMal}
           stifte={stifte}
+          zeitraum={zeitraum}
+          onZeitraumDatum={setZrDatum}
+          onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />
+        {zeitraum && !zeitraum.fertig && zrDatum !== null && <ZeitraumDatum t={zrDatum} />}
         <div className="karten-knoepfe">
           <button type="button" className="rund-knopf" aria-label={t.pass.oeffnen} onClick={() => setPass("start")}>
             <IconPass />
@@ -412,7 +449,9 @@ export function App() {
             <IconStandort />
           </button>
         </div>
-        {zeitreise !== null && daten && fortschritt ? (
+        {zeitraum ? (
+          <ZeitraumKarte titel={zeitraum.titel} von={zeitraum.von} bis={zeitraum.bis} fortschritt={fortschritt} fertig={zeitraum.fertig} schliessen={() => setZeitraum(null)} />
+        ) : zeitreise !== null && daten && fortschritt ? (
           <ZeitreiseLeiste daten={daten} gebiet={gebiet} fortschritt={fortschritt} bis={zeitreise} setBis={setZeitreise} schliessen={() => setZeitreise(null)} />
         ) : (
           <Blatt {...blattProps} />

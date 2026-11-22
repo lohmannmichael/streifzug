@@ -20,7 +20,12 @@ export const MIN_OHNE_NEUES_MS = 1000;
  * even pace, at least 2 s (with new streets) or 1 s; together at most `budget`: if needed, every
  * way runs faster. If even the minimums do not fit, they are shared out.
  */
-export function planeNachfahren(wege: readonly ReplayWeg[], mitNeuem: readonly boolean[], budget = NACHFAHREN_BUDGET_MS): ReplayPlan {
+export function planeNachfahren(
+  wege: readonly ReplayWeg[],
+  mitNeuem: readonly boolean[],
+  budget = NACHFAHREN_BUDGET_MS,
+  min: { mitNeuem: number; ohneNeues: number } = { mitNeuem: MIN_MIT_NEUEM_MS, ohneNeues: MIN_OHNE_NEUES_MS },
+): ReplayPlan {
   const meter = wege.map((w) => {
     const m = [0];
     for (let i = 1; i < w.coords.length; i++) m.push(m[i - 1]! + distanceM(w.coords[i - 1]!, w.coords[i]!));
@@ -42,11 +47,11 @@ export function planeNachfahren(wege: readonly ReplayWeg[], mitNeuem: readonly b
   });
   const auswahl = wege.map((_, i) => i).filter((i) => laeufe[i]!.length > 0);
   const natur = auswahl.map((i) => laeufe[i]!.reduce((s, l) => s + l.natur, 0));
-  const mindest = auswahl.map((i) => (mitNeuem[i] ? MIN_MIT_NEUEM_MS : MIN_OHNE_NEUES_MS));
+  const mindest = auswahl.map((i) => (mitNeuem[i] ? min.mitNeuem : min.ohneNeues));
 
   let dauer: number[];
   const summeMindest = mindest.reduce((a, b) => a + b, 0);
-  if (summeMindest >= budget) dauer = mindest.map((m) => (m * budget) / summeMindest);
+  if (summeMindest > 0 && summeMindest >= budget) dauer = mindest.map((m) => (m * budget) / summeMindest);
   else {
     const mit = (f: number) => natur.map((n, k) => Math.max(mindest[k]!, n / f));
     const summe = (f: number) => mit(f).reduce((a, b) => a + b, 0);

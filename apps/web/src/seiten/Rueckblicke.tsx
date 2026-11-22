@@ -1,4 +1,4 @@
-import type { KorrekturArt } from "@streifzug/core";
+import { jahr, monat, monateZurueck, woche, type KorrekturArt, type Zeitraum } from "@streifzug/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Abschnitt, WegKopf } from "../daten/abgleich.worker";
 import { fragen } from "../daten/arbeiter";
@@ -14,6 +14,25 @@ const uhr = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit
 const ARTEN: KorrekturArt[] = ["zuFuss", "rad", "gefahren"];
 
 const tagSchluessel = (t0: number) => new Date(t0).toDateString();
+const monatName = new Intl.DateTimeFormat("de-DE", { month: "long" });
+const monatJahr = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
+
+/** A period to play back (Bauplan 3, F2), with its title ("Dein November"). */
+export interface ZeitraumWahl extends Zeitraum {
+  titel: string;
+}
+
+/** New yellow meters per piece, as in the day rows: streets weighted, paths in full. */
+export function neuInZeitraum(f: Fortschritt | null, z: Zeitraum): number {
+  let m = 0;
+  f?.stuecke.forEach((p, i) => {
+    const t0 = f.erstesMal[i] ?? 0;
+    if (t0 < z.von || t0 >= z.bis) return;
+    if (p.kind === "street") m += p.lengthM * p.weight;
+    else if (p.kind === "path") m += p.lengthM;
+  });
+  return m;
+}
 
 export interface Tag {
   von: number;
@@ -42,7 +61,13 @@ function tageAus(wege: WegKopf[]): Tag[] {
  * the distance that turned yellow that day. A tap plays that day on the plan; the arrow (or a long
  * tap) opens the day with its ways and legs ("zu Fuß · Rad · gefahren", C2).
  */
-export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurueck: () => void; abspielen: (tag: Tag) => void; zeitreise: () => void }) {
+export function RueckblickeSeite(props: {
+  fortschritt: Fortschritt | null;
+  zurueck: () => void;
+  abspielen: (tag: Tag) => void;
+  zeitreise: () => void;
+  zeitraum: (z: ZeitraumWahl) => void;
+}) {
   const wege = useWegeListe();
   const [offenerTag, setOffenerTag] = useState<Tag | null>(null);
   const tage = useMemo(() => tageAus(wege ?? []), [wege]);
@@ -58,11 +83,53 @@ export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurue
     return m;
   }, [props.fortschritt]);
 
+  // Three tiles (this week, this month, this year) and the past months as rows (Bauplan 3, F2).
+  const kacheln = useMemo(() => {
+    const jetzt = Date.now();
+    const w = woche(jetzt);
+    const m = monat(jetzt);
+    const j = jahr(jetzt);
+    return [
+      { ...w, name: t.zeitraum.woche, titel: t.zeitraum.deineWoche, m: neuInZeitraum(props.fortschritt, w) },
+      { ...m, name: monatName.format(jetzt), titel: t.zeitraum.dein(monatName.format(jetzt)), m: neuInZeitraum(props.fortschritt, m) },
+      { ...j, name: String(new Date(jetzt).getFullYear()), titel: t.zeitraum.dein(String(new Date(jetzt).getFullYear())), m: neuInZeitraum(props.fortschritt, j) },
+    ];
+  }, [props.fortschritt]);
+  const monate = useMemo(() => {
+    const f = props.fortschritt;
+    if (!f || f.erstesMal.length === 0) return [];
+    let erster = Infinity;
+    for (const x of f.erstesMal) if (x < erster) erster = x;
+    return monateZurueck(erster, Date.now()).map((z) => ({ ...z, m: neuInZeitraum(f, z) })).filter((z) => z.m >= 1);
+  }, [props.fortschritt]);
+  // Days newest first; a past month's row stands before its days, older months follow at the end.
+  const zeilen = useMemo(() => {
+    const out: ({ art: "tag"; tag: Tag } | { art: "monat"; z: Zeitraum & { m: number } })[] = [];
+    const offen = [...monate];
+    for (const tag of tage) {
+      while (offen.length && offen[0]!.bis > tag.von) out.push({ art: "monat", z: offen.shift()! });
+      out.push({ art: "tag", tag });
+    }
+    for (const z of offen) out.push({ art: "monat", z });
+    return out;
+  }, [tage, monate]);
+
   if (offenerTag) return <TagSeite tag={offenerTag} zurueck={() => setOffenerTag(null)} />;
   return (
     <PassUnterseite titel={t.rueckblicke.titel} zurueck={props.zurueck}>
       {wege === null && <p className="zeile-text leise">{t.blatt.nochOffenLaedt}</p>}
       {wege?.length === 0 && <p className="zeile-text leise">{t.blatt.keineWege}</p>}
+      {(props.fortschritt?.stuecke.length ?? 0) > 0 && (
+        <div className="zeitraum-kacheln">
+          {kacheln.map((k) => (
+            <button key={k.name} type="button" className="zeitraum-kachel" onClick={() => props.zeitraum({ von: k.von, bis: k.bis, titel: k.titel })} aria-label={t.zeitraum.kachelLabel(k.name, alsStrecke(k.m))}>
+              <span>{k.name}</span>
+              <b>{alsStrecke(k.m)}</b>
+              <span className="leise">{t.zeitraum.neu}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {(props.fortschritt?.stuecke.length ?? 0) > 0 && (
         <ul className="orte-zeilen">
           <li>
@@ -77,15 +144,26 @@ export function RueckblickeSeite(props: { fortschritt: Fortschritt | null; zurue
         </ul>
       )}
       <ul className="orte-zeilen">
-        {tage.map((tag) => (
-          <TagZeile
-            key={tag.von}
-            tag={tag}
-            neuM={neuJeTag.get(tagSchluessel(tag.von)) ?? 0}
-            abspielen={() => props.abspielen(tag)}
-            oeffnen={() => setOffenerTag(tag)}
-          />
-        ))}
+        {zeilen.map((z) =>
+          z.art === "tag" ? (
+            <TagZeile
+              key={z.tag.von}
+              tag={z.tag}
+              neuM={neuJeTag.get(tagSchluessel(z.tag.von)) ?? 0}
+              abspielen={() => props.abspielen(z.tag)}
+              oeffnen={() => setOffenerTag(z.tag)}
+            />
+          ) : (
+            <li key={`m${z.z.von}`} className="monat-zeile">
+              <button type="button" className="ort-zeile" onClick={() => props.zeitraum({ von: z.z.von, bis: z.z.bis, titel: t.zeitraum.dein(monatName.format(z.z.von)) })}>
+                <span className="ort-text">
+                  <b>{t.zeitraum.monatZeile(monatJahr.format(z.z.von), alsStrecke(z.z.m))}</b>
+                </span>
+                <span className="pfeil" aria-hidden="true">›</span>
+              </button>
+            </li>
+          ),
+        )}
       </ul>
     </PassUnterseite>
   );

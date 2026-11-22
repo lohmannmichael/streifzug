@@ -27,6 +27,8 @@ let abzugJetzt: Fortschritt["abzug"] | undefined;
 const gesamtM = (g: GebietDaten) => gesamtMeter(g, abzugJetzt);
 
 export interface BlattProps {
+  /** First days of a month: "Dein November ist fertig" with a tap to play (Bauplan 3, F2). */
+  monatFertig: { titel: string; abspielen: () => void } | null;
   hoehe: Hoehe;
   setHoehe: (h: Hoehe) => void;
   gebiet: GebietDaten | null;
@@ -289,6 +291,13 @@ export function Blatt(props: BlattProps) {
           </div>
         )}
       </div>
+
+      {!a.aktiv && props.monatFertig && (
+        <div className="monat-fertig">
+          <span>{t.zeitraum.fertigZeile(props.monatFertig.titel)}</span>
+          <button type="button" className="text-knopf" onClick={props.monatFertig.abspielen}>{t.zeitraum.abspielen}</button>
+        </div>
+      )}
 
       {a.aktiv && (
         <div ref={aufnahmeRef} className="aufnahme-zeile">

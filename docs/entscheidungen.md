@@ -1,5 +1,14 @@
 # Entscheidungen
 
+## 22.11.2026: F2 „Dein November“ und die Kacheln
+- Rückblicke: oben drei Kacheln (Diese Woche ab Montag, laufender Monat, laufendes Jahr) mit den neuen Kilometern; vergangene Monate mit Neuem als Zeilen zwischen den Tagen („Oktober 2026 · 2,4 km neu“), jeweils vor ihren Tagen, ältere Monate am Ende
+- Tipp spielt den Zeitraum ab: Blatt weg, oben läuft das Datum des Wegs mit; je Gegend (Wege über etwa 40 km auseinander) ein eigener Abschnitt mit allen Wegen der Gegend im Bild (höchstens Zoom 15); darin alle Wege in zeitlicher Reihenfolge mit schmalem Textmarker-Strich; Neues des Zeitraums wird im selben Takt gelb. Etwa 10 s: die Zeit wird nach Länge verteilt, kurze Zeiträume werden auf 10 s gestreckt. Tipp auf den Plan beendet
+- Am Ende: alles Neue des Zeitraums gelb, Bild auf die Gegend mit den meisten Wegen, darunter „neu gesehen“ (km) und „neue Stempel“ (im Zeitraum gestempelt), „Fertig“
+- Abweichung: Die dritte Zahl „komplette Straßen“ fehlt noch, die App zählt komplette Straßen erst mit F4; sie kommt dort dazu
+- Erste 7 Tage eines Monats: Im Blatt steht „Dein Oktober ist fertig · Abspielen“, wenn der Vormonat Neues hat; nach dem Abspielen nicht mehr (`localStorage streifzug.monat-gesehen`). Kein automatischer Start, kein Video
+- Kern: `zeitraum.ts` (Woche, Monat, Jahr, Vormonat, Monate zurück; 5 Tests), `planeNachfahren` mit wählbaren Mindestzeiten
+- Oberflächentest `e2e/zeitraum.spec.ts`: drei Kacheln, Monatszeile, Jahr abspielen, Zahlen, „Fertig“. Die Zeile im Blatt hängt vom Datum ab und ist nicht im Oberflächentest
+
 ## 22.11.2026: F1 Rückblick näher heran, nachfahren
 - Jeder Weg einzeln, in zeitlicher Reihenfolge, alle Wege seit dem letzten Besuch (auch ohne Neues), harter Schnitt dazwischen
 - Bildausschnitt: Passt der Weg bei Zoom 15,5 über dem Blatt aufs Bild, steht die Karte still (eingepasst, höchstens Zoom 17). Sonst fährt sie mit: Zoom 16, Norden oben, Strichspitze bei 40 % vom hinteren Rand; Richtung aus 40 m hinter bis 80 m vor der Spitze, Bewegung geglättet (keine Rucke an Ecken)

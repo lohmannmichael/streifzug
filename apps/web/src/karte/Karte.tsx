@@ -9,6 +9,7 @@ import { eigenesZeichnen, erstesMalSetzen, LEER, linienSammlung, setzeDaten, sti
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
 import { ruhig, zeigeGebiet } from "./kamera";
 import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
+import { zeitraumAbspielen, type ZeitraumWeg } from "./zeitraum";
 import { SchildAnKarte, type EtikettZustand } from "./Schild";
 import { gebietAnPunkt, tippenEinrichten } from "./tippen";
 import { zeichenMoment } from "./zeichenMoment";
@@ -45,6 +46,10 @@ interface KartenProps {
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { wege: RueckblickWeg[]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
+  /** A whole period played back ("Dein November", Bauplan 3, F2); `nr` starts it. */
+  zeitraum: { wege: ZeitraumWeg[]; von: number; bis: number; nr: number } | null;
+  onZeitraumDatum: (t: number) => void;
+  onZeitraumEnde: () => void;
   /** When each seen piece was first walked (year colours, replay). */
   erstesMal: Map<string, number>;
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
@@ -200,6 +205,28 @@ export function Karte(props: KartenProps) {
     const karte = karteRef.current;
     if (karte) prozenteSetzen(karte, props.daten, props.prozente);
   }, [props.prozente, props.daten]);
+
+  // A period played back (Bauplan 3, F2).
+  const zr = useRef({ datum: props.onZeitraumDatum, ende: props.onZeitraumEnde });
+  zr.current = { datum: props.onZeitraumDatum, ende: props.onZeitraumEnde };
+  useEffect(() => {
+    const karte = karteRef.current;
+    const z = props.zeitraum;
+    if (!karte || !z) return;
+    return zeitraumAbspielen(
+      karte,
+      z,
+      {
+        entdeckt: entdecktRef.current,
+        erstesMal: erstesMalRef.current,
+        zeichnen: (stuecke) => setzeDaten(karte, "entdeckt", linienSammlung(stuecke)),
+        aktuell: () => entdecktRef.current,
+        untenFrei: Math.min(260, karte.getContainer().clientHeight * 0.4),
+        datum: (t) => zr.current.datum(t),
+      },
+      () => zr.current.ende(),
+    );
+  }, [props.zeitraum?.nr]);
 
   // Replay on opening: fit all new outings into view, then run along them once.
   const rbEnde = useRef(props.onRueckblickEnde);
