@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 23.11.2026: Öffnen am letzten Standort
+- Michi: Beim Öffnen sprang die App zu einem anderen Ort (dem zuletzt gewählten), statt dort anzufangen, wo er zuletzt war
+- Neu: Die App merkt sich den zuletzt bekannten eigenen Standort (`localStorage streifzug.letzterOrt`): den neuesten Overland-Punkt (beim Abfragen des Overland-Zustands) und den Standort-Knopf. Beim Öffnen startet die Karte dort (Zoom 15, über dem halben Blatt), das Blatt zeigt das Viertel an diesem Punkt; kein Sprung zum zuletzt gewählten Ort
+- Kommt in den ersten 15 s nach dem Öffnen ein neuerer Overland-Punkt woanders an, rückt die Karte einmal dorthin (ohne Animation), solange Michi noch nichts selbst gewählt hat
+- Liegt der letzte Standort in keinem Ort, gilt wie bisher das zuletzt gewählte Viertel (ohne Sprung)
+- Oberflächentest `e2e/start-ort.spec.ts`: zuletzt gewählt Lerchenfeld (Freising), zuletzt in Weiden → App öffnet in Weiden
+
 ## 23.11.2026: GPS-Zappeln im Haus ist ein Halt
 - Michi: Am Anfang und wenn er in ein Haus geht, zeichnet der Rückblick „zack, zack, zack“ viele kleine Linien; im Haus braucht er keine Daten. Statt der alten Zuhause-Zone (löschte Punkte auf dem Server, am 22.11. abgeschafft) eine Regel für jedes Haus, ohne Löschen: Bleiben alle Punkte 2,5 Minuten lang in einer Box von 100 m, ist das ein Halt. Darin zählen nur Punkte, die hin und her springen (gerade Strecke über fünf Punkte < 60 % des Wegs); Ankommen und Losgehen laufen in eine Richtung und bleiben Weg, damit die eigene Straße vor der Haustür gelb werden kann
 - Halte werden im Rückblick (auch Zeitraum und Tag) nicht gezeichnet und machen keine Straße gelb. Rohdaten bleiben unverändert

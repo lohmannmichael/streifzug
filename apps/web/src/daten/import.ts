@@ -4,6 +4,7 @@ import type { ImportVorschau, KurzWeg, QuellenInfo } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, andereGeaendert, fragen } from "./arbeiter";
 import type { Regionen } from "./regionen";
 import type { ImportQuelle } from "./speicher";
+import { letzterOrtMerken } from "./letzterOrt";
 import { supabase } from "./supabase";
 
 export type { ImportVorschau, KurzWeg, QuellenInfo } from "./abgleich.worker";
@@ -123,6 +124,9 @@ export interface OverlandStatus {
 }
 
 /** The newest point on the server (not the device): asked on opening, coming back and every 5 minutes. */
+/** Event: a newer last known place was stored (see letzterOrt.ts). */
+export const LETZTER_ORT = "streifzug:letzter-ort";
+
 export function useOverlandStatus(): OverlandStatus {
   const [status, setStatus] = useState<OverlandStatus>({ verbunden: overlandVerbunden() || null, letzter: overlandLetzterPunkt() });
   useEffect(() => {
@@ -131,8 +135,10 @@ export function useOverlandStatus(): OverlandStatus {
       if (!navigator.onLine) return;
       if (!(await sitzungAbwarten())) return;
       const verbunden = await verbindungPruefen();
-      const { data } = await supabase.from("received_points").select("t").order("t", { ascending: false }).limit(1).maybeSingle();
+      const { data } = await supabase.from("received_points").select("t, lon, lat").order("t", { ascending: false }).limit(1).maybeSingle();
       const t = data?.t ? Date.parse(data.t as string) : null;
+      // The newest point is the last known own place: the app opens there next time.
+      if (t !== null && typeof data?.lon === "number" && typeof data?.lat === "number" && letzterOrtMerken([data.lon, data.lat], t)) window.dispatchEvent(new Event(LETZTER_ORT));
       if (lebt) setStatus({ verbunden, letzter: t });
     };
     void fragenServer();

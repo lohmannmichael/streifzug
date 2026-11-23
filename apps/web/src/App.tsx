@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
 import { ergebnisSchluessel, gebietAn, meterJeGebiet, useFortschritt, type Fortschritt, type Spur, type Zaehlen } from "./daten/fortschritt";
-import { useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import";
+import { LETZTER_ORT, useOverlandAbholen, useOverlandStatus, wegeSeit } from "./daten/import";
+import { letzterOrtLesen, letzterOrtMerken } from "./daten/letzterOrt";
 import { useOnline } from "./daten/netz";
 import { alsGesehenMerken, kurzMitArt, useRueckblick } from "./daten/rueckblick";
 import { useSitzung } from "./daten/supabase";
@@ -55,7 +56,13 @@ export function App() {
   const [einzeln, setEinzeln] = useState<{ wege: RueckblickWeg[]; seit: number; bis: number; nr: number } | null>(null);
   // Shortcut from the sheet: open the settings at Overland.
   const [importZeigen, setImportZeigen] = useState<"overland" | "gpx" | "ueber" | null>(null);
-  const [gewaehlt, setGewaehlt] = useState<string | null>(() => localStorage.getItem(MERKEN));
+  // Opening starts where you last were (Michi, 23.11.2026): the area there is chosen once the
+  // places are loaded; until then the remembered area is not shown (it may be somewhere else).
+  const [startOrt] = useState(letzterOrtLesen);
+  const [gewaehlt, setGewaehlt] = useState<string | null>(() => (startOrt ? null : localStorage.getItem(MERKEN)));
+  // A tap or a list choice by Michi: from then on the opening does not move the map any more.
+  const selbstGewaehlt = useRef(false);
+  const [springeZu, setSpringeZu] = useState<{ p: [number, number]; nr: number } | null>(null);
   const [einstellungen, aendern] = useEinstellungen(sitzung);
   // On opening only Köln and the place of the chosen area are loaded; more places follow when needed.
   const [startOrte] = useState(() => [...new Set([START_ORT, localStorage.getItem(MERKEN_ORT) ?? START_ORT])]);
@@ -65,8 +72,9 @@ export function App() {
   const wartetAufOrt = !!gewaehlt && !!gewaehltOrt && !!daten && !daten.gebiete.has(gewaehlt) && !daten.geladen.has(gewaehltOrt) && daten.liste.some((r) => r.id === gewaehltOrt);
   const gebiet = daten && !wartetAufOrt ? (daten.gebiete.get(gewaehlt ?? "") ?? findeNachName(daten, START_NAME) ?? null) : null;
   // Choosing from a list or the map brings the area into view; locating keeps the map on your position.
-  const springen = useRef(true);
+  const springen = useRef(!startOrt);
   const waehlen = (id: string, sprung = true) => {
+    if (sprung) selbstGewaehlt.current = true;
     springen.current = sprung;
     setReise(null);
     setGewaehlt(id);
@@ -259,6 +267,7 @@ export function App() {
       (p) => {
         const hier: [number, number] = [p.coords.longitude, p.coords.latitude];
         setPosition(hier);
+        letzterOrtMerken(hier, Date.now());
         setZentrieren((n) => n + 1);
         if (datenRef.current)
           void gebietAn(hier, datenRef.current).then((id) => {
@@ -270,11 +279,18 @@ export function App() {
     );
   };
 
-  // When location is already allowed, start where you are (no question pops up).
+  // When location is already allowed, start where you are (no question pops up). Otherwise the
+  // area at the last known place is chosen, without moving the map (it opened there already).
   const gestartet = useRef(false);
+  const geoeffnet = useRef(Date.now());
   useEffect(() => {
     if (!daten || gestartet.current) return;
     gestartet.current = true;
+    if (startOrt)
+      void gebietAn(startOrt.punkt, daten).then((id) => {
+        if (id && !selbstGewaehlt.current) waehlen(id, false);
+        else if (!id && !selbstGewaehlt.current) setGewaehlt(localStorage.getItem(MERKEN));
+      });
     void navigator.permissions
       ?.query({ name: "geolocation" })
       .then((s) => {
@@ -283,6 +299,22 @@ export function App() {
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daten]);
+
+  // A newer Overland point arrives just after opening (you were somewhere else in between): go
+  // there once, as long as Michi has not chosen anything himself.
+  useEffect(() => {
+    const neu = () => {
+      const o = letzterOrtLesen();
+      const d = datenRef.current;
+      if (!o || !d || selbstGewaehlt.current || Date.now() - geoeffnet.current > 15_000) return;
+      if (startOrt && Math.abs(o.punkt[0] - startOrt.punkt[0]) < 0.002 && Math.abs(o.punkt[1] - startOrt.punkt[1]) < 0.0015) return;
+      setSpringeZu((alt) => ({ p: o.punkt, nr: (alt?.nr ?? 0) + 1 }));
+      void gebietAn(o.punkt, d).then((id) => id && !selbstGewaehlt.current && waehlen(id, false));
+    };
+    window.addEventListener(LETZTER_ORT, neu);
+    return () => window.removeEventListener(LETZTER_ORT, neu);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const blattProps: BlattProps = {
     hoehe: hoehe,
@@ -461,6 +493,7 @@ export function App() {
           onWaehlen={(id, sprung) => {
             // A tap on the quarter already shown puts the sheet down (Bauplan 3, B3).
             if (id === gebiet?.id && sprung === undefined) setHoehe(1);
+            if (sprung === undefined) selbstGewaehlt.current = true;
             waehlen(id, sprung);
           }}
           springen={springen.current}
@@ -487,6 +520,7 @@ export function App() {
           ueberblick={zeitreise === null ? fortschritt?.ueberblick : undefined}
           orte={ortePunkte}
           onOrt={ortOeffnen}
+          springeZu={springeZu}
           box={box}
           onZeitraumDatum={setZrDatum}
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}

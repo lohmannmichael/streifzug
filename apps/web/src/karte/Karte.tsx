@@ -43,6 +43,8 @@ interface KartenProps {
   /** Own position from the location button; the counter moves the map there each time. */
   position: [number, number] | null;
   zentrieren: number;
+  /** Move the map to a point without the position dot (a newer last place on opening); `nr` moves. */
+  springeZu: { p: [number, number]; nr: number } | null;
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { wege: RueckblickWeg[]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
@@ -293,6 +295,14 @@ export function Karte(props: KartenProps) {
       () => rbEnde.current(),
     );
   }, [props.rueckblick?.nr]);
+
+  // Opening: a newer last place arrived; move there once (no animation).
+  useEffect(() => {
+    const karte = karteRef.current;
+    const z = props.springeZu;
+    if (!karte || !z) return;
+    karte.jumpTo({ center: z.p, zoom: Math.max(karte.getZoom(), 15), padding: { top: 0, bottom: karte.getContainer().clientHeight * 0.45, left: 0, right: 0 } });
+  }, [props.springeZu?.nr]);
 
   // Location button: move to the own position.
   useEffect(() => {

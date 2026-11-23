@@ -7,13 +7,14 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 ## Was läuft
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
+- Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Plan im Druck-Stil, Textmarker (deckend) für zu Fuß und Rad, rote Kuli-Linie für gefahren, Parkwege schmal gelb (zählen nicht)
 - Blatt mit zwei Höhen, Pass oben rechts (Orte, Stempel, Rückblicke, Einstellungen), Stempel mit Tinten-Filter
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (F1: jeder Weg einzeln nachgefahren, dünne Tintenlinie, Gelb im selben Takt, Auto rot und schnell)
 - Nach einem Flug: weiter Sprung nach mindestens 10 Min. Pause gilt als neuer Anfang, nicht als Ausreißer
 - Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit, Wirtschaftswege und Zufahrten ab 100 m schmal gelb
-- Oberflächentests (E1): 26 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
+- Oberflächentests (E1): 27 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
 - Öffnen zeigt sofort den letzten Stand (E3, Gerätedatenbank `streifzug-stand`); Messung mit einem Jahr Daten: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`
 - Orte bei Bedarf (E4): vorab nur die Orte-Liste; ein Ort wird geladen, wenn der Plan hinschaut, dort Wege liegen oder er geöffnet wird; danach bleibt er auf dem Gerät (Zwischenspeicher „orte“, bis etwa 100 Orte)
@@ -40,6 +41,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 ## Offene Fragen an Michi
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
+- Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
 - Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
