@@ -5,6 +5,9 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 **Geltender Plan: `docs/PLAN-3.md` (Bauplan Fassung 3, Umbauplan).** Fassung 2 (`docs/PLAN.md`) gilt weiter für Zählregeln, Datenbasis und Design-System. Ältere Notizen: `docs/archiv/STAND-bis-2026-11-22.md`.
 
 ## Was läuft
+- 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
+- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
+- Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Plan im Druck-Stil, Textmarker (deckend) für zu Fuß und Rad, rote Kuli-Linie für gefahren, Parkwege schmal gelb (zählen nicht)
 - Blatt mit zwei Höhen, Pass oben rechts (Orte, Stempel, Rückblicke, Einstellungen), Stempel mit Tinten-Filter
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (F1: jeder Weg einzeln nachgefahren, dünne Tintenlinie, Gelb im selben Takt, Auto rot und schnell)
@@ -18,9 +21,6 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Rückblicke mit Kacheln (F2): Diese Woche, Monat, Jahr, vergangene Monate; Abspielen eines Zeitraums mit Datum oben und Zahlen am Ende; „Dein Oktober ist fertig“ im Blatt
 - Straße komplett (F4): Name mit Textmarker unterlegt, Etikett „komplett seit“, Viertel bei 100 % fein schraffiert, Stempel „Straßen komplett“ zählt
 - Deutschland-Blick (F5): unter Zoom 8,5 feine Linien aller Wege und ein Punkt je Ort, Tipp öffnet den Ort
-- 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
-- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
-- Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Orte → Reisen (über 50 km von Zuhause, mindestens eine Nacht), Rückblick je Reise, umbenennbar
 - Zeitreise (F3): Rückblicke → Zeitreise, Schieber vom ersten Tag bis heute, Plan und Prozent laufen mit
 - Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb, kurze Stummel und Schlaufen an Kreuzungen werden nicht gezeichnet)
@@ -41,7 +41,11 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
-- Reisen (F6): Passen die Schwellen (über 50 km von Zuhause, mindestens eine Nacht)? Reisenamen sollen ins Konto?
+- Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
+- Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
+- GPS-Zappeln: Sind die Zacken weg, wird die eigene Straße vor der Haustür noch gelb?
+- Plan Abschnitt 10: Monatsrückblick als Video? Backlog (Umweg-Tipp, Steckbrief, Trampelpfade, Heute vor einem Jahr, Rekorde, Fast fertig) rein oder raus? App weitergeben (Einladungs-Code, Erste Schritte) wann?
+- D8: Tabelle `privacy_zones` und alte Zonen-Funktionen löschen? (bleiben bis zu Michis Ja)
 - Rückblick (F1): nah genug, zu schnell, zu langsam? (an drei echten Tagen prüfen)
 - Wirtschaftswege und Zufahrten ab 100 m werden schmal gelb gezeichnet: passt das so?
 - Notizen aus der Prüfwoche (Etappe D) fehlen noch; in der Sitzung vom 22.11. stand nur der Platzhalter
