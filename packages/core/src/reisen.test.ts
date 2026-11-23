@@ -5,6 +5,7 @@ const t = (m: number, d: number, h: number) => new Date(2026, m - 1, d, h).getTi
 const KOELN: [number, number] = [6.95, 50.94];
 const MUENCHEN: [number, number] = [11.58, 48.14];
 const BONN: [number, number] = [7.1, 50.73];
+const AACHEN: [number, number] = [6.08, 50.78];
 const weg = (id: string, start: number, punkt: [number, number], m = 3000): ReiseWeg => ({ id, start, ende: start + 3600_000, punkt, m });
 
 describe("reisenFinden (Bauplan 3, F6)", () => {
@@ -20,7 +21,12 @@ describe("reisenFinden (Bauplan 3, F6)", () => {
     expect(reisenFinden(wege, KOELN)).toEqual([]);
   });
 
-  it("stays home within 100 km (Bonn is no trip)", () => {
+  it("counts from 50 km on (Aachen over a night is a trip)", () => {
+    const wege = [weg("b", t(10, 2, 9), AACHEN), weg("c", t(10, 3, 9), AACHEN), weg("d", t(10, 4, 9), KOELN)];
+    expect(reisenFinden(wege, KOELN).map((r) => r.wege)).toEqual([["b", "c"]]);
+  });
+
+  it("stays home within 50 km (Bonn is no trip)", () => {
     const wege = [weg("b", t(10, 2, 9), BONN), weg("c", t(10, 4, 9), BONN)];
     expect(reisenFinden(wege, KOELN)).toEqual([]);
   });

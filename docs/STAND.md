@@ -18,7 +18,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Rückblicke mit Kacheln (F2): Diese Woche, Monat, Jahr, vergangene Monate; Abspielen eines Zeitraums mit Datum oben und Zahlen am Ende; „Dein Oktober ist fertig“ im Blatt
 - Straße komplett (F4): Name mit Textmarker unterlegt, Etikett „komplett seit“, Viertel bei 100 % fein schraffiert, Stempel „Straßen komplett“ zählt
 - Deutschland-Blick (F5): unter Zoom 8,5 feine Linien aller Wege und ein Punkt je Ort, Tipp öffnet den Ort
-- Reisen (F6): Orte → Reisen (über 100 km von Zuhause, mindestens eine Nacht), Rückblick je Reise, umbenennbar
+- Reisen (F6): Orte → Reisen (über 50 km von Zuhause, mindestens eine Nacht), Rückblick je Reise, umbenennbar
 - Zeitreise (F3): Rückblicke → Zeitreise, Schieber vom ersten Tag bis heute, Plan und Prozent laufen mit
 - Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb, kurze Stummel und Schlaufen an Kreuzungen werden nicht gezeichnet)
 - Orte ohne Region: behalten, „Wird vorbereitet“, Wünsche in `region_wishes`
@@ -35,7 +35,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 | F Neues | F1–F7 | alle erledigt (22.11.), Michi prüft am iPhone |
 
 ## Offene Fragen an Michi
-- Reisen (F6): Passen die Schwellen (über 100 km von Zuhause, mindestens eine Nacht)? Reisenamen sollen ins Konto?
+- Reisen (F6): Passen die Schwellen (über 50 km von Zuhause, mindestens eine Nacht)? Reisenamen sollen ins Konto?
 - Rückblick (F1): nah genug, zu schnell, zu langsam? (an drei echten Tagen prüfen)
 - Wirtschaftswege und Zufahrten ab 100 m werden schmal gelb gezeichnet: passt das so?
 - Notizen aus der Prüfwoche (Etappe D) fehlen noch; in der Sitzung vom 22.11. stand nur der Platzhalter

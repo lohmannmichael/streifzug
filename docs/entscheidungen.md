@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 23.11.2026: Reisen ab 50 km
+- Michi: „Wenn es 50 Kilometer von zu Hause ist, dann mindestens eine Nacht weg.“ Schwelle von 100 auf 50 km gesenkt, eine Nacht bleibt (`REISE_RADIUS_KM`). Test: Aachen über eine Nacht ist eine Reise, Bonn nicht
+
 ## 22.11.2026: Tempo nach Etappe F (Messung mit einem Jahr Daten)
 - Gleiche Messung wie E3 (`MESSEN=1 npx playwright test e2e/tempo.spec.ts`, 1.088 Wege, 384.818 Punkte, CPU vierfach gebremst), jetzt mit kompletten Straßen, feinen Übersichtslinien, Reisen und `ABGLEICH_VERSION` 10
 - Öffnen: Zahl nach 0,07 s, Plan nach 0,7 s (E3: 0,9 s), Gelb nach 1,5 s (E3: unter 1 s), alles fertig nach 3,1 s. Ziel „Plan mit letztem Stand unter 2 s“ erreicht

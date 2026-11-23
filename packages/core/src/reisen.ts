@@ -1,11 +1,11 @@
 /**
  * Trips (Bauplan 3, F6). A trip begins when ways lie more than `radiusKm` from home and there is at
  * least one night between its first and last way; it ends with the first way back within the
- * radius. The thresholds are an assumption; Michi decides them.
+ * radius. Thresholds set by Michi (23.11.2026): 50 km, at least one night.
  */
 import { distanceM, type LonLat } from "./geo";
 
-export const REISE_RADIUS_KM = 100;
+export const REISE_RADIUS_KM = 50;
 
 export interface ReiseWeg {
   id: string;
