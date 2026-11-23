@@ -12,7 +12,8 @@ test("Pass → Orte → Freising: der Plan zeigt Freising", async ({ page }) => 
   await page.getByRole("button", { name: "Pass öffnen" }).tap();
   await expect(page.getByRole("heading", { name: "Dein Pass" })).toBeVisible();
   await page.locator(".pass-zeile", { hasText: "Orte" }).tap();
-  await expect(page.locator(".ort-zeile")).toHaveCount(2);
+  // Köln, Freising and Frechen (a test way crosses the border at Weiden).
+  await expect(page.locator(".ort-zeile")).toHaveCount(3);
   // Köln has the most yellow metres and is home; Freising comes under "Weitere Orte".
   await expect(page.locator(".ort-zeile").first()).toContainText("Köln");
   await page.locator(".ort-zeile", { hasText: "Freising" }).tap();

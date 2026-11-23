@@ -1,0 +1,7 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.66974,50.87481]},"properties":{"id":"26a75371-4e25-4359-969f-4a51b9f09ca7","name":"Kerpen","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.63913,50.85406]},"properties":{"id":"2de89ae6-f1cc-4797-9100-81a16892231f","name":"Blatzheim","rang":1,"eltern":"26a75371-4e25-4359-969f-4a51b9f09ca7","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.57734,50.86429]},"properties":{"id":"e11bcfd4-3501-43fe-9898-34325f11a749","name":"Buir","rang":1,"eltern":"26a75371-4e25-4359-969f-4a51b9f09ca7","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.60394,50.88615]},"properties":{"id":"367e6087-0c54-4d71-930b-961d7f5b506c","name":"Manheim","rang":1,"eltern":"26a75371-4e25-4359-969f-4a51b9f09ca7","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.79781,50.85683]},"properties":{"id":"58b72e05-5573-4388-91bc-274664da3fee","name":"Weiler Brüggen","rang":1,"eltern":"26a75371-4e25-4359-969f-4a51b9f09ca7","art":"locality"}}
+]}

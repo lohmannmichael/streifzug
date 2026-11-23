@@ -1,0 +1,14 @@
+{
+  "id": "monheim-am-rhein",
+  "name": "Monheim am Rhein",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Monheim am Rhein",
+    "punkt": [
+      6.88124,
+      51.09095
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

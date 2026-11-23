@@ -1,0 +1,9 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.05391,50.80767]},"properties":{"id":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","name":"Niederkassel","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.03309,50.83516]},"properties":{"id":"10f60f1b-3c9e-4efb-957c-ae9fbf3f9065","name":"Lülsdorf","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.06067,50.79714]},"properties":{"id":"905f0617-4db7-4414-91c3-0dd03c2f08fe","name":"Rheidt","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"macrohood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.04498,50.81609]},"properties":{"id":"3b65065b-799e-41a4-921c-995788db6eba","name":"Niederkassel","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.07258,50.7796]},"properties":{"id":"66ccaa43-3e2e-47ec-ae03-9c03b139248c","name":"Mondorf","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.07061,50.82196]},"properties":{"id":"9d36ebd4-9ece-42cd-8395-d2e47089f02d","name":"Uckendorf","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.08857,50.82512]},"properties":{"id":"e00fca90-6405-4a2b-bc82-b23c74d54398","name":"Stockem","rang":1,"eltern":"5ade8d1d-058a-4fa6-bd1e-45ef119f58b7","art":"locality"}}
+]}

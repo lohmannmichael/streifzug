@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.15479,50.97907]},"properties":{"id":"91e323a1-928d-4690-8212-0c9f2abb1872","name":"Bergisch Gladbach","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.146,50.96174]},"properties":{"id":"1aaed9cf-17b6-4d3b-8195-ab86e12efee7","name":"Grün Karree","rang":1,"eltern":"91e323a1-928d-4690-8212-0c9f2abb1872","art":"neighborhood"}}
+]}

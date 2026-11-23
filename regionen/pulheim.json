@@ -1,0 +1,14 @@
+{
+  "id": "pulheim",
+  "name": "Pulheim",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Pulheim",
+    "punkt": [
+      6.80254,
+      50.99799
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

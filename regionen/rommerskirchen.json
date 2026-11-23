@@ -1,0 +1,14 @@
+{
+  "id": "rommerskirchen",
+  "name": "Rommerskirchen",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Rommerskirchen",
+    "punkt": [
+      6.68334,
+      51.0333
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

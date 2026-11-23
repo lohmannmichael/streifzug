@@ -1,0 +1,6 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.79411,51.00012]},"properties":{"id":"358cddb6-0dc1-4bf2-ab65-99d931a4f73d","name":"Pulheim","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.77433,50.9749]},"properties":{"id":"a40bba8b-ebd1-491d-bec1-a0e1886359a3","name":"Sinthern","rang":1,"eltern":"358cddb6-0dc1-4bf2-ab65-99d931a4f73d","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.83272,51.005]},"properties":{"id":"b7276785-43c7-4201-8be6-12e183359c21","name":"Orr","rang":1,"eltern":"358cddb6-0dc1-4bf2-ab65-99d931a4f73d","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.76914,50.98805]},"properties":{"id":"de82050c-e1c3-4bee-b5fa-af479d6de46a","name":"Manstedten","rang":1,"eltern":"358cddb6-0dc1-4bf2-ab65-99d931a4f73d","art":"locality"}}
+]}

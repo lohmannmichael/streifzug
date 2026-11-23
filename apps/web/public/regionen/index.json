@@ -1,5 +1,83 @@
 [
  {
+  "id": "bedburg",
+  "name": "Bedburg",
+  "wurzel": "8ba9858a-f0d6-4b71-b25b-da7d9b0def7b",
+  "bbox": [
+   6.4528,
+   50.9691,
+   6.6603,
+   51.0595
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "bergheim",
+  "name": "Bergheim",
+  "wurzel": "98ae145a-edc9-46f6-8269-af60b01f5648",
+  "bbox": [
+   6.5635,
+   50.916,
+   6.767,
+   51.0219
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "bergisch-gladbach",
+  "name": "Bergisch Gladbach",
+  "wurzel": "91e323a1-928d-4690-8212-0c9f2abb1872",
+  "bbox": [
+   7.0618,
+   50.9199,
+   7.2546,
+   51.0269
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "bruehl",
+  "name": "Brühl",
+  "wurzel": "49ff6aa3-23b4-4791-a6a7-93c28773478e",
+  "bbox": [
+   6.8335,
+   50.7849,
+   6.9437,
+   50.8514
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "dormagen",
+  "name": "Dormagen",
+  "wurzel": "6c588411-592a-490c-8f9a-0f310c6644d6",
+  "bbox": [
+   6.6961,
+   51.0459,
+   6.8834,
+   51.1626
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "elsdorf",
+  "name": "Elsdorf",
+  "wurzel": "5c682782-4f26-474e-9980-6984124813a4",
+  "bbox": [
+   6.4788,
+   50.8906,
+   6.655,
+   50.9764
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
   "id": "emmerthal",
   "name": "Emmerthal",
   "wurzel": "19add1e9-c2e1-41df-826d-15f0fef3c5fb",
@@ -10,6 +88,19 @@
    52.081
   ],
   "stand": "2026-11-19",
+  "land": "DE"
+ },
+ {
+  "id": "erftstadt",
+  "name": "Erftstadt",
+  "wurzel": "f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6",
+  "bbox": [
+   6.6786,
+   50.7171,
+   6.852,
+   50.8627
+  ],
+  "stand": "2026-11-23",
   "land": "DE"
  },
  {
@@ -52,6 +143,32 @@
   "land": "DE"
  },
  {
+  "id": "huerth",
+  "name": "Hürth",
+  "wurzel": "9f73cbc7-0ea0-47c4-a6d4-243a77f1e6e9",
+  "bbox": [
+   6.7765,
+   50.8369,
+   6.9232,
+   50.9116
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "kerpen",
+  "name": "Kerpen",
+  "wurzel": "26a75371-4e25-4359-969f-4a51b9f09ca7",
+  "bbox": [
+   6.5495,
+   50.8219,
+   6.8052,
+   50.9254
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
   "id": "koeln",
   "name": "Köln",
   "wurzel": "17375791-94e6-49fb-8f4a-bfd3196ccc77",
@@ -69,6 +186,45 @@
   }
  },
  {
+  "id": "langenfeld-rheinland",
+  "name": "Langenfeld (Rheinland)",
+  "wurzel": "db8cf743-0190-4a47-bd99-83a893e37aae",
+  "bbox": [
+   6.9039,
+   51.0674,
+   7.001,
+   51.1494
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "leverkusen",
+  "name": "Leverkusen",
+  "wurzel": "8152d2f1-5701-4419-92ab-fa057aa0d487",
+  "bbox": [
+   6.8978,
+   51.0111,
+   7.1161,
+   51.0972
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "monheim-am-rhein",
+  "name": "Monheim am Rhein",
+  "wurzel": "2eb2f1cf-0f46-48f5-a71e-050d80199cc3",
+  "bbox": [
+   6.8529,
+   51.0647,
+   6.9306,
+   51.1314
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
   "id": "new-york",
   "name": "New York City",
   "wurzel": "a4c73b33-ce85-45ac-99e5-44abe35b6732",
@@ -80,5 +236,70 @@
   ],
   "stand": "2026-11-19",
   "land": "US"
+ },
+ {
+  "id": "niederkassel",
+  "name": "Niederkassel",
+  "wurzel": "5ade8d1d-058a-4fa6-bd1e-45ef119f58b7",
+  "bbox": [
+   6.979,
+   50.7673,
+   7.1009,
+   50.8501
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "pulheim",
+  "name": "Pulheim",
+  "wurzel": "358cddb6-0dc1-4bf2-ab65-99d931a4f73d",
+  "bbox": [
+   6.7114,
+   50.9387,
+   6.8448,
+   51.0659
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "rommerskirchen",
+  "name": "Rommerskirchen",
+  "wurzel": "5ed565c1-c642-4927-bc1a-866336ad03df",
+  "bbox": [
+   6.6261,
+   51.015,
+   6.762,
+   51.1114
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "weilerswist",
+  "name": "Weilerswist",
+  "wurzel": "8b1fa7bd-e22b-4b8e-9460-0caf02e3c932",
+  "bbox": [
+   6.7619,
+   50.6878,
+   6.9158,
+   50.7896
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
+  "id": "wesseling",
+  "name": "Wesseling",
+  "wurzel": "6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc",
+  "bbox": [
+   6.9289,
+   50.7927,
+   7.0296,
+   50.8454
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
  }
 ]

@@ -1,0 +1,14 @@
+{
+  "id": "langenfeld-rheinland",
+  "name": "Langenfeld (Rheinland)",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Langenfeld (Rheinland)",
+    "punkt": [
+      6.94594,
+      51.1009
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

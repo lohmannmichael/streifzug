@@ -1,0 +1,14 @@
+{
+  "id": "niederkassel",
+  "name": "Niederkassel",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Niederkassel",
+    "punkt": [
+      7.03519,
+      50.81371
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

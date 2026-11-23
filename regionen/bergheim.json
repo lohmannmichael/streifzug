@@ -1,0 +1,14 @@
+{
+  "id": "bergheim",
+  "name": "Bergheim",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Bergheim",
+    "punkt": [
+      6.641,
+      50.95405
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

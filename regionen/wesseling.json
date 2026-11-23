@@ -1,0 +1,14 @@
+{
+  "id": "wesseling",
+  "name": "Wesseling",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Wesseling",
+    "punkt": [
+      6.98109,
+      50.82472
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

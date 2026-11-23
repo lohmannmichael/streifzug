@@ -1,0 +1,4 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.88676,50.82078]},"properties":{"id":"49ff6aa3-23b4-4791-a6a7-93c28773478e","name":"Brühl","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.8745,50.83295]},"properties":{"id":"62d74557-39b9-4bf0-96ed-cab5c59729aa","name":"Heide","rang":1,"eltern":"49ff6aa3-23b4-4791-a6a7-93c28773478e","art":"macrohood"}}
+]}

@@ -1,0 +1,14 @@
+{
+  "id": "bedburg",
+  "name": "Bedburg",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Bedburg",
+    "punkt": [
+      6.57676,
+      50.99722
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "leverkusen",
+  "name": "Leverkusen",
+  "wurzel": {
+    "ebene": "county",
+    "name": "Leverkusen",
+    "punkt": [
+      7.01296,
+      51.0541
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

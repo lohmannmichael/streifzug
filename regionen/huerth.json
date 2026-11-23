@@ -1,0 +1,14 @@
+{
+  "id": "huerth",
+  "name": "Hürth",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Hürth",
+    "punkt": [
+      6.87657,
+      50.88074
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

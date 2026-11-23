@@ -1,0 +1,11 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.97261,50.81723]},"properties":{"id":"6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc","name":"Wesseling","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.96419,50.81158]},"properties":{"id":"a0db60ec-fcf6-47db-be06-7a2b79493976","name":"Keldenich","rang":1,"eltern":"6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.98778,50.81864]},"properties":{"id":"0c22e4c8-8cb9-4021-aa55-f69070107407","name":"Wesseling-Mitte","rang":1,"eltern":"6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.01792,50.80962]},"properties":{"id":"870f5bf3-aaac-4d75-8827-a35ab4feb2ea","name":"Urfeld","rang":1,"eltern":"6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.94663,50.83007]},"properties":{"id":"796abd46-4e8f-4777-acb6-3dc0474a4e45","name":"Berzdorf","rang":1,"eltern":"6d43b3a3-13ce-42a0-a00d-2cff81dd6ccc","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.98478,50.81847]},"properties":{"id":"ae7c51d3-759b-4791-8e21-fe305b2ae1b2","name":"Gemarkung Wesseling","rang":2,"eltern":"0c22e4c8-8cb9-4021-aa55-f69070107407","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[7.01384,50.80961]},"properties":{"id":"51c275cb-a3d1-409c-a846-45a6fcba576e","name":"Gemarkung Urfeld","rang":2,"eltern":"870f5bf3-aaac-4d75-8827-a35ab4feb2ea","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.95815,50.81229]},"properties":{"id":"debc51f3-cd5c-40cf-b15c-c9e4e62704d2","name":"Gemarkung Keldenich","rang":2,"eltern":"a0db60ec-fcf6-47db-be06-7a2b79493976","art":"neighborhood"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.94534,50.83006]},"properties":{"id":"6f57d5b0-d4df-4bdf-aaa1-878f3eac0223","name":"Gemarkung Berzdorf","rang":2,"eltern":"796abd46-4e8f-4777-acb6-3dc0474a4e45","art":"neighborhood"}}
+]}

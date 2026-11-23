@@ -32,15 +32,20 @@ test("Ort hinzufügen: suchen, vormerken, schon vorhandene Orte öffnen", async 
   await page.locator(".pass-zeile", { hasText: "Orte" }).tap();
 
   const suche = page.getByRole("searchbox", { name: "Stadt oder Gemeinde" });
-  await suche.fill("Hürth");
+  await suche.fill("Hürt");
   // Only towns and villages, no streets.
   await expect(page.locator(".ort-hinzufuegen .ort-zeile")).toHaveCount(2);
-  await page.locator(".ort-hinzufuegen .ort-zeile", { hasText: "Hürth" }).first().tap();
-  await expect(page.getByRole("status")).toContainText("Hürth ist vorgemerkt");
-  expect(server.wuensche).toEqual([{ name: "Hürth", lon: 6.8761, lat: 50.8771 }]);
-  await expect(page.locator(".ort-vorbereitet", { hasText: "Hürth" })).toContainText("vorgemerkt");
+  await page.locator(".ort-hinzufuegen .ort-zeile", { hasText: "Hürtgenwald" }).tap();
+  await expect(page.getByRole("status")).toContainText("Hürtgenwald ist vorgemerkt");
+  expect(server.wuensche).toEqual([{ name: "Hürtgenwald", lon: 6.36, lat: 50.71 }]);
+  await expect(page.locator(".ort-vorbereitet", { hasText: "Hürtgenwald" })).toContainText("vorgemerkt");
 
-  // A place that is there already opens on the plan.
+  // A place that is there already opens on the plan (Hürth since the Umkreis, 23.11.2026).
+  await suche.fill("Hürth");
+  await page.locator(".ort-hinzufuegen .ort-zeile", { hasText: /^Hürth/ }).first().tap();
+  await expect(page.getByRole("heading", { name: "Hürth", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Pass öffnen" }).tap();
+  await page.locator(".pass-zeile", { hasText: "Orte" }).tap();
   await suche.fill("Freising");
   await page.locator(".ort-hinzufuegen .ort-zeile", { hasText: "Freising" }).tap();
   await expect(page.getByRole("heading", { name: "Freising", exact: true })).toBeVisible();

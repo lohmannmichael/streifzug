@@ -1,0 +1,3 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.95697,51.11095]},"properties":{"id":"db8cf743-0190-4a47-bd99-83a893e37aae","name":"Langenfeld","rang":0,"eltern":null,"art":"locality"}}
+]}

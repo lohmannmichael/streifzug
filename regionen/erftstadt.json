@@ -1,0 +1,14 @@
+{
+  "id": "erftstadt",
+  "name": "Erftstadt",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Erftstadt",
+    "punkt": [
+      6.80316,
+      50.80272
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

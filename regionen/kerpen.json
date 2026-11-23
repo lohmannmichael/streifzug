@@ -1,0 +1,14 @@
+{
+  "id": "kerpen",
+  "name": "Kerpen",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Kerpen",
+    "punkt": [
+      6.69473,
+      50.86963
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

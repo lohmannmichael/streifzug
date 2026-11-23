@@ -1,0 +1,14 @@
+{
+  "id": "bergisch-gladbach",
+  "name": "Bergisch Gladbach",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Bergisch Gladbach",
+    "punkt": [
+      7.12774,
+      50.99293
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

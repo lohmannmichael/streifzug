@@ -1,0 +1,14 @@
+{
+  "id": "dormagen",
+  "name": "Dormagen",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Dormagen",
+    "punkt": [
+      6.84162,
+      51.09344
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "bruehl",
+  "name": "Brühl",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Brühl",
+    "punkt": [
+      6.90371,
+      50.82913
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

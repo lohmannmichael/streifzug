@@ -1,0 +1,14 @@
+{
+  "id": "elsdorf",
+  "name": "Elsdorf",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Elsdorf",
+    "punkt": [
+      6.56983,
+      50.93713
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

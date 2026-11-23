@@ -1,0 +1,14 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.76615,50.79145]},"properties":{"id":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","name":"Erftstadt","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.76446,50.79659]},"properties":{"id":"d93dfde3-c936-41ee-b655-1da85ce7e0b9","name":"Lechenich","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.77233,50.75793]},"properties":{"id":"0a56bf3f-1357-4dfd-a596-92d7591dd821","name":"Friesheim","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.81742,50.82633]},"properties":{"id":"1d0c7ed5-907c-4e85-8cbd-fdc8c398505a","name":"Liblar","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.71607,50.76971]},"properties":{"id":"a6aba4b4-237e-4796-9792-cc31c90b57b7","name":"Erp","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.72598,50.84062]},"properties":{"id":"ca3c8a45-5e6e-441e-a6e6-18e0bb598b88","name":"Gymnich","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.82286,50.78355]},"properties":{"id":"2c5019a9-4907-44a4-a86c-8227ee79e221","name":"Bliesheim","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.76396,50.82648]},"properties":{"id":"055a3b9b-0c37-4b3d-94f6-58e63203db60","name":"Dirmerzheim","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.73824,50.73791]},"properties":{"id":"90526586-82f8-4a09-9609-c329a815dcd0","name":"Borr","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.77272,50.73142]},"properties":{"id":"2080912a-be21-45a5-9454-27a68bdce557","name":"Niederberg","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.78876,50.83815]},"properties":{"id":"3a295236-325d-4fa2-b0c1-a8f22e840e74","name":"Kierdorf","rang":1,"eltern":"f5ce7d15-6f01-4cfa-ae6b-5c3e938651e6","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.76575,50.81175]},"properties":{"id":"3f9068a5-cf5b-4ed7-a283-c4706cd50bc6","name":"Konradsheim","rang":2,"eltern":"d93dfde3-c936-41ee-b655-1da85ce7e0b9","art":"locality"}}
+]}

@@ -13,7 +13,11 @@ function orteMitschreiben(page: Page): Set<string> {
   return orte;
 }
 
-test("frischer Start ohne Wege lädt nur Köln", async ({ page }) => {
+// Places far from the start view (Weiden): never loaded on a fresh start. Neighbours in view
+// (Frechen, Pulheim) may come with the view, as intended (E4).
+const WEIT_WEG = ["freising", "hameln", "emmerthal", "new-york", "leverkusen", "bergisch-gladbach", "dormagen", "wesseling"];
+
+test("frischer Start ohne Wege lädt nur Köln und Orte im Blick", async ({ page }) => {
   const orte = orteMitschreiben(page);
   await serverErsetzen(page, { wege: [] });
   await page.goto("/");
@@ -21,10 +25,11 @@ test("frischer Start ohne Wege lädt nur Köln", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Weiden" })).toBeVisible();
   await expect(prozent(page)).toHaveAttribute("aria-label", "0 Prozent");
   await page.waitForTimeout(2000);
-  expect([...orte]).toEqual(["koeln"]);
+  expect(orte.has("koeln")).toBe(true);
+  expect([...orte].filter((o) => WEIT_WEG.includes(o))).toEqual([]);
 });
 
-test("Start mit Wegen lädt nur die Orte mit Wegen (Köln, Freising)", async ({ page }) => {
+test("Start mit Wegen lädt die Orte mit Wegen (Köln, Freising), nichts weit weg", async ({ page }) => {
   const orte = orteMitschreiben(page);
   await serverErsetzen(page);
   await ohneRueckblick(page);
@@ -33,7 +38,8 @@ test("Start mit Wegen lädt nur die Orte mit Wegen (Köln, Freising)", async ({ 
   await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await expect.poll(() => orte.has("freising")).toBe(true);
   await page.waitForTimeout(1500);
-  expect([...orte].sort()).toEqual(["freising", "koeln"]);
+  expect(orte.has("koeln")).toBe(true);
+  expect([...orte].filter((o) => WEIT_WEG.includes(o) && o !== "freising")).toEqual([]);
 });
 
 test("zuletzt gewählter Ort wird beim Öffnen geladen", async ({ page }) => {

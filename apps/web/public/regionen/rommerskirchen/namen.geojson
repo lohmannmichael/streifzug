@@ -1,0 +1,10 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.68794,51.05389]},"properties":{"id":"5ed565c1-c642-4927-bc1a-866336ad03df","name":"Rommerskirchen","rang":0,"eltern":null,"art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.67342,51.07088]},"properties":{"id":"5bf3fa3e-a364-4eca-a4e1-36d9561e1bd2","name":"Oekoven","rang":1,"eltern":"5ed565c1-c642-4927-bc1a-866336ad03df","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.72518,51.06537]},"properties":{"id":"c618604a-1592-46ad-9144-234df034ddde","name":"Frixheim-Anstel","rang":1,"eltern":"5ed565c1-c642-4927-bc1a-866336ad03df","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.72298,51.04405]},"properties":{"id":"b0a0b692-b9c1-413f-ae1d-b452c7352d23","name":"Nettesheim-Butzheim","rang":1,"eltern":"5ed565c1-c642-4927-bc1a-866336ad03df","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.68269,51.09381]},"properties":{"id":"bca80cce-1f8c-4667-8ad7-0fec60e70975","name":"Hoeningen","rang":1,"eltern":"5ed565c1-c642-4927-bc1a-866336ad03df","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.70793,51.03131]},"properties":{"id":"53abbaf2-bec2-4f7c-9e13-f583a64628c8","name":"Gut Mariannenhöhe","rang":1,"eltern":"5ed565c1-c642-4927-bc1a-866336ad03df","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.67227,51.09887]},"properties":{"id":"5c0df37a-6a61-43d2-990d-2c12ff759c6b","name":"Villau","rang":2,"eltern":"bca80cce-1f8c-4667-8ad7-0fec60e70975","art":"locality"}},
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.65194,51.09647]},"properties":{"id":"aa88b69e-30ce-47db-8c66-ae628e91f9ff","name":"Gut Muchhausen","rang":2,"eltern":"bca80cce-1f8c-4667-8ad7-0fec60e70975","art":"locality"}}
+]}

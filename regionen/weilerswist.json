@@ -1,0 +1,14 @@
+{
+  "id": "weilerswist",
+  "name": "Weilerswist",
+  "wurzel": {
+    "ebene": "locality",
+    "name": "Weilerswist",
+    "punkt": [
+      6.84079,
+      50.75807
+    ]
+  },
+  "land": "DE",
+  "tiefe": "auto"
+}

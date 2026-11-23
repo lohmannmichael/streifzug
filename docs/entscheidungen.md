@@ -1,5 +1,20 @@
 # Entscheidungen
 
+## 23.11.2026: GPS-Zappeln im Haus ist ein Halt
+- Michi: Am Anfang und wenn er in ein Haus geht, zeichnet der Rückblick „zack, zack, zack“ viele kleine Linien; im Haus braucht er keine Daten. Statt der alten Zuhause-Zone (löschte Punkte auf dem Server, am 22.11. abgeschafft) eine Regel für jedes Haus, ohne Löschen: Bleiben alle Punkte 2,5 Minuten lang in einer Box von 100 m, ist das ein Halt. Darin zählen nur Punkte, die hin und her springen (gerade Strecke über fünf Punkte < 60 % des Wegs); Ankommen und Losgehen laufen in eine Richtung und bleiben Weg, damit die eigene Straße vor der Haustür gelb werden kann
+- Halte werden im Rückblick (auch Zeitraum und Tag) nicht gezeichnet und machen keine Straße gelb. Rohdaten bleiben unverändert
+- Geprüft mit Michis Overland-Punkten der letzten drei Tage (nur lesend): Punkte in Bewegung 1.983 → 1.101, gezählte Straße 11.777 → 11.552 m (−225 m, sehr wahrscheinlich falsches Gelb durch Zappeln rund ums Haus), Wege unverändert 8.103 m
+- Grenze: Sehr langsames Gehen unter etwa 0,7 m/s über mehr als 2,5 Minuten auf engem Raum (Spielplatz) kann als Halt gelten
+- `ABGLEICH_VERSION` 11: alle Wege werden einmal neu eingerechnet. Kern: Tests in `legs.test.ts` und `nachfahren.test.ts`
+- Aufgeräumt: `apps/web/src/zz-tmp.ts` (Prüfskript aus F4) war versehentlich im Repo, entfernt
+
+## 23.11.2026: Umkreis 20 km um Weiden aufgenommen (Stufe 2)
+- Michi: „Umkreis 20 km um mein Zuhause.“ 18 neue Orte, alle Gemeinden ganz oder teilweise im Umkreis: Frechen, Pulheim, Hürth, Kerpen, Bergheim, Brühl, Erftstadt, Wesseling, Leverkusen, Dormagen, Rommerskirchen, Elsdorf, Bedburg, Monheim am Rhein, Langenfeld (Rheinland), Bergisch Gladbach, Niederkassel, Weilerswist. Zusammen 23 Orte
+- Straßen-km plausibel (2,5–5 km je 1.000 Einwohner:innen), z. B. Frechen 199,6 km, Hürth 219,1 km, Leverkusen 482,5 km, Bergisch Gladbach 410,9 km
+- Viertel: Leverkusen 3 Stadtbezirke und 13 Stadtteile (wie offiziell); Hürth 9, Erftstadt 10, Dormagen 15, Pulheim 3, Kerpen 4, Wesseling 4+4, Niederkassel 6, Weilerswist 4, Rommerskirchen 5. Ohne Viertel (OpenStreetMap kennt keine Grenzen, der Ort zählt als Ganzes): Frechen, Bergheim, Elsdorf, Bedburg, Monheim, Langenfeld; Brühl und Bergisch Gladbach nur ein Teilgebiet
+- Korrigiert: „Langenfeld“ traf zuerst das bayerische Dorf (1.026 Einwohner:innen), ersetzt durch Langenfeld (Rheinland); Leverkusen als Gemeinde nicht gefunden, als kreisfreie Stadt aufgenommen (`--ebene county`)
+- Dank E4 lädt die App nur Orte, die im Blick sind oder wo Wege liegen. Oberflächentests angepasst (Frechen ist Nachbar von Weiden und kommt beim Start mit; ein Testweg quert die Grenze nach Frechen; Hürth ist jetzt vorhanden)
+
 ## 23.11.2026: Ort hinzufügen (vorab vormerken)
 - Michi: Im Menü einen Ort schon vorab anlegen können. Neu am Ende von Pass → Orte: „Ort hinzufügen“ mit Suchfeld; beim Tippen Vorschläge (nur Städte, Gemeinden, Dörfer, mit Bundesland und Land). Tipp auf einen Vorschlag merkt ihn in `region_wishes` vor (gleiche Liste wie die gegangenen Orte ohne Daten); er steht dann unter „Wird vorbereitet · vorgemerkt“. Ist der Ort schon da, öffnet er sich stattdessen
 - Suche: Photon von komoot (`photon.komoot.io`, OpenStreetMap-Daten, kostenlos), direkt vom iPhone. Dafür in `_headers` (Sicherheitsregel) freigegeben. Geschickt wird nur der getippte Ortsname. Aus der Claude-Umgebung ist der Dienst gesperrt; im Oberflächentest wird er ersetzt
