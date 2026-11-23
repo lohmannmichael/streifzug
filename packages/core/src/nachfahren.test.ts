@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LonLat } from "./geo";
-import { gefahrenJePunkt, NACHFAHREN_BUDGET_MS, NACHFAHREN_TEMPO, passtBeiZoom, planeNachfahren } from "./nachfahren";
+import { artJePunkt, gefahrenJePunkt, NACHFAHREN_BUDGET_MS, NACHFAHREN_TEMPO, passtBeiZoom, planeNachfahren } from "./nachfahren";
 import type { ReplayArt, ReplayWeg } from "./replay";
 import type { Fix } from "./track";
 
@@ -86,5 +86,19 @@ describe("gefahrenJePunkt", () => {
     expect(g).toHaveLength(fixes.length);
     expect(g.slice(0, 30).some(Boolean)).toBe(false);
     expect(g.slice(60).every(Boolean)).toBe(true);
+  });
+});
+
+describe("artJePunkt", () => {
+  it("gives null for the points of a halt (nothing to draw there)", () => {
+    const fixes: Fix[] = [];
+    let lon = 6.82;
+    let t = 0;
+    for (let i = 0; i < 18; i++, t += 10_000) fixes.push({ t, lon: (lon += (1.4 * 10) / 70_000), lat: 50.94, acc: 5 });
+    for (let i = 0; i < 20; i++, t += 10_000) fixes.push({ t, lon, lat: 50.94, acc: 5 });
+    for (let i = 0; i < 18; i++, t += 10_000) fixes.push({ t, lon: (lon += (1.4 * 10) / 70_000), lat: 50.94, acc: 5 });
+    const a = artJePunkt(fixes);
+    expect(a.slice(22, 34).every((x) => x === null)).toBe(true);
+    expect(a.slice(2, 15).every((x) => x === "aktiv")).toBe(true);
   });
 });

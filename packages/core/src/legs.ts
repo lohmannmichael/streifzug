@@ -38,6 +38,11 @@ const SMOOTH_MS = 5_000;
 const HALT_SPEED_MS = 0.4;
 const HALT_MS = 30_000;
 const GAP_MS = 60_000;
+/** GPS jitter indoors (Michi, 23.11.2026): two and a half minutes inside a box of 100 m is standing, not walking. */
+const ZAPPEL_BOX_M = 100;
+const ZAPPEL_MS = 150_000;
+/** Straight-line distance over path length below this (five points around): jumping back and forth. */
+const ZAPPEL_GERADE = 0.6;
 const MOTION_SWITCH_MS = 20_000;
 /** Above this now and then (98 %), "car" from the phone is believed. */
 const TOP_MS = 40 / 3.6;
@@ -139,6 +144,46 @@ export function splitLegs(input: readonly Fix[], korrekturen: readonly Korrektur
     while (j + 1 < f.length && tempi[j + 1]! < HALT_SPEED_MS) j++;
     if (f[j]!.t - f[i]!.t >= HALT_MS) for (let k = i; k <= j; k++) halt[k] = true;
     i = j + 1;
+  }
+
+  // GPS jitter in a house: the position jumps back and forth (often faster than walking), but over
+  // two and a half minutes everything stays within about 100 m. That is a halt too.
+  for (let i = 0; i < f.length; ) {
+    let [w, s, o, n] = [f[i]!.lon, f[i]!.lat, f[i]!.lon, f[i]!.lat];
+    let j = i;
+    while (j + 1 < f.length) {
+      const p = f[j + 1]!;
+      const [w2, s2, o2, n2] = [Math.min(w, p.lon), Math.min(s, p.lat), Math.max(o, p.lon), Math.max(n, p.lat)];
+      if (distanceM([w2, s2], [o2, n2]) > ZAPPEL_BOX_M) break;
+      [w, s, o, n] = [w2, s2, o2, n2];
+      j++;
+    }
+    if (f[j]!.t - f[i]!.t >= ZAPPEL_MS) {
+      // Only points that jump back and forth; arriving and leaving go one way and stay a way.
+      const zappelt = (k: number) => {
+        const a = Math.max(i, k - 2);
+        const b = Math.min(j, k + 2);
+        let weg = 0;
+        for (let q = a; q < b; q++) weg += d(f[q]!, f[q + 1]!);
+        return weg > 0 && d(f[a]!, f[b]!) / weg < ZAPPEL_GERADE;
+      };
+      const markiert: boolean[] = [];
+      for (let k = i; k <= j; k++) markiert.push(halt[k]! || zappelt(k));
+      // A few straight points in the middle of jumping are jumping too.
+      for (let k = 0; k < markiert.length; ) {
+        if (markiert[k]) {
+          k++;
+          continue;
+        }
+        let e = k;
+        while (e + 1 < markiert.length && !markiert[e + 1]) e++;
+        const innen = k > 0 && e < markiert.length - 1;
+        if (innen && e - k < 3) for (let q = k; q <= e; q++) markiert[q] = true;
+        k = e + 1;
+      }
+      for (let k = i; k <= j; k++) halt[k] = markiert[k - i]!;
+      i = j + 1;
+    } else i++;
   }
 
   // Raw pieces of movement, cut at halts, gaps and lasting changes of the phone's motion activity.

@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { gefahrenJePunkt, type KompletteStrasse, type LonLat, type ReiseWeg, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { artJePunkt, type KompletteStrasse, type LonLat, type ReiseWeg, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
 import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
 import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import { kompletteBerechnen } from "./komplett";
@@ -155,11 +155,15 @@ export function kuerzen(fixes: Fix[]): [number, number][] {
   return kurzIndizes(fixes.length).map((i) => [fixes[i]!.lon, fixes[i]!.lat]);
 }
 
-/** Shortened way with the car legs marked (with Michi's corrections). */
+/** Shortened way with the car legs marked (with Michi's corrections); halts and jitter left out. */
 function kurzMitArt(fixes: Fix[], korrekturen: readonly Korrektur[] = []): { coords: [number, number][]; gefahren: boolean[] } {
-  const g = gefahrenJePunkt(fixes, korrekturen);
-  const idx = kurzIndizes(fixes.length);
-  return { coords: idx.map((i) => [fixes[i]!.lon, fixes[i]!.lat]), gefahren: idx.map((i) => g[i]!) };
+  const art = artJePunkt(fixes, korrekturen);
+  const bewegt = fixes.filter((_, i) => art[i] !== null);
+  const arten = art.filter((a) => a !== null);
+  // A way that is only standing around is drawn as it was (rare, e.g. a short test).
+  if (bewegt.length < 2) return { coords: kuerzen(fixes), gefahren: kurzIndizes(fixes.length).map(() => false) };
+  const idx = kurzIndizes(bewegt.length);
+  return { coords: idx.map((i) => [bewegt[i]!.lon, bewegt[i]!.lat]), gefahren: idx.map((i) => arten[i] === "gefahren") };
 }
 
 const senden = (a: Antwort) => (self as unknown as DedicatedWorkerGlobalScope).postMessage(a);

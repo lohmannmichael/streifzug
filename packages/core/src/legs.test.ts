@@ -163,3 +163,47 @@ describe("corrections (Bauplan 3, C2)", () => {
   });
 });
 
+
+describe("GPS-Zappeln im Haus ist ein Halt (Michi, 23.11.2026)", () => {
+  // Points every 10 s; inside a house the position jumps 20–40 m back and forth.
+  const LAT = 50.94;
+  const mX = 1 / 70_000;
+  function weg(): Fix[] {
+    const f: Fix[] = [];
+    let t = 0;
+    let x = 6.83;
+    // 3 minutes walking east (1.4 m/s) ...
+    for (let i = 0; i < 18; i++, t += 10_000) f.push({ t, lon: (x += 14 * mX), lat: LAT, acc: 8 });
+    // ... 6 minutes in a house: jumps of up to 40 m, often faster than walking between two points ...
+    const haus = x;
+    const spruenge = [25, -15, 35, -30, 10, 40, -20, 0, 30, -35, 15, -10];
+    for (let i = 0; i < 36; i++, t += 10_000) f.push({ t, lon: haus + spruenge[i % spruenge.length]! * mX, lat: LAT + (i % 3 === 0 ? 0.0002 : -0.0001), acc: 30 });
+    // ... then 3 minutes walking on.
+    x = haus;
+    for (let i = 0; i < 18; i++, t += 10_000) f.push({ t, lon: (x += 14 * mX), lat: LAT, acc: 8 });
+    return f;
+  }
+
+  it("leaves the jumping in the house out of every leg", () => {
+    const legs = splitLegs(weg());
+    const inLegs = legs.flatMap((l) => l.fixes.map((x) => x.t));
+    const hausZeiten = weg().slice(19, 53).map((x) => x.t);
+    expect(hausZeiten.filter((t) => inLegs.includes(t))).toEqual([]);
+    expect(legs.length).toBe(2);
+  });
+
+  it("keeps the last meters before the house and the first after it as way (the own street)", () => {
+    const f = weg();
+    const inLegs = new Set(splitLegs(f).flatMap((l) => l.fixes.map((x) => x.t)));
+    // Arriving: the walking points before the door (the door itself is the halt); leaving: the 6 after it.
+    expect(f.slice(12, 17).every((x) => inLegs.has(x.t))).toBe(true);
+    expect(f.slice(55, 61).every((x) => inLegs.has(x.t))).toBe(true);
+  });
+
+  it("keeps a slow stroll (0.8 m/s, a pram) as a leg", () => {
+    const f: Fix[] = [];
+    for (let i = 0; i < 36; i++) f.push({ t: i * 10_000, lon: 6.83 + i * 8 * mX, lat: LAT, acc: 8 });
+    const legs = splitLegs(f);
+    expect(legs.reduce((n, l) => n + l.fixes.length, 0)).toBeGreaterThan(30);
+  });
+});

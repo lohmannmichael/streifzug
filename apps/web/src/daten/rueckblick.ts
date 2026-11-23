@@ -1,4 +1,4 @@
-import { gefahrenJePunkt, type Fix } from "@streifzug/core";
+import { artJePunkt, type Fix } from "@streifzug/core";
 import { useCallback, useState } from "react";
 import { wegeSeit, type KurzWeg } from "./import";
 import { alleLaden } from "./speicher";
@@ -33,9 +33,13 @@ function kurzIndizes(n: number): number[] {
 
 /** Shortened own way for the replay, with its car legs marked (Bauplan 3, F1). */
 export function kurzMitArt(fixes: Fix[]): { coords: [number, number][]; gefahren: boolean[] } {
-  const g = gefahrenJePunkt(fixes);
-  const idx = kurzIndizes(fixes.length);
-  return { coords: idx.map((i) => [fixes[i]!.lon, fixes[i]!.lat]), gefahren: idx.map((i) => g[i]!) };
+  // Halts and GPS jitter in a house are not drawn (Michi, 23.11.2026).
+  const art = artJePunkt(fixes);
+  const bewegt = fixes.filter((_, i) => art[i] !== null);
+  const arten = art.filter((a) => a !== null);
+  if (bewegt.length < 2) return { coords: kuerzen(fixes), gefahren: kurzIndizes(fixes.length).map(() => false) };
+  const idx = kurzIndizes(bewegt.length);
+  return { coords: idx.map((i) => [bewegt[i]!.lon, bewegt[i]!.lat]), gefahren: idx.map((i) => arten[i] === "gefahren") };
 }
 
 /** Everything up to now counts as seen (e.g. after an outing that was watched live). */

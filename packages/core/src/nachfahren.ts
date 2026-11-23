@@ -92,9 +92,14 @@ export function passtBeiZoom(box: readonly [number, number, number, number], bre
   return (x(box[2]) - x(box[0])) * welt <= breite && (y(box[1]) - y(box[3])) * welt <= hoehe;
 }
 
+/** For each fix its leg's kind, or null for halts (also GPS jitter in a house) and dropped points. */
+export function artJePunkt(fixes: readonly Fix[], korrekturen: readonly Korrektur[] = []): ("aktiv" | "gefahren" | null)[] {
+  const art = new Map<number, "aktiv" | "gefahren">();
+  for (const l of splitLegs(fixes, korrekturen)) for (const f of l.fixes) art.set(f.t, l.art);
+  return fixes.map((f) => art.get(f.t) ?? null);
+}
+
 /** For each fix whether it belongs to a car, bus or train leg (with Michi's corrections). */
 export function gefahrenJePunkt(fixes: readonly Fix[], korrekturen: readonly Korrektur[] = []): boolean[] {
-  const gefahren = new Set<number>();
-  for (const l of splitLegs(fixes, korrekturen)) if (l.art === "gefahren") for (const f of l.fixes) gefahren.add(f.t);
-  return fixes.map((f) => gefahren.has(f.t));
+  return artJePunkt(fixes, korrekturen).map((a) => a === "gefahren");
 }

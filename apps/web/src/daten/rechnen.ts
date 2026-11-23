@@ -11,7 +11,8 @@ import { stueckeDerKachel } from "./strassen";
 /** Bump when the matching rules change: stored results of older versions are worked out again. */
 // 2 (21.11.2026): legs "aktiv"/"gefahren" (Bauplan 6.2), results stored separately.
 // 10 (22.11.2026): tracks and long service roads drawn as paths.
-const ABGLEICH_VERSION = 10;
+// 11 (23.11.2026): GPS jitter in a house is a halt, not a way.
+const ABGLEICH_VERSION = 11;
 
 interface Flaeche {
   id: string;
