@@ -1,0 +1,3 @@
+{"type":"FeatureCollection", "features": [
+{"type":"Feature","geometry":{"type":"Point","coordinates":[6.78379,50.91315]},"properties":{"id":"41d52ffe-e60f-4549-b205-8dac2b105f37","name":"Frechen","rang":0,"eltern":null,"art":"locality"}}
+]}

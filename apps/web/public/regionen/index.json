@@ -13,6 +13,19 @@
   "land": "DE"
  },
  {
+  "id": "frechen",
+  "name": "Frechen",
+  "wurzel": "41d52ffe-e60f-4549-b205-8dac2b105f37",
+  "bbox": [
+   6.72,
+   50.8761,
+   6.8552,
+   50.9496
+  ],
+  "stand": "2026-11-23",
+  "land": "DE"
+ },
+ {
   "id": "freising",
   "name": "Freising",
   "wurzel": "f3936e7e-93ce-432b-940b-89b658abe42b",
