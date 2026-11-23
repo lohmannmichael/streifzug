@@ -5,6 +5,8 @@ import type { FremderOrt } from "../daten/orte";
 import { alsKm, gesamtMeter, viertelWort, prozent, prozentText, zaehlendeMeter, type GebietDaten, type Region, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { useReisen, type ReiseZeile } from "../daten/reisen";
+import { useWuensche } from "../daten/wuensche";
+import { OrtHinzufuegen } from "./OrtHinzufuegen";
 import { orteMitWegen, PassUnterseite, tagText } from "./Pass";
 
 const datumKurz = new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", year: "numeric" });
@@ -33,12 +35,15 @@ export function OrteSeite(props: {
 }) {
   const { daten, fortschritt: f } = props;
   const reisen = useReisen(daten, f, props.fremdeOrte);
+  // Places put on the list by hand and not yet prepared (walked ones are already in `fremde`).
+  const { wuensche, neuLaden } = useWuensche();
+  const vorgemerkt = wuensche.filter((w) => !props.fremdeOrte.some((o) => o.name === w.name) && !daten.liste.some((r) => r.name === w.name));
   const { regionen, fremde } = useMemo(() => orteMitWegen(daten, f, props.fremdeOrte), [daten, f, props.fremdeOrte]);
   const [zuhause, ...weitere] = regionen;
   const zeile = (r: Region) => <OrtZeile key={r.id} region={r} daten={daten} fortschritt={f} oeffnen={() => props.oeffnen(r.wurzel)} />;
   return (
     <PassUnterseite titel={t.orte.titel} zurueck={props.zurueck}>
-      {!zuhause && fremde.length === 0 && <p className="zeile-text leise">{t.orte.nochNichts}</p>}
+      {!zuhause && fremde.length === 0 && vorgemerkt.length === 0 && <p className="zeile-text leise">{t.orte.nochNichts}</p>}
       {zuhause && (
         <>
           <h2>{t.orte.zuhause}</h2>
@@ -69,7 +74,7 @@ export function OrteSeite(props: {
           </ul>
         </>
       )}
-      {fremde.length > 0 && (
+      {fremde.length + vorgemerkt.length > 0 && (
         <>
           <h2>{t.orte.vorbereitet}</h2>
           <ul className="orte-zeilen">
@@ -79,10 +84,17 @@ export function OrteSeite(props: {
                 <span>{t.orte.vorbereitetText(alsKm(o.m))}</span>
               </li>
             ))}
+            {vorgemerkt.map((w) => (
+              <li key={`w:${w.name}`} className="ort-vorbereitet">
+                <b>{w.name}</b>
+                <span>{t.orte.gewuenschtText}</span>
+              </li>
+            ))}
           </ul>
           <p className="zeile-text leise klein">{t.orte.vorbereitetHinweis}</p>
         </>
       )}
+      <OrtHinzufuegen daten={daten} oeffnen={props.oeffnen} gewuenscht={neuLaden} />
     </PassUnterseite>
   );
 }

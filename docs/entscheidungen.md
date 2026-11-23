@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 23.11.2026: Ort hinzufügen (vorab vormerken)
+- Michi: Im Menü einen Ort schon vorab anlegen können. Neu am Ende von Pass → Orte: „Ort hinzufügen“ mit Suchfeld; beim Tippen Vorschläge (nur Städte, Gemeinden, Dörfer, mit Bundesland und Land). Tipp auf einen Vorschlag merkt ihn in `region_wishes` vor (gleiche Liste wie die gegangenen Orte ohne Daten); er steht dann unter „Wird vorbereitet · vorgemerkt“. Ist der Ort schon da, öffnet er sich stattdessen
+- Suche: Photon von komoot (`photon.komoot.io`, OpenStreetMap-Daten, kostenlos), direkt vom iPhone. Dafür in `_headers` (Sicherheitsregel) freigegeben. Geschickt wird nur der getippte Ortsname. Aus der Claude-Umgebung ist der Dienst gesperrt; im Oberflächentest wird er ersetzt
+- Aufgenommen wird ein vorgemerkter Ort weiter in einer Claude-Sitzung (`npm run region`, zu Beginn jeder Sitzung die Wunschliste prüfen). Ohne Claude ginge es nur mit einem automatischen Lauf auf GitHub (Vorschlag an Michi, noch nicht gebaut)
+- Oberflächentest `e2e/ort-hinzufuegen.spec.ts`: suchen (Straßen werden ausgefiltert), vormerken, vorhandener Ort öffnet sich
+
 ## 23.11.2026: Reisen ab 50 km
 - Michi: „Wenn es 50 Kilometer von zu Hause ist, dann mindestens eine Nacht weg.“ Schwelle von 100 auf 50 km gesenkt, eine Nacht bleibt (`REISE_RADIUS_KM`). Test: Aachen über eine Nacht ist eine Reise, Bonn nicht
 

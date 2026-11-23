@@ -625,3 +625,7 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .zeitraum-zahlen dd { margin: 0; font-family: var(--schrift-zahl); font-size: var(--t-titel); font-weight: 800; font-variant-numeric: tabular-nums; }
 .monat-fertig { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -8px 0 8px; border-top: 1px solid var(--linie); }
 .schild .komplett { font-weight: 600; }
+
+/* "Ort hinzufügen" on the Orte page. */
+.ort-hinzufuegen { margin-top: 28px; }
+.ort-hinzufuegen .adresse { margin-bottom: 8px; }

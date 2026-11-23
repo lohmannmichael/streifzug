@@ -260,6 +260,12 @@ export const de = {
   },
   orte: {
     reisen: "Reisen",
+    hinzufuegen: "Ort hinzufügen",
+    suchePlatzhalter: "Stadt oder Gemeinde",
+    vorgemerkt: (name: string) => `${name} ist vorgemerkt und wird vorbereitet.`,
+    sucheFehler: "Die Suche ist gerade nicht erreichbar. Versuch es später noch mal.",
+    nichtsGefunden: "Kein Ort mit diesem Namen gefunden.",
+    gewuenschtText: "vorgemerkt",
     reiseZeile: (zeit: string, orte: number, km: string) => `${zeit} · ${orte} ${orte === 1 ? "Ort" : "Orte"} · ${km}`,
     reiseRueckblick: "Rückblick dieser Reise",
     umbenennen: "Umbenennen",

@@ -42,6 +42,8 @@ export interface ServerOptionen {
 
 export interface Server {
   optionen: ServerOptionen;
+  /** Wishes written to region_wishes ("Ort hinzufügen"). */
+  wuensche?: { name: string; lon: number; lat: number }[];
   /** Ids of fake accounts handed out (there are no real ones; kept for symmetry with the rule in CLAUDE.md). */
   benutzer: string;
 }
@@ -132,6 +134,13 @@ async function supabase(route: Route, s: Server, jetzt: number) {
       if (url.searchParams.get("order") === "t.desc") liste = liste.reverse();
       const grenze = Number(url.searchParams.get("limit") ?? 1000);
       return zeilen(liste.slice(0, grenze));
+    }
+    if (tabelle === "region_wishes") {
+      s.wuensche ??= [];
+      if (req.method() === "GET") return zeilen(s.wuensche.map((w) => ({ name: w.name, meters: 0 })));
+      const neu = JSON.parse(req.postData() ?? "[]") as { name: string; lon: number; lat: number } | { name: string; lon: number; lat: number }[];
+      for (const w of Array.isArray(neu) ? neu : [neu]) if (!s.wuensche.some((x) => x.name === w.name)) s.wuensche.push({ name: w.name, lon: w.lon, lat: w.lat });
+      return json([], 201);
     }
     if (req.method() === "GET") return zeilen([]);
     return json([], 201);
