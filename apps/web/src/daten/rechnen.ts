@@ -126,7 +126,13 @@ export async function stueckeFuerIds(ids: Iterable<string>): Promise<Piece[]> {
  * Seen meters per area id (all levels): every piece counts for each area its middle lies in.
  * With `zeit`, each area also gets the time of its first piece (`seit`).
  */
-export async function meterJeGebiet(stuecke: Iterable<Piece>, liste: Region[], zeit?: (p: Piece) => number | undefined): Promise<Map<string, Summe>> {
+export async function meterJeGebiet(
+  stuecke: Iterable<Piece>,
+  liste: Region[],
+  zeit?: (p: Piece) => number | undefined,
+  /** Called for every area a piece lies in (e.g. the Zeitreise's meters per area and day). */
+  jeGebiet?: (gebietId: string, p: Piece) => void,
+): Promise<Map<string, Summe>> {
   const proGebiet = new Map<string, Summe>();
   const alle = [...stuecke];
   // Only the places where pieces lie are loaded (Bauplan 3, E4).
@@ -144,6 +150,7 @@ export async function meterJeGebiet(stuecke: Iterable<Piece>, liste: Region[], z
         const t = zeit?.(piece);
         if (t !== undefined && (s.seit === undefined || t < s.seit)) s.seit = t;
         proGebiet.set(g.id, s);
+        jeGebiet?.(g.id, piece);
       }
     }
   }

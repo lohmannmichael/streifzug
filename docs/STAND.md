@@ -23,7 +23,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Straße komplett (F4): Name mit Textmarker unterlegt, Etikett „komplett seit“, Viertel bei 100 % fein schraffiert, Stempel „Straßen komplett“ zählt
 - Deutschland-Blick (F5): unter Zoom 8,5 feine Linien aller Wege und ein Punkt je Ort, Tipp öffnet den Ort
 - Reisen (F6): Orte → Reisen (über 50 km von Zuhause, mindestens eine Nacht), Rückblick je Reise, umbenennbar
-- Zeitreise (F3): Rückblicke → Zeitreise, Schieber vom ersten Tag bis heute, Plan und Prozent laufen mit
+- Zeitreise (F3): Rückblicke → Zeitreise, Schieber vom ersten Tag bis heute, Plan, Prozent und (herausgezoomt) Schraffur und Zahlen aller Viertel laufen mit
 - Plan: eine Linie je Straße (Gehwege neben Straßen, zweite Fahrbahn, Rot neben Gelb, kurze Stummel und Schlaufen an Kreuzungen werden nicht gezeichnet)
 - Orte ohne Region: behalten, „Wird vorbereitet“, Wünsche in `region_wishes`
 - Konto: anonym; neues Konto nur, wenn das alte wirklich gelöscht ist; Overland-Verbindung und eigene Wege werden vom Server zurückgeholt

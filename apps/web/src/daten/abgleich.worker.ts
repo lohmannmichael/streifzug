@@ -61,6 +61,7 @@ export type Anfrage =
   | { typ: "export"; nr: number; extra: { name: string; text: string }[] }
   | { typ: "wegeListe"; nr: number; seit: number }
   | { typ: "reiseWege"; nr: number }
+  | { typ: "zeitleisten"; nr: number; liste: Region[] }
   | { typ: "abschnitte"; nr: number; id: string; korrekturen: Korrektur[] };
 
 export type Antwort =
@@ -69,6 +70,7 @@ export type Antwort =
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
   | { typ: "reiseWege"; nr: number; wege: ReiseWeg[] }
+  | { typ: "zeitleisten"; nr: number; jeGebiet: [string, number[], number[]][] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
@@ -498,6 +500,17 @@ async function antworten(a: Anfrage): Promise<void> {
         if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
       }
       return senden({ typ: "wege", nr: a.nr, wege });
+    }
+    case "zeitleisten": {
+      // Zeitreise (Bauplan 3, F3): for every area, when how many street meters were first walked.
+      const jeGebiet = new Map<string, { t: number[]; m: number[] }>();
+      const stuecke = [...zuletztGesehen].map((id) => stueckNachId.get(id)).filter((p): p is Piece => !!p && p.kind === "street");
+      await meterJeGebiet(stuecke, a.liste, undefined, (g, p) => {
+        const e = jeGebiet.get(g) ?? jeGebiet.set(g, { t: [], m: [] }).get(g)!;
+        e.t.push(ersteAktiv.get(p.id) ?? 0);
+        e.m.push(p.lengthM * p.weight);
+      });
+      return senden({ typ: "zeitleisten", nr: a.nr, jeGebiet: [...jeGebiet].map(([g, e]) => [g, e.t, e.m]) });
     }
     case "reiseWege": {
       // Every way with its time, middle point and length, for the trips (Bauplan 3, F6).

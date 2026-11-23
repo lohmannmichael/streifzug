@@ -1,4 +1,5 @@
-import { eineLinieJeStrasse, vormonat } from "@streifzug/core";
+import { eineLinieJeStrasse, meterBis, vormonat, zeitleiste, type Zeitleiste } from "@streifzug/core";
+import { fragen } from "./daten/arbeiter";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
 import { useAufzeichnung, useStreifzuege } from "./daten/aufzeichnung";
@@ -207,6 +208,29 @@ export function App() {
     const nachId = new Map((fortschritt?.stuecke ?? []).map((p) => [p.id, p]));
     return k.map((s) => ({ name: s.name, coords: s.ids.flatMap((id) => { const p = nachId.get(id); return p ? [p.coords] : []; }) }));
   }, [fortschritt]);
+  // Zeitreise: the shares of all areas on the chosen day, for hatching and numbers far out.
+  const [zeitleisten, setZeitleisten] = useState<Map<string, Zeitleiste> | null>(null);
+  useEffect(() => {
+    if (zeitreise === null || !daten) return setZeitleisten(null);
+    if (zeitleisten) return;
+    let lebt = true;
+    void fragen<"zeitleisten">({ typ: "zeitleisten", liste: daten.liste }).antwort.then((a) => {
+      if (lebt) setZeitleisten(new Map(a.jeGebiet.map(([g, t, m]) => [g, zeitleiste(t.map((x, i) => ({ t: x, m: m[i]! })))])));
+    });
+    return () => {
+      lebt = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zeitreise === null, fortschritt]);
+  const prozenteZeitreise = useMemo(() => {
+    if (zeitreise === null || !zeitleisten || !daten || !fortschritt) return null;
+    const m = new Map<string, number>();
+    for (const [id, z] of zeitleisten) {
+      const g = daten.gebiete.get(id);
+      if (g) m.set(id, prozent(meterBis(z, zeitreise - 1), gesamtMeter(g, fortschritt.abzug)));
+    }
+    return m;
+  }, [zeitreise, zeitleisten, daten, fortschritt]);
   // During the Zeitreise only what was yellow by the chosen day; the red pen line is left out.
   const gelbZeitreise = useMemo(
     () => (zeitreise === null ? linien.gelb : linien.gelb.filter((p) => (erstesMalRoh(fortschritt, p.id) ?? 0) < zeitreise)),
@@ -500,7 +524,7 @@ export function App() {
           spur={aufzeichnung.fixes}
           entdeckt={gelbZeitreise}
           gefahren={zeitreise === null ? linien.rot : []}
-          prozente={prozenteJeGebiet(daten, fortschritt)}
+          prozente={prozenteZeitreise ?? prozenteJeGebiet(daten, fortschritt)}
           folgen={aufzeichnung.aktiv}
           zeichnen={aufzeichnung.aktiv}
           wegeZaehlen={false}

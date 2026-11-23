@@ -30,6 +30,17 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
   expect(Number(ersterTag!.replace(" Prozent", "").replace(",", "."))).toBeLessThan(9.8);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeLessThan(heute * 0.9);
 
+  // Zoomed out, the share under the quarter's name follows the slider too.
+  const weidenText = () =>
+    page.evaluate(`(() => {
+      const f = window.__karte.querySourceFeatures("namen-koeln").find((x) => x.properties.name === "Weiden");
+      return f ? String(f.properties.pt ?? "") : "fehlt";
+    })()`);
+  await expect.poll(weidenText).toMatch(/^\d,\d %$/);
+  expect(await weidenText()).not.toBe("9,8 %");
+  await schieber.fill("40");
+  await expect.poll(weidenText).toBe("9,8 %");
+
   // "Fertig": the sheet and today's yellow are back.
   await leiste.getByRole("button", { name: "Fertig" }).tap();
   await expect(leiste).toBeHidden();

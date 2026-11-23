@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 23.11.2026: Zeitreise auch herausgezoomt
+- Michi wählte aus den Verbesserungen Punkt 4: Herausgezoomt zeigten Schraffur und Prozente unter den Viertelnamen während der Zeitreise den heutigen Stand
+- Neu: Beim Öffnen der Zeitreise rechnet der Hintergrund einmal je Gebiet (alle Ebenen), welche Straßenmeter wann zum ersten Mal gegangen wurden (`zeitleisten`). Beim Ziehen liest die Seite daraus die Prozente aller Gebiete für den gewählten Tag ab, ohne neu zu rechnen; Schraffur-Stufe und Zahl unter dem Namen folgen dem Schieber
+- Oberflächentest `zeitreise.spec.ts` erweitert: am ersten Tag steht unter „Weiden“ nicht 9,8 %, am letzten wieder 9,8 %
+
 ## 23.11.2026: Öffnen am letzten Standort
 - Michi: Beim Öffnen sprang die App zu einem anderen Ort (dem zuletzt gewählten), statt dort anzufangen, wo er zuletzt war
 - Neu: Die App merkt sich den zuletzt bekannten eigenen Standort (`localStorage streifzug.letzterOrt`): den neuesten Overland-Punkt (beim Abfragen des Overland-Zustands) und den Standort-Knopf. Beim Öffnen startet die Karte dort (Zoom 15, über dem halben Blatt), das Blatt zeigt das Viertel an diesem Punkt; kein Sprung zum zuletzt gewählten Ort
