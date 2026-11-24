@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
-import { artJePunkt, type KompletteStrasse, type LonLat, type ReiseWeg, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
-import { abgleichen, gueltigFuer, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
-import { ortsName, stueckeDerKachel, strassenName } from "./strassen";
+import { ausnahmeAufloesen, artJePunkt, type KompletteStrasse, type LonLat, type ReiseWeg, ueberblickLinien, gpxAus, zipErstellen, cleanFixes, density, distanceToLineM, parseGpx, splitOutings, summarizeImported, tileFor, TILE_ZOOM, type Fix, type Korrektur, type KorrekturArt, type Piece, distanceM, splitLegs } from "@streifzug/core";
+import { abgleichen, gueltigFuer, kartenStandSetzen, korrekturHash, meterJeGebiet, stueckeFuerIds } from "./rechnen";
+import { kartenStandHolen, ortsName, stueckeDerKachel, strassenName } from "./strassen";
 import { kompletteBerechnen } from "./komplett";
 import type { Region, Summe } from "./regionen";
 import { alleLaden, einenLaden, ergebnisseMerken, importeEntfernen, importeLaden, vieleSpeichern, type ImportQuelle, type Streifzug } from "./speicher";
@@ -23,6 +23,8 @@ export interface SpurDaten {
   /** Stored result from an earlier session (piece ids, "aktiv" and "gefahren"); then no fixes are needed. */
   ids?: string[];
   gefahren?: string[];
+  /** The key the stored result was made under (rules, map data version, length, corrections). */
+  gueltig?: string;
 }
 
 /** Which other sources count. (Car, bus, train never count: that is decided per leg.) */
@@ -32,6 +34,8 @@ export interface Zaehlen {
   ausnahmen: string[];
   /** Corrected legs per way (Bauplan 3, C2). */
   korrekturen: Record<string, Korrektur[]>;
+  /** Map data version last used (for offline starts; see rechnen.ts). */
+  kartenStand?: string;
 }
 
 export interface ImportVorschau {
@@ -66,7 +70,7 @@ export type Anfrage =
 
 export type Antwort =
   | { typ: "stand"; nr: number; fertig: number; gesamt: number }
-  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[]; ueberblick: { gelb: LonLat[][]; rot: LonLat[][] } }
+  | { typ: "ergebnis"; nr: number; stuecke: Piece[]; erstesMal: number[]; gefahren: Piece[]; proGebiet: [string, Summe][]; abzug: [string, Summe][]; draussen: Draussen[]; uebersprungen: string[]; komplett: KompletteStrasse[]; ueberblick: { gelb: LonLat[][]; rot: LonLat[][] }; kartenStand: string }
   | { typ: "stuecke"; nr: number; stuecke: Piece[] }
   | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
   | { typ: "reiseWege"; nr: number; wege: ReiseWeg[] }
@@ -182,8 +186,16 @@ const stueckNachId = new Map<string, Piece>();
 type Kopf = Omit<Streifzug, "fixes"> & { fixes: Fix[] | null; n: number };
 let andere: Promise<Map<string, Kopf>> | null = null;
 
+/** The version of the map data, before any stored result is checked (offline: the one last used). */
+let kartenStandBekannt = "";
+async function kartenStandAktuell(): Promise<string> {
+  kartenStandBekannt = await kartenStandHolen().catch(() => kartenStandBekannt);
+  kartenStandSetzen(kartenStandBekannt);
+  return kartenStandBekannt;
+}
+
 function andereLaden(): Promise<Map<string, Kopf>> {
-  andere ??= importeLaden(QUELLEN).then((liste) => {
+  andere ??= kartenStandAktuell().then(() => importeLaden(QUELLEN)).then((liste) => {
     const m = new Map<string, Kopf>();
     for (const s of liste) {
       const n = s.fixes.length;
@@ -240,10 +252,19 @@ async function etikettAn(punkt: [number, number], radiusM: number): Promise<Etik
 async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Region[]) {
   neueste = nr;
   korrekturenJetzt = z.korrekturen ?? {};
+  // New map data since the last calculation: stored results no longer fit (ids name other pieces).
+  if (!kartenStandBekannt && z.kartenStand) kartenStandBekannt = z.kartenStand;
+  const standVorher = kartenStandBekannt;
+  const stand = await kartenStandAktuell();
+  if (standVorher && stand !== standVorher) {
+    jeSpur.clear();
+    andere = null;
+  }
   const keyVon = (id: string, n: number) => gueltig(n, hashVon(id));
   // Own outings: stored results first (cheap). The page sends them only if valid with the corrections.
   const fehlend: string[] = [];
-  for (const s of eigene) if (s.ids && jeSpur.get(s.id)?.key !== keyVon(s.id, s.n)) jeSpur.set(s.id, { key: keyVon(s.id, s.n), ids: s.ids, gefahren: s.gefahren ?? [] });
+  // Only results made under the current key (after a map update the ids may name other pieces).
+  for (const s of eigene) if (s.ids && s.gueltig === keyVon(s.id, s.n) && jeSpur.get(s.id)?.key !== keyVon(s.id, s.n)) jeSpur.set(s.id, { key: keyVon(s.id, s.n), ids: s.ids, gefahren: s.gefahren ?? [] });
   const alle = await andereLaden();
   const zaehlende = [...alle.values()].filter((k) => zaehlt(k, z));
   for (const id of [...eigene.map((s) => s.id), ...zaehlende.map((k) => k.id)]) {
@@ -292,7 +313,13 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
 
   // State per piece: "aktiv" wins over "gefahren" (yellow paints over the pen line).
   // Exceptions ("Hier komme ich nicht hin") count neither as seen nor in the total.
-  const ausnahmen = new Set(z.ausnahmen);
+  // Exceptions are found by their place in the current map data (their ids may have changed).
+  const ausnahmen = new Set<string>();
+  for (const e of z.ausnahmen ?? []) {
+    const kachel = e.split(":")[0]!.split("/").map(Number) as [number, number, number];
+    const stuecke = await stueckeDerKachel({ z: kachel[0], x: kachel[1], y: kachel[2] }).catch(() => []);
+    ausnahmen.add(ausnahmeAufloesen(e, stuecke));
+  }
   const gesehen = new Map<string, Piece>();
   const gefahren = new Map<string, Piece>();
   const aktivAb = new Map<string, number>();
@@ -336,7 +363,7 @@ async function berechne(nr: number, eigene: SpurDaten[], z: Zaehlen, liste: Regi
   const draussen = [...zellen.values()].filter((e) => e.m >= 200);
   // Fine lines for the overview far out (Bauplan 3, F5), worked out once per calculation.
   const ueberblick = { gelb: ueberblickLinien(stuecke.filter((p) => p.kind !== "drive")), rot: ueberblickLinien(gefahren.values()) };
-  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen, komplett: zuletztKomplett, ueberblick });
+  senden({ typ: "ergebnis", nr, stuecke, erstesMal, gefahren: [...gefahren.values()], proGebiet: [...proGebiet], abzug: [...abzug], draussen, uebersprungen, komplett: zuletztKomplett, ueberblick, kartenStand: stand });
   // Complete streets afterwards (Bauplan 3, F4): the first time with many ways this takes a few
   // seconds; the plan does not wait for it. A failure keeps the last list.
   try {

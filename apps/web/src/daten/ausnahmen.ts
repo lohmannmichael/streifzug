@@ -1,3 +1,4 @@
+import { ausnahmeEintrag, ausnahmeLesen, distanceM, type LonLat } from "@streifzug/core";
 import { useEffect, useState } from "react";
 import { KONTO_DATEN, kontoDatenGeaendert } from "./kontoDaten";
 
@@ -16,10 +17,18 @@ function ausnahmenLesen(): string[] {
   }
 }
 
-export function ausnahmeSetzen(id: string, an: boolean) {
+/**
+ * On: stored with the middle of the piece, so it is found again after a map update (see
+ * kartenstand.ts). Off: every entry for this piece goes, by id or by place.
+ */
+export function ausnahmeSetzen(id: string, an: boolean, mid?: LonLat) {
   const alle = new Set(ausnahmenLesen());
-  if (an) alle.add(id);
-  else alle.delete(id);
+  if (an) alle.add(mid ? ausnahmeEintrag(id, mid) : id);
+  else
+    for (const e of [...alle]) {
+      const x = ausnahmeLesen(e);
+      if (x.id === id || (mid && x.mid && distanceM(mid, x.mid) <= 3)) alle.delete(e);
+    }
   localStorage.setItem(KEY, JSON.stringify([...alle].sort()));
   window.dispatchEvent(new Event(GEAENDERT));
   kontoDatenGeaendert();

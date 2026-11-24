@@ -1,5 +1,5 @@
 import { VectorTile } from "@mapbox/vector-tile";
-import { nameNear, piecesFromTile, tileFor, TILE_ZOOM, type LonLat, type NamedLine, type OmtTransportation, type Piece, type Tile, type TileFeature } from "@streifzug/core";
+import { kartenStandAusUrl, nameNear, piecesFromTile, tileFor, TILE_ZOOM, type LonLat, type NamedLine, type OmtTransportation, type Piece, type Tile, type TileFeature } from "@streifzug/core";
 import { PbfReader } from "pbf";
 
 let vorlage: Promise<string> | null = null;
@@ -32,6 +32,11 @@ async function bytes(antwort: Response): Promise<Uint8Array> {
 
 function linienVon(geo: { type: string; coordinates?: unknown }): LonLat[][] {
   return geo.type === "LineString" ? [geo.coordinates as LonLat[]] : geo.type === "MultiLineString" ? (geo.coordinates as LonLat[][]) : [];
+}
+
+/** Version of the street data in use (part of every stored result's key, see rechnen.ts). */
+export async function kartenStandHolen(): Promise<string> {
+  return kartenStandAusUrl(await tileUrl());
 }
 
 /** One zoom-14 tile, loaded and decoded once: counted pieces and named lines. */

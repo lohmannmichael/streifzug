@@ -3,7 +3,12 @@ import { pointInGeometry } from "@streifzug/core";
 import { useEffect, useRef, useState } from "react";
 import type { Draussen, SpurDaten, Zaehlen } from "./abgleich.worker";
 import { ANDERE_GEAENDERT, aufStandHoeren, fragen, KOMPLETT } from "./arbeiter";
-import { gueltigFuer, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
+import { gueltigFuer, kartenStandJetzt, kartenStandSetzen, korrekturHash, ladeFlaechen, meterJeGebiet as meterJeGebietListe } from "./rechnen";
+
+// The map data version of the last calculation, so own outings' stored results can be checked
+// before the worker answers (Michi, 24.11.2026).
+const KARTEN_STAND = "streifzug.kartenStand";
+kartenStandSetzen(localStorage.getItem(KARTEN_STAND) ?? "");
 import { ortLadenAuf, regionenJetzt, type Regionen, type Summe } from "./regionen";
 import { standLaden, standMerken } from "./stand";
 
@@ -38,6 +43,8 @@ export interface Spur {
   /** Stored matching result (piece ids) from an earlier session, if still valid. */
   ids?: string[];
   gefahren?: string[];
+  /** Key the stored result was made under (checked again in the worker). */
+  gueltig?: string;
 }
 
 /** Key under which a stored result is valid: same matching rules, same track. */
@@ -102,7 +109,8 @@ export function useFortschritt(
   }, []);
   const anzahl = spuren.reduce((n, s) => n + s.fixes.length, 0);
   // Which outings and sources take part and, every 10 fixes, the live track.
-  const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}:${versuch}`;
+  // A new map data version (known after a calculation) starts it again: stored results may not fit.
+  const schluessel = `${spuren.map((s) => s.id).join(",")}:${Math.floor(anzahl / 10)}:${JSON.stringify(zaehlen)}:${andereStand}:${versuch}:${kartenStandJetzt()}`;
   const aktuell = useRef(0);
   aktuellRef = aktuell;
   // Only the list of places matters here; loading more places does not start a new calculation.
@@ -113,9 +121,9 @@ export function useFortschritt(
       id: s.id,
       n: s.fixes.length,
       t: s.t,
-      ...(imWorker.get(s.id) === ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]) ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [] } : { fixes: s.fixes }),
+      ...(imWorker.get(s.id) === ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]) ? {} : s.ids ? { ids: s.ids, gefahren: s.gefahren ?? [], ...(s.gueltig ? { gueltig: s.gueltig } : {}) } : { fixes: s.fixes }),
     }));
-    const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen, liste });
+    const { nr, antwort } = fragen<"ergebnis">({ typ: "berechne", eigene, zaehlen: { ...zaehlen, kartenStand: kartenStandJetzt() }, liste });
     aktuell.current = nr;
     const weg = aufStandHoeren((a) => {
       if (a.nr === aktuell.current) setRechnet({ fertig: a.fertig, gesamt: a.gesamt });
@@ -125,6 +133,10 @@ export function useFortschritt(
       // Skipped ways (e.g. street data did not arrive) are sent again on the next try.
       const nichtDrin = new Set(a.uebersprungen);
       for (const s of spuren) if (!s.id.startsWith("live:") && !nichtDrin.has(s.id)) imWorker.set(s.id, ergebnisSchluessel(s.fixes, zaehlen.korrekturen?.[s.id]));
+      if (a.kartenStand !== kartenStandJetzt()) {
+        kartenStandSetzen(a.kartenStand);
+        localStorage.setItem(KARTEN_STAND, a.kartenStand);
+      }
       if (a.nr !== aktuell.current) return;
       setRechnet(null);
       setFehler(a.uebersprungen.length ? `${a.uebersprungen.length} übersprungen (Straßendaten nicht geladen)` : null);

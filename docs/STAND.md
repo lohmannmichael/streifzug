@@ -7,6 +7,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 ## Was läuft
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
+- Gespeicherte Ergebnisse gelten nur für eine Version der Kartendaten; nach einem OpenFreeMap-Update wird einmal alles neu gerechnet
 - Lücken in Autofahrten (bis 400 m) und nach Overland-Pausen werden nachgezeichnet, `ABGLEICH_VERSION` 12
 - Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
@@ -15,7 +16,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Aufzeichnung über Overland, Abholen beim Öffnen und alle 5 Minuten, Rückblick beim Öffnen (F1: jeder Weg einzeln nachgefahren, dünne Tintenlinie, Gelb im selben Takt, Auto rot und schnell)
 - Nach einem Flug: weiter Sprung nach mindestens 10 Min. Pause gilt als neuer Anfang, nicht als Ausreißer
 - Erkennung: Abschnitte je Halt, Auto nur bei passendem Tempo, eine Fahrt mit einmal über 40 km/h ist Auto, Ecken und kurze Lücken werden geschlossen, Lücken entlang der Straße nachgezeichnet, Gegenfahrbahn zählt mit, Wirtschaftswege und Zufahrten ab 100 m schmal gelb
-- Oberflächentests (E1): 27 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
+- Oberflächentests (E1): 28 Abläufe im iPhone-Format, laufen bei jedem Push auf GitHub (`npm run e2e`)
 - Karte in Teile mit je einer Aufgabe zerlegt (E2, `karte/`)
 - Öffnen zeigt sofort den letzten Stand (E3, Gerätedatenbank `streifzug-stand`); Messung mit einem Jahr Daten: `MESSEN=1 npx playwright test e2e/tempo.spec.ts`
 - Orte bei Bedarf (E4): vorab nur die Orte-Liste; ein Ort wird geladen, wenn der Plan hinschaut, dort Wege liegen oder er geöffnet wird; danach bleibt er auf dem Gerät (Zwischenspeicher „orte“, bis etwa 100 Orte)
@@ -42,13 +43,14 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 ## Offene Fragen an Michi
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
+- Gespeicherte Ergebnisse gelten nur für eine Version der Kartendaten; nach einem OpenFreeMap-Update wird einmal alles neu gerechnet
 - Lücken in Autofahrten (bis 400 m) und nach Overland-Pausen werden nachgezeichnet, `ABGLEICH_VERSION` 12
 - Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
 - Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
 - GPS-Zappeln: Sind die Zacken weg, wird die eigene Straße vor der Haustür noch gelb?
-- Radfahrt 24.11. 7:56 Uhr über die Ludwig-Jahn-Straße: auf dem iPhone blau statt gelb, beim Nachrechnen gelb. Nach dem Update prüfen; sonst Bild der Abschnitte des Wegs
+- Fehlendes Gelb (Ludwig-Jahn-Straße, Hans-Willy-Mertens-Straße) kam vom Karten-Update am 22.11. (behoben am 24.11.): nach dem Neuöffnen prüfen, ob beide jetzt gelb sind
 - Plan Abschnitt 10: Monatsrückblick als Video? Backlog (Umweg-Tipp, Steckbrief, Trampelpfade, Heute vor einem Jahr, Rekorde, Fast fertig) rein oder raus? App weitergeben (Einladungs-Code, Erste Schritte) wann?
 - D8: Tabelle `privacy_zones` und alte Zonen-Funktionen löschen? (bleiben bis zu Michis Ja)
 - Rückblick (F1): nah genug, zu schnell, zu langsam? (an drei echten Tagen prüfen)

@@ -1,6 +1,7 @@
 import { Marker, type Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { lineLengthM, pointAlong } from "@streifzug/core";
 import { ausnahmeSetzen } from "../daten/ausnahmen";
 import { alsStrecke } from "../daten/regionen";
 import type { Etikett } from "../daten/veedel";
@@ -35,7 +36,7 @@ function Schild({ z, schliessen }: { z: EtikettZustand; schliessen: () => void }
           type="button"
           className="text-knopf"
           onClick={() => {
-            ausnahmeSetzen(s.id, !s.ausnahme);
+            ausnahmeSetzen(s.id, !s.ausnahme, pointAlong(s.coords, lineLengthM(s.coords) / 2));
             schliessen();
           }}
         >

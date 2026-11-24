@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 24.11.2026: Gespeicherte Ergebnisse passen nach einem Karten-Update nicht mehr (behoben)
+- Michi (Bilder Ludwig-Jahn-Straße, Hans-Willy-Mertens-Straße, Aachener Straße): Wo er war, fehlte Gelb; dafür kurze gelbe Bruchstücke. Mit seinen Punkten nachgerechnet (nur lesend) wurden beide Straßen vollständig gelb, auch mit älteren Ständen der App
+- Ursache: Die App speichert je Weg nur Kennungen („Kachel:Linie:Stück“). Sie gelten nur für eine Version der Kartendaten. OpenFreeMap hat am 22.11. neue Daten veröffentlicht (`20261122_124456_pt`, vorher `20261115_080022_pt`); in der Kachel um Weiden bezeichnen danach 1.051 von 2.274 Kennungen eine andere Straße (Beispiel: `417:4` war ein Stück der Römerstraße, ist jetzt eines der Hans-Willy-Mertens-Straße). Gespeicherte Ergebnisse zeigten so auf falsche Stücke. Das passiert bei jedem Update (etwa wöchentlich)
+- Behoben: Der Gültigkeits-Schlüssel jedes gespeicherten Ergebnisses enthält die Version der Kartendaten (aus der Kachel-Adresse). Nach einem Update rechnet der Hintergrund alle Wege einmal neu (mit einem Jahr Daten rund 2,5 Minuten im Hintergrund, die App bleibt bedienbar). Eigene Aufnahmen: Der Hintergrund prüft den Schlüssel selbst; passt er nicht, schickt die Seite die Punkte nach
+- Ausnahmen („Hier komme ich nicht hin“) werden ab jetzt mit der Mitte ihres Stücks gespeichert und nach einem Update am Ort wiedergefunden (bis 3 m). Michis Konto hatte keine Ausnahmen, es ging nichts verloren
+- Kern: `kartenstand.ts` (5 Tests). Oberflächentest `e2e/kartenstand.spec.ts` (neue Server-Option `kartenStand` spielt ein Karten-Update nach)
+
 ## 24.11.2026: Lücken in Autofahrten und nach Pausen nachzeichnen
 - Michi (Bild Moltkestraße/Aachener Straße): „Hier war ich mit dem Auto unterwegs“, die blaue Kuli-Linie hatte eine Lücke. Mit seinen Punkten nachgestellt (nur lesend): 17:44 Uhr am Parkplatz, danach 4,5 Minuten keine Punkte (Overland „Pause + Geofence 100 m“), 17:48 Uhr 210 m weiter. Außerdem liegen im Auto die Punkte oft 150–300 m auseinander, Lücken füllte die App bisher nur für Gehen und Rad
 - Neu, nur für die Kuli-Linie (zählt nie): Lücken in Fahrten werden bis 400 m entlang des kürzesten Wegs nachgezeichnet; zwei Fahrbahnen nebeneinander lassen die Lücke nicht mehr offen, und es werden alle Straßenpunkte bis 25 m um beide Punkte probiert (die Fahrbahnen der Moltkestraße sind in den Kartendaten nicht verbunden)

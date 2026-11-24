@@ -38,6 +38,8 @@ export interface ServerOptionen {
   tageZurueck?: Record<string, number>;
   /** Adds a copy of single test ways this many days earlier (a trip over a night, Reisen). */
   kopien?: Record<string, number>;
+  /** Pretends a new version of the map data (OpenFreeMap update): same tiles under another name. */
+  kartenStand?: string;
 }
 
 export interface Server {
@@ -68,8 +70,15 @@ function aufnahmeDatei(url: URL): string {
   return join(AUFNAHMEN, extname(pfad) ? pfad : `${pfad}.json`);
 }
 
+const AUFGENOMMENER_STAND = /\/planet\/([^/]+)\//.exec(readFileSync(join(AUFNAHMEN, "planet.json"), "utf8"))![1]!;
+
 async function openfreemap(route: Route, s: Server) {
   const url = new URL(route.request().url());
+  // A pretended newer map data version: the index names it, its tiles are the recorded ones.
+  const stand = s.optionen.kartenStand;
+  if (stand && url.pathname === "/planet")
+    return route.fulfill({ status: 200, contentType: "application/json", body: readFileSync(join(AUFNAHMEN, "planet.json"), "utf8").replaceAll(AUFGENOMMENER_STAND, stand), headers: { "access-control-allow-origin": "*" } });
+  if (stand && url.pathname.startsWith(`/planet/${stand}/`)) url.pathname = url.pathname.replace(stand, AUFGENOMMENER_STAND);
   if (s.optionen.karteAus) return route.abort("connectionrefused");
   const istStil = url.pathname.startsWith("/styles/");
   if (istStil && s.optionen.stilVerzoegerung) await new Promise((r) => setTimeout(r, s.optionen.stilVerzoegerung));

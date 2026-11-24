@@ -81,7 +81,17 @@ export function korrekturHash(k: readonly Korrektur[] | undefined): string {
 }
 
 /** Key under which a stored result is valid: matching rules, track length and corrections. */
-export const gueltigFuer = (n: number, hash: string) => (hash ? `${ABGLEICH_VERSION}:${n}:${hash}` : `${ABGLEICH_VERSION}:${n}`);
+/**
+ * Version of the map data the piece ids belong to (Michi, 24.11.2026): after an OpenFreeMap update
+ * the same id may name another piece, so a stored result is valid only for the same version.
+ */
+let kartenStand = "";
+export const kartenStandSetzen = (stand: string) => {
+  kartenStand = stand;
+};
+export const kartenStandJetzt = () => kartenStand;
+
+export const gueltigFuer = (n: number, hash: string) => (hash ? `${ABGLEICH_VERSION}:${kartenStand}:${n}:${hash}` : `${ABGLEICH_VERSION}:${kartenStand}:${n}`);
 
 export async function abgleichen(fixes: Fix[], locker: boolean, korrekturen: readonly Korrektur[] = []): Promise<{ aktiv: Piece[]; gefahren: Piece[] }> {
   const alle: Piece[] = [];

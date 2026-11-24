@@ -126,7 +126,7 @@ export function App() {
       t: s.startedAt,
       fixes: s.fixes,
       // Matched in an earlier session: no need to match again.
-      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes, korrekturen[s.id]) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [] } : {}),
+      ...(s.stueckIds && s.stueckIdsGueltig === ergebnisSchluessel(s.fixes, korrekturen[s.id]) ? { ids: s.stueckIds, gefahren: s.stueckIdsGefahren ?? [], gueltig: s.stueckIdsGueltig } : {}),
     })),
     ...(aufzeichnung.aktiv ? [{ id: `live:${aufzeichnung.startedAt}`, t: aufzeichnung.startedAt ?? Date.now(), fixes: aufzeichnung.fixes }] : []),
   ];
