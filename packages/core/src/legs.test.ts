@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { seenByLegs, splitLegs } from "./legs";
+import { folgenDerArt, seenByLegs, splitLegs } from "./legs";
 import type { Piece } from "./pieces";
 import type { Fix } from "./track";
 
@@ -205,5 +205,45 @@ describe("GPS-Zappeln im Haus ist ein Halt (Michi, 23.11.2026)", () => {
     for (let i = 0; i < 36; i++) f.push({ t: i * 10_000, lon: 6.83 + i * 8 * mX, lat: LAT, acc: 8 });
     const legs = splitLegs(f);
     expect(legs.reduce((n, l) => n + l.fixes.length, 0)).toBeGreaterThan(30);
+  });
+});
+
+describe("folgenDerArt", () => {
+  it("gives the points of the car ride for the pen line", () => {
+    const f: Fix[] = [];
+    let lon = 6.82;
+    let t = 0;
+    for (let i = 0; i < 36; i++, t += 5000) f.push({ t, lon: (lon += (1.4 * 5) / 70_000), lat: 50.94, acc: 5 });
+    for (let i = 0; i < 12; i++, t += 5000) f.push({ t, lon, lat: 50.94, acc: 5 });
+    const autoStart = t;
+    for (let i = 0; i < 36; i++, t += 5000) f.push({ t, lon: (lon += (14 * 5) / 70_000), lat: 50.94, acc: 5 });
+    const auto = folgenDerArt(f, [], "gefahren");
+    expect(auto).toHaveLength(1);
+    // It may begin at the last point of the halt before it (pause, geofence).
+    expect(auto[0]![0]!.t).toBeGreaterThanOrEqual(autoStart - 60_000);
+    expect(auto[0]!.length).toBeGreaterThan(30);
+  });
+});
+
+describe("Start nach einer Pause (Geofence, Michi 24.11.2026)", () => {
+  it("starts the run at the last point before the pause, so the gap can be traced", () => {
+    const f: Fix[] = [];
+    let t = 0;
+    // Parked: a few points without movement, then 4.5 minutes nothing, then driving 200 m further on.
+    for (let i = 0; i < 6; i++, t += 10_000) f.push({ t, lon: 6.9325, lat: 50.9345, acc: 10 });
+    const parkplatz = f.at(-1)!;
+    t += 270_000;
+    let lat = 50.9364;
+    for (let i = 0; i < 20; i++, t += 10_000) f.push({ t, lon: 6.9328 - i * 0.0015, lat, acc: 8, speed: 11, motion: ["automotive"] });
+    lat += 0;
+    const auto = folgenDerArt(f, [], "gefahren");
+    expect(auto).toHaveLength(1);
+    expect(auto[0]![0]).toEqual(parkplatz);
+  });
+
+  it("does not reach back more than 10 minutes", () => {
+    const f: Fix[] = [{ t: 0, lon: 6.9325, lat: 50.9345, acc: 10 }];
+    for (let i = 0; i < 20; i++) f.push({ t: 700_000 + i * 10_000, lon: 6.9328 - i * 0.0015, lat: 50.9364, acc: 8, speed: 11, motion: ["automotive"] });
+    expect(folgenDerArt(f, [], "gefahren")[0]![0]!.t).toBe(700_000);
   });
 });

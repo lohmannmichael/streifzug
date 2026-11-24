@@ -46,3 +46,17 @@ describe("nachzeichnen", () => {
     expect(nachzeichnen(stuecke, [[fix(70, 0, 0)], [fix(100, 30, 10)]], new Set()).size).toBe(0);
   });
 });
+
+describe("nachzeichnen mit allen nahen Knoten (Fahrten, Michi 24.11.2026)", () => {
+  // Two carriageways 15 m apart, not joined: the west one goes on south to the parking place.
+  const stuecke = [strasse("sued", [0, -100], [0, 0]), strasse("west", [0, 0], [0, 200]), strasse("ost", [15, 0], [15, 200])];
+  const gap = [[fix(0, -100, 0), fix(13, 195, 60)]];
+
+  it("normally takes only the nearest node, which lies on the other carriageway", () => {
+    expect(nachzeichnen(stuecke, gap, new Set(), { maxM: 400 }).size).toBe(0);
+  });
+
+  it("with alleNahen tries every node nearby and takes the shortest way", () => {
+    expect([...nachzeichnen(stuecke, gap, new Set(), { maxM: 400, alleNahen: true })].sort()).toEqual(["sued", "west"]);
+  });
+});

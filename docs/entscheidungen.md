@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 24.11.2026: Lücken in Autofahrten und nach Pausen nachzeichnen
+- Michi (Bild Moltkestraße/Aachener Straße): „Hier war ich mit dem Auto unterwegs“, die blaue Kuli-Linie hatte eine Lücke. Mit seinen Punkten nachgestellt (nur lesend): 17:44 Uhr am Parkplatz, danach 4,5 Minuten keine Punkte (Overland „Pause + Geofence 100 m“), 17:48 Uhr 210 m weiter. Außerdem liegen im Auto die Punkte oft 150–300 m auseinander, Lücken füllte die App bisher nur für Gehen und Rad
+- Neu, nur für die Kuli-Linie (zählt nie): Lücken in Fahrten werden bis 400 m entlang des kürzesten Wegs nachgezeichnet; zwei Fahrbahnen nebeneinander lassen die Lücke nicht mehr offen, und es werden alle Straßenpunkte bis 25 m um beide Punkte probiert (die Fahrbahnen der Moltkestraße sind in den Kartendaten nicht verbunden)
+- Neu für alle Abschnitte: Ein Abschnitt beginnt beim letzten Punkt vor einer Pause (höchstens 10 Minuten davor), damit das Stück bis zum Aufwachen des GPS nachgezeichnet werden kann. Für Gehen und Rad gelten weiter die strengen Regeln (bis 150 m, nur eindeutig)
+- Mit Michis letzten fünf Tagen: Kuli-Linie 12,1 → 14,4 km (Aachener Straße +2,1 km, Moltkestraße unter der Bahnbrücke +143 m), gelbe Straße 14.641 → 14.666 m (+25 m vom Losgehen nach einer Pause)
+- Am selben Tag geklärt: Die blauen Linien sind Michis Kuli (in den Einstellungen auf Blau), also Autofahrten; richtig erkannt (bis 61 km/h, iPhone meldet „Auto“). Seine Radfahrt am Morgen über die Ludwig-Jahn-Straße wird beim Nachrechnen gelb; auf dem iPhone fehlte sie, Ursache offen (Bitte an Michi: App neu öffnen, sonst Bild der Abschnitte des Wegs von 7:56 Uhr)
+- `ABGLEICH_VERSION` 12. Kern: `folgenDerArt`, Option `alleNahen` in `nachzeichnen` (Tests)
+
 ## 23.11.2026: Zeitreise auch herausgezoomt
 - Michi wählte aus den Verbesserungen Punkt 4: Herausgezoomt zeigten Schraffur und Prozente unter den Viertelnamen während der Zeitreise den heutigen Stand
 - Neu: Beim Öffnen der Zeitreise rechnet der Hintergrund einmal je Gebiet (alle Ebenen), welche Straßenmeter wann zum ersten Mal gegangen wurden (`zeitleisten`). Beim Ziehen liest die Seite daraus die Prozente aller Gebiete für den gewählten Tag ab, ohne neu zu rechnen; Schraffur-Stufe und Zahl unter dem Namen folgen dem Schieber

@@ -6,7 +6,8 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 
 ## Was läuft
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
-- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
+- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
+- Lücken in Autofahrten (bis 400 m) und nach Overland-Pausen werden nachgezeichnet, `ABGLEICH_VERSION` 12
 - Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Plan im Druck-Stil, Textmarker (deckend) für zu Fuß und Rad, rote Kuli-Linie für gefahren, Parkwege schmal gelb (zählen nicht)
@@ -40,12 +41,14 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 
 ## Offene Fragen an Michi
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
-- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb), `ABGLEICH_VERSION` 11
+- GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
+- Lücken in Autofahrten (bis 400 m) und nach Overland-Pausen werden nachgezeichnet, `ABGLEICH_VERSION` 12
 - Öffnen am letzten Standort (letzter Overland-Punkt oder Standort-Knopf), nicht am zuletzt gewählten Ort
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
 - Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
 - GPS-Zappeln: Sind die Zacken weg, wird die eigene Straße vor der Haustür noch gelb?
+- Radfahrt 24.11. 7:56 Uhr über die Ludwig-Jahn-Straße: auf dem iPhone blau statt gelb, beim Nachrechnen gelb. Nach dem Update prüfen; sonst Bild der Abschnitte des Wegs
 - Plan Abschnitt 10: Monatsrückblick als Video? Backlog (Umweg-Tipp, Steckbrief, Trampelpfade, Heute vor einem Jahr, Rekorde, Fast fertig) rein oder raus? App weitergeben (Einladungs-Code, Erste Schritte) wann?
 - D8: Tabelle `privacy_zones` und alte Zonen-Funktionen löschen? (bleiben bis zu Michis Ja)
 - Rückblick (F1): nah genug, zu schnell, zu langsam? (an drei echten Tagen prüfen)

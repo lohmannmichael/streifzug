@@ -1,4 +1,4 @@
-import { orteMitPunkten, aktiveFolgen, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
+import { orteMitPunkten, aktiveFolgen, folgenDerArt, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
 import { ortDatei } from "./ortDatei";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
@@ -12,7 +12,8 @@ import { stueckeDerKachel } from "./strassen";
 // 2 (21.11.2026): legs "aktiv"/"gefahren" (Bauplan 6.2), results stored separately.
 // 10 (22.11.2026): tracks and long service roads drawn as paths.
 // 11 (23.11.2026): GPS jitter in a house is a halt, not a way.
-const ABGLEICH_VERSION = 11;
+// 12 (24.11.2026): gaps in car rides traced along the streets (pen line only).
+const ABGLEICH_VERSION = 12;
 
 interface Flaeche {
   id: string;
@@ -100,6 +101,10 @@ export async function abgleichen(fixes: Fix[], locker: boolean, korrekturen: rea
   const zuFuss = splitLegs(fixes, korrekturen).filter((l) => l.art === "aktiv").flatMap((l) => l.fixes);
   // Gaps between points traced along the streets, where the way is clear (Michi, 22.11.2026).
   for (const id of nachzeichnen(alle, aktiveFolgen(fixes, korrekturen), aktivIds)) aktivIds.add(id);
+  // Car rides too, only for the pen line (never counted): at car speed points are 150–300 m
+  // apart, so gaps are traced up to 400 m along the shortest way; two carriageways side by side
+  // are no reason to leave the gap open here, as nothing is counted (Michi, 24.11.2026).
+  for (const id of nachzeichnen(alle, folgenDerArt(fixes, korrekturen, "gefahren"), gefahrenIds, { maxM: 400, eindeutigFaktor: 0.99, fangM: 25, alleNahen: true })) if (!aktivIds.has(id)) gefahrenIds.add(id);
   for (const id of eckenSchliessen(alle, aktivIds, zuFuss)) aktivIds.add(id);
   for (const id of lueckenSchliessen(alle, aktivIds)) aktivIds.add(id);
   // Two carriageways: one walked counts the other too (Michi, 22.11.2026).

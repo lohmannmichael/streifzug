@@ -38,6 +38,8 @@ const SMOOTH_MS = 5_000;
 const HALT_SPEED_MS = 0.4;
 const HALT_MS = 30_000;
 const GAP_MS = 60_000;
+/** A run may begin at the last point up to this long before its first moving point (pause, geofence). */
+const VORLAUF_MS = 10 * 60_000;
 /** GPS jitter indoors (Michi, 23.11.2026): two and a half minutes inside a box of 100 m is standing, not walking. */
 const ZAPPEL_BOX_M = 100;
 const ZAPPEL_MS = 150_000;
@@ -269,16 +271,24 @@ export function splitLegs(input: readonly Fix[], korrekturen: readonly Korrektur
  * split wherever something was driven. Used to trace gaps along the streets.
  */
 export function aktiveFolgen(fixes: readonly Fix[], korrekturen: readonly Korrektur[] = []): Fix[][] {
+  return folgenDerArt(fixes, korrekturen, "aktiv");
+}
+
+/** Runs of consecutive legs of one kind, with all their points (e.g. car rides for the pen line). */
+export function folgenDerArt(fixes: readonly Fix[], korrekturen: readonly Korrektur[], art: Art): Fix[][] {
   const legs = splitLegs(fixes, korrekturen);
   const sortiert = [...fixes].sort((x, y) => x.t - y.t);
   const out: Fix[][] = [];
   for (let i = 0; i < legs.length; i++) {
-    if (legs[i]!.art !== "aktiv") continue;
+    if (legs[i]!.art !== art) continue;
     let j = i;
-    while (j + 1 < legs.length && legs[j + 1]!.art === "aktiv") j++;
+    while (j + 1 < legs.length && legs[j + 1]!.art === art) j++;
     const von = legs[i]!.von;
     const bis = legs[j]!.bis;
-    out.push(sortiert.filter((x) => x.t >= von && x.t <= bis));
+    // After a pause (Overland's geofence wakes the GPS only after about 100 m) the last point
+    // before it is where the run began; with it the gap can be traced along the streets.
+    const davor = sortiert.filter((x) => x.t < von && von - x.t <= VORLAUF_MS).at(-1);
+    out.push([...(davor ? [davor] : []), ...sortiert.filter((x) => x.t >= von && x.t <= bis)]);
     i = j;
   }
   return out;

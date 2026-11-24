@@ -22,6 +22,11 @@ export interface NachzeichnenOptionen {
   eindeutigFaktor: number;
   /** Share of a piece the traced ways must cover for it to count. */
   anteil: number;
+  /**
+   * Try every street node within `fangM` of both points, not only the nearest (car rides: two
+   * carriageways side by side may not be joined in the map data).
+   */
+  alleNahen?: boolean;
 }
 
 export const NACHZEICHNEN_STANDARD: NachzeichnenOptionen = {
@@ -76,23 +81,21 @@ function netz(pieces: readonly Piece[]) {
     const k = `${Math.floor(p[0] / zelle)},${Math.floor(p[1] / zelle)}`;
     (raster.get(k) ?? raster.set(k, []).get(k)!).push(i);
   });
-  const naechster = (p: LonLat, maxM: number): number | null => {
+  /** Nodes within `maxM` of a point, nearest first. */
+  const nahe = (p: LonLat, maxM: number): { i: number; d: number }[] => {
     const cx = Math.floor(p[0] / zelle);
     const cy = Math.floor(p[1] / zelle);
-    let best: number | null = null;
-    let bestD = maxM;
+    const out: { i: number; d: number }[] = [];
     for (let dx = -1; dx <= 1; dx++)
       for (let dy = -1; dy <= 1; dy++)
         for (const i of raster.get(`${cx + dx},${cy + dy}`) ?? []) {
           const d = distanceM(p, lage[i]!);
-          if (d <= bestD) {
-            bestD = d;
-            best = i;
-          }
+          if (d <= maxM) out.push({ i, d });
         }
-    return best;
+    return out.sort((x, y) => x.d - y.d);
   };
-  return { lage, kanten, naechster };
+  const naechster = (p: LonLat, maxM: number): number | null => nahe(p, maxM)[0]?.i ?? null;
+  return { lage, kanten, naechster, nahe };
 }
 
 /** Shortest way from a to b (Dijkstra), not longer than `grenze`; `strafe` makes some edges dearer. */
@@ -137,7 +140,9 @@ function weg(kanten: Kante[][], a: number, b: number, grenze: number, strafe?: S
  */
 export function nachzeichnen(pieces: readonly Piece[], folgen: readonly Fix[][], schon: ReadonlySet<string>, optionen: Partial<NachzeichnenOptionen> = {}): Set<string> {
   const o = { ...NACHZEICHNEN_STANDARD, ...optionen };
-  const { kanten, naechster } = netz(pieces);
+  const netzDaten = netz(pieces);
+  const { kanten, naechster, nahe } = netzDaten;
+  const lage = (i: number) => netzDaten.lage[i]!;
   const laengeJe = new Map(pieces.map((p) => [p.id, p.lengthM]));
   const bedeckt = new Map<string, number>();
   for (const folge of folgen) {
@@ -147,12 +152,26 @@ export function nachzeichnen(pieces: readonly Piece[], folgen: readonly Fix[][],
       const b: LonLat = [punkte[i]!.lon, punkte[i]!.lat];
       const luft = distanceM(a, b);
       if (luft < o.minM || luft > o.maxM) continue;
-      const ka = naechster(a, o.fangM);
-      const kb = naechster(b, o.fangM);
-      if (ka === null || kb === null || ka === kb) continue;
       const grenze = luft * o.umwegFaktor + o.zuschlagM;
-      const best = weg(kanten, ka, kb, grenze);
-      if (!best) continue;
+      let ka = naechster(a, o.fangM);
+      let kb = naechster(b, o.fangM);
+      let best = ka !== null && kb !== null && ka !== kb ? weg(kanten, ka, kb, grenze) : null;
+      if (o.alleNahen) {
+        // The shortest way between any nodes near both points (a few each), counting the way to them.
+        let bestGesamt = best ? best.laenge + distanceM(a, lage(ka!)) + distanceM(b, lage(kb!)) : Infinity;
+        for (const x of nahe(a, o.fangM).slice(0, 6))
+          for (const y of nahe(b, o.fangM).slice(0, 6)) {
+            if (x.i === y.i) continue;
+            const w = weg(kanten, x.i, y.i, grenze);
+            if (w && w.laenge + x.d + y.d < bestGesamt) {
+              bestGesamt = w.laenge + x.d + y.d;
+              best = w;
+              ka = x.i;
+              kb = y.i;
+            }
+          }
+      }
+      if (!best || ka === null || kb === null) continue;
       // A second way that avoids the first one: if it is almost as short, the gap is unclear.
       const strafe = new Set<string>();
       let u = ka;
