@@ -8,6 +8,7 @@ import { karteBauen, stilNeu } from "./aufbau";
 import { eigenesZeichnen, erstesMalSetzen, kompletteNamen, LEER, linienSammlung, namenFilterVergessen, setzeDaten, stifteSetzen, ueberblickSetzen } from "./ebenen";
 import { gebieteZeichnen, prozenteSetzen, veedelRahmen } from "./gebiete";
 import { ruhig, zeigeBox, zeigeGebiet } from "./kamera";
+import { drohneAbspielen } from "./drohne";
 import { rueckblickAbspielen, type RueckblickWeg } from "./rueckblick";
 import { zeitraumAbspielen, type ZeitraumWeg } from "./zeitraum";
 import { SchildAnKarte, type EtikettZustand } from "./Schild";
@@ -48,6 +49,10 @@ interface KartenProps {
   /** Replay on opening: the map runs along these outings once (in order); `nr` starts it. */
   rueckblick: { wege: RueckblickWeg[]; seit: number; bis?: number; nr: number } | null;
   onRueckblickEnde: () => void;
+  /** Replay as a drone flight (Michi, 24.11.2026) instead of the calm one, way by way. */
+  rueckblickDrohne: boolean;
+  /** New pieces just turned yellow during a replay (for the line on top). */
+  onGelbDazu: (stuecke: readonly Piece[]) => void;
   /** A whole period played back ("Dein November", Bauplan 3, F2); `nr` starts it. */
   zeitraum: { wege: ZeitraumWeg[]; von: number; bis: number; nr: number } | null;
   onZeitraumDatum: (t: number) => void;
@@ -271,6 +276,10 @@ export function Karte(props: KartenProps) {
   }, [props.zeitraum?.nr]);
 
   // Replay on opening: fit all new outings into view, then run along them once.
+  const drohneRef = useRef(props.rueckblickDrohne);
+  drohneRef.current = props.rueckblickDrohne;
+  const gelbDazuRef = useRef(props.onGelbDazu);
+  gelbDazuRef.current = props.onGelbDazu;
   const rbEnde = useRef(props.onRueckblickEnde);
   rbEnde.current = props.onRueckblickEnde;
   useEffect(() => {
@@ -280,7 +289,7 @@ export function Karte(props: KartenProps) {
     // Visible part of the sheet (it is moved down when small).
     const rahmen = document.querySelector(".blatt")?.getBoundingClientRect();
     const blatt = rahmen ? Math.max(0, karte.getContainer().getBoundingClientRect().bottom - rahmen.top) : 160;
-    return rueckblickAbspielen(
+    return (drohneRef.current ? drohneAbspielen : rueckblickAbspielen)(
       karte,
       { wege: rb.wege, seit: rb.seit, bis: rb.bis },
       {
@@ -291,6 +300,7 @@ export function Karte(props: KartenProps) {
         untenFrei: Math.min(blatt, karte.getContainer().clientHeight * 0.4),
         // A past day ends where its ways are, not at the chosen quarter.
         veedel: rb.bis === undefined ? veedelRahmen(gewaehltRef.current, datenRef.current) : null,
+        gelbDazu: (stuecke) => gelbDazuRef.current(stuecke),
       },
       () => rbEnde.current(),
     );

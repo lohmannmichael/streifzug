@@ -13,6 +13,8 @@ export interface Einstellungen {
   kuli: string;
   /** Each street keeps the highlighter colour of the year it was first walked. */
   jahresFarben: boolean;
+  /** Replay on opening as a drone flight (Michi, 24.11.2026); off: the calm one, way by way. */
+  rueckblickDrohne: boolean;
 }
 
 export const MARKER_FARBEN = [
@@ -49,6 +51,7 @@ const STANDARD: Einstellungen = {
   marker: "#ffe83a",
   kuli: "#d92b20",
   jahresFarben: false,
+  rueckblickDrohne: true,
 };
 
 function lesen(): Einstellungen {

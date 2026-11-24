@@ -18,7 +18,7 @@ export interface RueckblickWeg {
   gefahren?: boolean[];
 }
 
-interface RueckblickDaten {
+export interface RueckblickDaten {
   wege: RueckblickWeg[];
   /** Everything first walked since this time counts as new. */
   seit: number;
@@ -26,7 +26,7 @@ interface RueckblickDaten {
   bis?: number | undefined;
 }
 
-interface RueckblickKontext {
+export interface RueckblickKontext {
   /** All seen ("aktiv") street pieces with the time each was first walked. */
   entdeckt: readonly Piece[];
   erstesMal: ReadonlyMap<string, number>;
@@ -38,6 +38,8 @@ interface RueckblickKontext {
   untenFrei: number;
   /** Bounds of the chosen quarter, for the closing zoom. */
   veedel: [[number, number], [number, number]] | null;
+  /** New pieces just turned yellow (for "+340 m neu" and the street name on top). */
+  gelbDazu?: (stuecke: readonly Piece[]) => void;
 }
 
 const ZOOM_FOLGEN = 16;
@@ -53,21 +55,21 @@ const RUHIG_JE_WEG_MS = 1000;
 
 const ruhig = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function alsReplayWeg(w: RueckblickWeg): ReplayWeg {
+export function alsReplayWeg(w: RueckblickWeg): ReplayWeg {
   return { coords: w.coords, arten: w.coords.slice(1).map((_, i): ReplayArt => (w.gefahren?.[i] && w.gefahren?.[i + 1] ? "gefahren" : "neu")) };
 }
 
 /** Only the parts walked or cycled release yellow (a car ride never does). */
-const nurAktiv = (plan: ReplayPlan): ReplayPlan => ({ ...plan, abschnitte: plan.abschnitte.filter((a) => a.art !== "gefahren") });
+export const nurAktiv = (plan: ReplayPlan): ReplayPlan => ({ ...plan, abschnitte: plan.abschnitte.filter((a) => a.art !== "gefahren") });
 
-function box(coords: readonly LonLat[]): [number, number, number, number] {
+export function box(coords: readonly LonLat[]): [number, number, number, number] {
   let [w, s, o, n] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const [x, y] of coords) [w, s, o, n] = [Math.min(w, x), Math.min(s, y), Math.max(o, x), Math.max(n, y)];
   return [w, s, o, n];
 }
 
 /** The way up to `m` meters, split into ink and pen-line parts. */
-function spurBis(weg: ReplayWeg, meter: readonly number[], m: number) {
+export function spurBis(weg: ReplayWeg, meter: readonly number[], m: number) {
   const features: { type: "Feature"; properties: { gefahren: boolean }; geometry: { type: "LineString"; coordinates: LonLat[] } }[] = [];
   let aktuell: LonLat[] = [weg.coords[0]!];
   let art = weg.arten[0] === "gefahren";
@@ -179,6 +181,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
     let m = freigegeben;
     while (m < reihenfolge.length && (freigabe.get(reihenfolge[m]!.id) ?? Infinity) <= t) m++;
     if (m !== freigegeben) {
+      k.gelbDazu?.(reihenfolge.slice(freigegeben, m));
       freigegeben = m;
       k.zeichnen([...alt, ...reihenfolge.slice(0, m)]);
     }

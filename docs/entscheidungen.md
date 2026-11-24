@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 24.11.2026: Rückblick als Drohnenflug (zweite Variante) mit Anzeige oben
+- Michi: Der Rückblick beim Öffnen fährt teils langsam hinterher und ist teils zu weit herausgezoomt; lieber näher und je nach Strecke schneller. Drei Vorschläge gemacht (A immer nah, B nur das Neue, C Drohne); Michi wählte C zum Ausprobieren, dazu Ideen 1 (Straßenname), 2 (Zähler), 5 (komplette Straße)
+- Drohne (`karte/drohne.ts`, Kern `drohne.ts` mit 5 Tests): je Gegend (Wege innerhalb etwa 40 km) zuerst ein Überblick über alle ihre Wege des Tages (höchstens Zoom 14), dann gleitet die Kamera hinunter. Zoom nach Art des Stücks an der Stiftspitze: neue Straße 17, bekannte 15,6, Autofahrt 13,6, Flug zum nächsten Weg 14,8; der Zoom gleitet (0,65 s), die Position folgt eng (0,22 s), Spitze leicht vor der Mitte. Tempo: Neues 90 m/s, Bekanntes sechsfach, Auto 25-fach, alles zusammen auf 5 s plus 3 s je neuem km gebracht (höchstens 15 s). Neue Gegend (Köln, dann Freising): harter Schnitt zum Überblick. Tipp überspringt, Gedrückthalten dreifach. „Bewegung reduzieren“: die ruhige Variante
+- Einstellungen → Stifte: Schalter „Rückblick als Drohnenflug“ (zum Ausprobieren an); aus = die ruhige Variante aus F1
+- Oben während des Rückblicks: „+340 m neu“ zählt mit; darunter kurz „Neu: Straßenname“ beim Gelbwerden, „Komplett: Straßenname“ (Textmarker) wenn das letzte fehlende Stück einer Straße dazukommt. Namen liefert der Hintergrund (`namen`). Gilt für beide Varianten
+- Nicht umgesetzt aus Idee 2: Die Prozentzahl im Blatt steigt weiter erst am Ende (wie bisher)
+
 ## 24.11.2026: Gespeicherte Ergebnisse passen nach einem Karten-Update nicht mehr (behoben)
 - Michi (Bilder Ludwig-Jahn-Straße, Hans-Willy-Mertens-Straße, Aachener Straße): Wo er war, fehlte Gelb; dafür kurze gelbe Bruchstücke. Mit seinen Punkten nachgerechnet (nur lesend) wurden beide Straßen vollständig gelb, auch mit älteren Ständen der App
 - Ursache: Die App speichert je Weg nur Kennungen („Kachel:Linie:Stück“). Sie gelten nur für eine Version der Kartendaten. OpenFreeMap hat am 22.11. neue Daten veröffentlicht (`20261122_124456_pt`, vorher `20261115_080022_pt`); in der Kachel um Weiden bezeichnen danach 1.051 von 2.274 Kennungen eine andere Straße (Beispiel: `417:4` war ein Stück der Römerstraße, ist jetzt eines der Hans-Willy-Mertens-Straße). Gespeicherte Ergebnisse zeigten so auf falsche Stücke. Das passiert bei jedem Update (etwa wöchentlich)

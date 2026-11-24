@@ -35,6 +35,9 @@ test("Rückblick fährt alle Wege nach (F1): unter 20 Sekunden, Endstand wie son
   const ueberspringen = page.getByRole("button", { name: "Überspringen" });
   await expect(ueberspringen).toBeVisible();
   const start = Date.now();
+  // On top: the new meters run up, and the name of a street just turned yellow shows (Drohne, 24.11.2026).
+  await expect(page.locator(".rb-meter")).toContainText(/neu$/, { timeout: 20_000 });
+  await expect(page.locator(".rb-zeile").first()).toContainText(/^(Neu|Komplett): /, { timeout: 20_000 });
   await expect(ueberspringen).toBeHidden({ timeout: 45_000 });
   // 20 s for the ways (exactly checked in the core tests), plus the short look before and the
   // closing zoom; the test browser draws without a graphics chip, slower when tests run side by side.

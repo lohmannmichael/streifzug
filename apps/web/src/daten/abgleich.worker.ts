@@ -66,6 +66,7 @@ export type Anfrage =
   | { typ: "wegeListe"; nr: number; seit: number }
   | { typ: "reiseWege"; nr: number }
   | { typ: "zeitleisten"; nr: number; liste: Region[] }
+  | { typ: "namen"; nr: number; ids: string[] }
   | { typ: "abschnitte"; nr: number; id: string; korrekturen: Korrektur[] };
 
 export type Antwort =
@@ -75,6 +76,7 @@ export type Antwort =
   | { typ: "komplett"; nr: number; komplett: KompletteStrasse[] }
   | { typ: "reiseWege"; nr: number; wege: ReiseWeg[] }
   | { typ: "zeitleisten"; nr: number; jeGebiet: [string, number[], number[]][] }
+  | { typ: "namen"; nr: number; namen: [string, string | null][] }
   | { typ: "vorschau"; nr: number; vorschau: ImportVorschau | null; fehler: string | null }
   | { typ: "info"; nr: number; info: QuellenInfo }
   | { typ: "abgeholt"; nr: number; punkte: number; bis: string | null; fehler: string | null }
@@ -527,6 +529,15 @@ async function antworten(a: Anfrage): Promise<void> {
         if (fixes.length > 1) wege.push({ id: k.id, startedAt: k.startedAt, endedAt: k.endedAt ?? k.startedAt, distanceM: k.distanceM, coords: kuerzen(fixes) });
       }
       return senden({ typ: "wege", nr: a.nr, wege });
+    }
+    case "namen": {
+      // Street names of pieces (replay: "Neu: Hans-Willy-Mertens-Straße").
+      const namen: [string, string | null][] = [];
+      for (const id of a.ids) {
+        const p = stueckNachId.get(id);
+        namen.push([id, p ? await strassenName(p).catch(() => null) : null]);
+      }
+      return senden({ typ: "namen", nr: a.nr, namen });
     }
     case "zeitleisten": {
       // Zeitreise (Bauplan 3, F3): for every area, when how many street meters were first walked.

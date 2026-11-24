@@ -26,3 +26,4 @@ export * from "./komplett";
 export * from "./ueberblick";
 export * from "./reisen";
 export * from "./kartenstand";
+export * from "./drohne";

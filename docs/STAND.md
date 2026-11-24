@@ -5,6 +5,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 **Geltender Plan: `docs/PLAN-3.md` (Bauplan Fassung 3, Umbauplan).** Fassung 2 (`docs/PLAN.md`) gilt weiter für Zählregeln, Datenbasis und Design-System. Ältere Notizen: `docs/archiv/STAND-bis-2026-11-22.md`.
 
 ## Was läuft
+- Rückblick beim Öffnen als Drohnenflug (Schalter in Einstellungen → Stifte, aus = ruhig), oben „+340 m neu“ und „Neu/Komplett: Straße“
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
 - Gespeicherte Ergebnisse gelten nur für eine Version der Kartendaten; nach einem OpenFreeMap-Update wird einmal alles neu gerechnet
@@ -49,6 +50,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
 - Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
+- Drohnenflug ausprobieren: nah genug, Tempo, Überblick am Anfang? Bleibt er oder die ruhige Variante?
 - GPS-Zappeln: Sind die Zacken weg, wird die eigene Straße vor der Haustür noch gelb?
 - Fehlendes Gelb (Ludwig-Jahn-Straße, Hans-Willy-Mertens-Straße) kam vom Karten-Update am 22.11. (behoben am 24.11.): nach dem Neuöffnen prüfen, ob beide jetzt gelb sind
 - Plan Abschnitt 10: Monatsrückblick als Video? Backlog (Umweg-Tipp, Steckbrief, Trampelpfade, Heute vor einem Jahr, Rekorde, Fast fertig) rein oder raus? App weitergeben (Einladungs-Code, Erste Schritte) wann?

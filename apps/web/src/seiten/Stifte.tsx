@@ -38,6 +38,13 @@ export function Stifte(props: { werte: Einstellungen; aendern: (teil: Partial<Ei
         </span>
         <input type="checkbox" role="switch" className="schalter" checked={werte.jahresFarben} onChange={(e) => aendern({ jahresFarben: e.target.checked })} />
       </label>
+      <label className="schalter-zeile">
+        <span>
+          <span className="schalter-label">{tx.drohne}</span>
+          <span className="schalter-hinweis">{werte.rueckblickDrohne ? tx.drohneAn : tx.drohneAus}</span>
+        </span>
+        <input type="checkbox" role="switch" className="schalter" checked={werte.rueckblickDrohne} onChange={(e) => aendern({ rueckblickDrohne: e.target.checked })} />
+      </label>
     </div>
   );
 }

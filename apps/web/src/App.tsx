@@ -1,4 +1,4 @@
-import { eineLinieJeStrasse, meterBis, vormonat, zeitleiste, type Zeitleiste } from "@streifzug/core";
+import { eineLinieJeStrasse, meterBis, type Piece, vormonat, zeitleiste, type Zeitleiste } from "@streifzug/core";
 import { fragen } from "./daten/arbeiter";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
@@ -21,6 +21,7 @@ import { PassSeite, type PassTeil } from "./seiten/Pass";
 import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { neuInZeitraum, RueckblickeSeite, type Tag, type ZeitraumWahl } from "./seiten/Rueckblicke";
 import { ZeitraumDatum, ZeitraumKarte } from "./seiten/ZeitraumKarte";
+import { RueckblickAnzeige, type RbAnzeigeStand } from "./seiten/RueckblickAnzeige";
 import { reiseUmbenennen, type ReiseZeile } from "./daten/reisen";
 import type { ZeitraumWeg } from "./karte/zeitraum";
 import { ZeitreiseLeiste } from "./seiten/Zeitreise";
@@ -392,6 +393,54 @@ export function App() {
     },
   };
 
+  // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
+  const abspielen =
+    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr } : null);
+  // During a replay: "+340 m neu" and the street just turned yellow (Michi, 24.11.2026).
+  const [rbAnzeige, setRbAnzeige] = useState<RbAnzeigeStand | null>(null);
+  const rbNamen = useRef(new Map<string, string | null>());
+  const rbKomplett = useRef(new Map<string, { name: string; offen: Set<string> }>());
+  useEffect(() => {
+    if (!abspielen || !fortschritt) return setRbAnzeige(null);
+    setRbAnzeige({ m: 0, zeile: null, komplett: false });
+    const bisZeit = "bis" in abspielen && abspielen.bis !== undefined ? abspielen.bis : Infinity;
+    const neueIds = fortschritt.stuecke.filter((p, i) => p.kind === "street" && (fortschritt.erstesMal[i] ?? 0) >= abspielen.seit && (fortschritt.erstesMal[i] ?? 0) < bisZeit).map((p) => p.id);
+    rbNamen.current = new Map();
+    void fragen<"namen">({ typ: "namen", ids: neueIds }).antwort.then((a) => (rbNamen.current = new Map(a.namen)));
+    // Streets completed by these ways: their name lights up once their last piece turns yellow.
+    rbKomplett.current = new Map();
+    for (const k of fortschritt.komplett ?? []) {
+      if (k.seit < abspielen.seit) continue;
+      const eintrag = { name: k.name, offen: new Set(k.ids.filter((id) => neueIds.includes(id))) };
+      for (const id of eintrag.offen) rbKomplett.current.set(id, eintrag);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abspielen?.nr]);
+  const gelbDazu = (stuecke: readonly Piece[]) => {
+    let dazu = 0;
+    let zeile: string | null = null;
+    let komplett = false;
+    for (const p of stuecke) {
+      dazu += p.kind === "street" ? p.lengthM * p.weight : p.kind === "path" ? p.lengthM : 0;
+      const k = rbKomplett.current.get(p.id);
+      if (k) {
+        k.offen.delete(p.id);
+        if (k.offen.size === 0) {
+          zeile = t.rbAnzeige.komplett(k.name);
+          komplett = true;
+        }
+      }
+      const name = rbNamen.current.get(p.id);
+      if (name && !komplett) zeile = t.rbAnzeige.strasse(name);
+    }
+    setRbAnzeige((alt) => {
+      const neu = { m: (alt?.m ?? 0) + dazu, zeile: alt?.zeile ?? null, komplett: alt?.komplett ?? false };
+      // A new name only when it changes; a completed street stays a moment longer than plain names.
+      if (zeile && zeile !== alt?.zeile) return { ...neu, zeile, komplett };
+      return neu;
+    });
+  };
+
   // Opened from the confirmation link (in Safari): say where to go on.
   if (safariHinweis)
     return (
@@ -502,9 +551,6 @@ export function App() {
       />
     ) : null;
 
-  // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
-  const abspielen =
-    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr } : null);
   // Pages of the Pass lie over the plan; the plan stays as it is underneath (Bauplan 3, D2).
   return (
     <>
@@ -531,6 +577,8 @@ export function App() {
           position={position}
           zentrieren={zentrieren}
           rueckblick={abspielen}
+          rueckblickDrohne={einstellungen.rueckblickDrohne}
+          onGelbDazu={gelbDazu}
           onRueckblickEnde={() => {
             setEinzeln(null);
             if (einzeln) return;
@@ -550,6 +598,7 @@ export function App() {
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />
         {zeitraum && !zeitraum.fertig && zrDatum !== null && <ZeitraumDatum t={zrDatum} />}
+        {abspielen && rbAnzeige && rbAnzeige.m >= 1 && <RueckblickAnzeige stand={rbAnzeige} />}
         <div className="karten-knoepfe">
           <button type="button" className="rund-knopf" aria-label={t.pass.oeffnen} onClick={() => setPass("start")}>
             <IconPass />

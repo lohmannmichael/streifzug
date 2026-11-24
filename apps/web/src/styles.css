@@ -629,3 +629,11 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 /* "Ort hinzufügen" on the Orte page. */
 .ort-hinzufuegen { margin-top: 28px; }
 .ort-hinzufuegen .adresse { margin-bottom: 8px; }
+
+/* Replay: new meters on top and the street just turned yellow (Michi, 24.11.2026). */
+.rb-anzeige { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 50%; z-index: 4; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.rb-meter { margin: 0; padding: 8px 14px; border-radius: 12px; background: var(--flaeche); box-shadow: var(--schatten); font-family: var(--schrift-zahl); font-weight: 800; font-size: var(--t-gross); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rb-zeile { margin: 0; padding: 4px 10px; border-radius: 8px; background: var(--flaeche); box-shadow: var(--schatten); font-size: var(--t-klein); font-weight: 600; white-space: nowrap; animation: rb-zeile 2.2s ease-out both; }
+.rb-zeile.komplett { background: var(--marker); color: #151515; }
+@keyframes rb-zeile { 0% { opacity: 0; transform: translateY(-4px); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rb-zeile { animation: none; } }

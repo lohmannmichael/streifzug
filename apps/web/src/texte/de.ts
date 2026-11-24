@@ -214,6 +214,11 @@ export const de = {
     safariText: "Geh jetzt zurück zur App Unterwegs auf deinem Homescreen. Dort legst du unter Einstellungen → Konto dein Passwort fest.",
     safariWeiter: "Hier weiter",
   },
+  rbAnzeige: {
+    neu: (strecke: string) => `+${strecke} neu`,
+    strasse: (name: string) => `Neu: ${name}`,
+    komplett: (name: string) => `Komplett: ${name}`,
+  },
   zeitraum: {
     woche: "Diese Woche",
     deineWoche: "Deine Woche",
@@ -315,6 +320,9 @@ export const de = {
     strassenKomplett: (n: number) => `${n} Straßen komplett`,
   },
   stifte: {
+    drohne: "Rückblick als Drohnenflug",
+    drohneAn: "Von oben hinein, nah bei Neuem, schnell bei Bekanntem.",
+    drohneAus: "Ruhig: jeder Weg einzeln, die Karte fährt mit.",
     titel: "Stifte",
     marker: "Textmarker",
     kuli: "Kuli (gefahren)",
