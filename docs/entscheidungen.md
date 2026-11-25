@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 25.11.2026: Stummel an Kreuzungen raus
+- Michi schickte Bilder mit kleinen gelben Kreuzen, Stummeln und Zickzack-Stücken an Kreuzungen (Rudolf-Harbig-Weg, Kantstraße, Aachener Straße/Bunzlauer Straße, Schützenweg, Frechen, Stadtwald)
+- Ursache: Die Regeln, die nach dem Abgleich Ecken, kurze Lücken und die zweite Fahrbahn auffüllen, nehmen an Kreuzungen manchmal ein paar Meter der Querstraße mit
+- Neu als letzter Schritt (`stummelEntfernen`): Ein gelbes Stück bis 30 m, dessen eines Ende an kein anderes gelbes Stück anschließt (3 m), zählt nur, wenn ein GPS-Punkt (zu Fuß/Rad) höchstens 15 m an dieses Ende herankam. 5 Tests
+- Geprüft an den Testwegen (Bilder vorher/nachher): herausgenommen wurden nur Stummel (Schleife über der Aachener Straße, Zipfel über Kreuzungen hinaus); Weiden dort 9,8 → 9,5 %. Abgleich-Version 13: das iPhone rechnet einmal neu (etwa 2–3 Minuten)
+- Nicht erfasst: längere Stücke der zweiten Fahrbahn neben großen Straßen (über 30 m), z. B. in Frechen
+
 ## 25.11.2026: Wege schöner zeichnen (A: glätten, C: einrasten)
 - Michi: Wege smoother und „mehr vorhersagend“ zeichnen, nicht 100 % auf GPS verlassen. Vier Wege vorgeschlagen (A glätten, B einrasten, C Mischung, D fremder Dienst); Michi wählte A und C. D (z. B. Mapbox) abgelehnt: Standorte an Dritte, Kosten, Abgleich soll auf dem Gerät laufen
 - Gilt nur fürs Zeichnen (Stiftlinie im Rückblick, Polaroid, Zeitraum, Live-Spur), am Zählen ändert sich nichts

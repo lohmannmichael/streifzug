@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eckenSchliessen, lueckenSchliessen } from "./luecken";
+import { eckenSchliessen, lueckenSchliessen, stummelEntfernen } from "./luecken";
 import type { Piece } from "./pieces";
 
 const M = 1 / 111_195;
@@ -65,3 +65,45 @@ describe("eckenSchliessen", () => {
   });
 });
 
+
+describe("stummelEntfernen (Michi, 25.11.2026: kleine Kreuze und Stummel an Kreuzungen)", () => {
+  // A walked street along the north axis (0 to 200 m) and a side street crossing it at 100 m.
+  const OST = 1 / 70_000;
+  const quer = (id: string, von: number, bis: number): Piece => ({
+    id,
+    kind: "street",
+    weight: 1,
+    lengthM: Math.abs(bis - von),
+    coords: [[6.83 + von * OST, 50.94 + 100 * M], [6.83 + bis * OST, 50.94 + 100 * M]],
+    mid: [6.83 + ((von + bis) / 2) * OST, 50.94 + 100 * M],
+  });
+  const a = stueck("a", 0, 100);
+  const b = stueck("b", 100, 200);
+  const stummel = quer("stummel", 0, 20);
+  const fix = (nord: number, ost = 0) => ({ lat: 50.94 + nord * M, lon: 6.83 + ost * OST, t: 0 });
+  const entlang = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200].map((n) => fix(n));
+
+  it("takes out a short side piece you only passed at the crossing", () => {
+    expect([...stummelEntfernen([a, b, stummel], new Set(["a", "b", "stummel"]), entlang)]).toEqual(["stummel"]);
+  });
+
+  it("keeps it when you went to its end", () => {
+    expect(stummelEntfernen([a, b, stummel], new Set(["a", "b", "stummel"]), [...entlang, fix(100, 18)]).size).toBe(0);
+  });
+
+  it("keeps short pieces inside a walked street (both ends joined)", () => {
+    const kurz = stueck("kurz", 100, 115);
+    const weiter = stueck("weiter", 115, 200);
+    expect(stummelEntfernen([a, kurz, weiter], new Set(["a", "kurz", "weiter"]), entlang).size).toBe(0);
+  });
+
+  it("keeps longer pieces", () => {
+    const lang = quer("lang", 0, 60);
+    expect(stummelEntfernen([a, b, lang], new Set(["a", "b", "lang"]), entlang).size).toBe(0);
+  });
+
+  it("also takes out a short piece standing alone far from any point", () => {
+    const allein = quer("allein", 300, 320);
+    expect([...stummelEntfernen([a, b, allein], new Set(["a", "b", "allein"]), entlang)]).toEqual(["allein"]);
+  });
+});

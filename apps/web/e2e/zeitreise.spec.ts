@@ -8,7 +8,7 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
   await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeGreaterThan(1500);
   const heute = await gelbePixel(page, UEBER_DEM_BLATT);
@@ -24,7 +24,7 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
   const erster = Date.now() - (40 * 1440 + 600) * 60_000;
   const tage = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(erster).setHours(0, 0, 0, 0)) / 86_400_000);
   await expect(schieber).toHaveAttribute("max", String(tage));
-  await expect(leiste.locator(".prozent")).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(leiste.locator(".prozent")).toHaveAttribute("aria-label", "9,5 Prozent");
 
   // Back to the first day: only the first walk is yellow.
   await schieber.fill("0");
@@ -40,13 +40,13 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
       return f ? String(f.properties.pt ?? "") : "fehlt";
     })()`);
   await expect.poll(weidenText).toMatch(/^\d,\d %$/);
-  expect(await weidenText()).not.toBe("9,8 %");
+  expect(await weidenText()).not.toBe("9,5 %");
   await schieber.fill(String(tage));
-  await expect.poll(weidenText).toBe("9,8 %");
+  await expect.poll(weidenText).toBe("9,5 %");
 
   // "Fertig": the sheet and today's yellow are back.
   await leiste.getByRole("button", { name: "Fertig" }).tap();
   await expect(leiste).toBeHidden();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeGreaterThan(heute * 0.95);
 });

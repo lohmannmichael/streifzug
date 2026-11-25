@@ -89,3 +89,69 @@ export function eckenSchliessen(
   }
   return dazu;
 }
+
+/** A seen piece up to this long with a free end is a stub unless a point came near that end. */
+export const STUMMEL_MAX_M = 30;
+const STUMMEL_ENDE_M = 15;
+/** An end closer than this to another seen piece is joined. */
+const ANSCHLUSS_M = 3;
+
+/**
+ * Stubs (Michi, 25.11.2026: small crosses and stubs at crossings): the rules that close corners
+ * and gaps sometimes take a few meters of a side street you only passed. A seen piece of at most
+ * 30 m with an end that joins no other seen piece counts only if a GPS point came within 15 m of
+ * that end. Returns the ids to take out again.
+ */
+export function stummelEntfernen(kandidaten: readonly Piece[], gesehen: ReadonlySet<string>, fixes: readonly { lat: number; lon: number }[]): Set<string> {
+  const raus = new Set<string>();
+  const seen = kandidaten.filter((p) => gesehen.has(p.id));
+  const kurze = seen.filter((p) => p.lengthM <= STUMMEL_MAX_M && p.coords.length > 1);
+  if (kurze.length === 0) return raus;
+  const lat0 = kurze[0]!.coords[0]![1];
+  const kx = 111_320 * Math.cos((lat0 * Math.PI) / 180);
+  const ky = 111_195;
+  const xy = (p: LonLat): [number, number] => [p[0] * kx, p[1] * ky];
+  // Grid of the seen pieces' segments and of the points (cells of 20 m).
+  const ZELLE = 20;
+  const k = (x: number, y: number) => `${Math.floor(x / ZELLE)}:${Math.floor(y / ZELLE)}`;
+  const segs = new Map<string, { id: string; a: [number, number]; b: [number, number] }[]>();
+  for (const p of seen)
+    for (let i = 1; i < p.coords.length; i++) {
+      const a = xy(p.coords[i - 1]!);
+      const b = xy(p.coords[i]!);
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / ZELLE));
+      const zellen = new Set<string>();
+      for (let j = 0; j <= n; j++) zellen.add(k(a[0] + ((b[0] - a[0]) * j) / n, a[1] + ((b[1] - a[1]) * j) / n));
+      for (const z of zellen) (segs.get(z) ?? segs.set(z, []).get(z)!).push({ id: p.id, a, b });
+    }
+  const punkte = new Map<string, [number, number][]>();
+  for (const f of fixes) {
+    const q = xy([f.lon, f.lat]);
+    const z = k(q[0], q[1]);
+    (punkte.get(z) ?? punkte.set(z, []).get(z)!).push(q);
+  }
+  const umgebung = function* <T>(karte: Map<string, T[]>, q: [number, number]) {
+    const [cx, cy] = [Math.floor(q[0] / ZELLE), Math.floor(q[1] / ZELLE)];
+    for (const dx of [-1, 0, 1]) for (const dy of [-1, 0, 1]) yield* karte.get(`${cx + dx}:${cy + dy}`) ?? [];
+  };
+  const abstand = (q: [number, number], a: [number, number], b: [number, number]) => {
+    const [sx, sy] = [b[0] - a[0], b[1] - a[1]];
+    const l = sx * sx + sy * sy;
+    const t = l > 0 ? Math.max(0, Math.min(1, ((q[0] - a[0]) * sx + (q[1] - a[1]) * sy) / l)) : 0;
+    return Math.hypot(q[0] - a[0] - t * sx, q[1] - a[1] - t * sy);
+  };
+  for (const p of kurze) {
+    const enden = [xy(p.coords[0]!), xy(p.coords[p.coords.length - 1]!)];
+    const frei = enden.filter((e) => {
+      for (const s of umgebung(segs, e)) if (s.id !== p.id && abstand(e, s.a, s.b) <= ANSCHLUSS_M) return false;
+      return true;
+    });
+    if (frei.length === 0) continue;
+    const erreicht = frei.every((e) => {
+      for (const q of umgebung(punkte, e)) if (Math.hypot(q[0] - e[0], q[1] - e[1]) <= STUMMEL_ENDE_M) return true;
+      return false;
+    });
+    if (!erreicht) raus.add(p.id);
+  }
+  return raus;
+}

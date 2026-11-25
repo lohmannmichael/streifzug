@@ -21,7 +21,7 @@ test("Karten-Update: gespeicherte Ergebnisse werden mit den neuen Kartendaten ne
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
   await expect.poll(async () => (await schluessel(page)).length).toBeGreaterThan(0);
   expect((await schluessel(page)).every((k) => k.includes("20261115_080022_pt"))).toBe(true);
 
@@ -30,6 +30,6 @@ test("Karten-Update: gespeicherte Ergebnisse werden mit den neuen Kartendaten ne
   await page.reload();
   await planDa(page);
   await expect.poll(async () => (await schluessel(page)).every((k) => k.includes("20991231_000000_pt")), { timeout: 30_000 }).toBe(true);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
   expect(await page.evaluate(() => localStorage.getItem("streifzug.kartenStand"))).toBe("20991231_000000_pt");
 });

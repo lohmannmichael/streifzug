@@ -1,4 +1,4 @@
-import { orteMitPunkten, aktiveFolgen, folgenDerArt, eckenSchliessen, nachzeichnen, lueckenSchliessen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
+import { orteMitPunkten, aktiveFolgen, folgenDerArt, eckenSchliessen, nachzeichnen, lueckenSchliessen, stummelEntfernen, pointInGeometry, seenByLegs, splitLegs, tileFor, TILE_ZOOM, type Fix, type Korrektur, type Piece, type PolygonGeometry, fahrbahnenErgaenzen } from "@streifzug/core";
 import { ortDatei } from "./ortDatei";
 import type { Region, Summe } from "./regionen";
 import { stueckeDerKachel } from "./strassen";
@@ -13,7 +13,8 @@ import { stueckeDerKachel } from "./strassen";
 // 10 (22.11.2026): tracks and long service roads drawn as paths.
 // 11 (23.11.2026): GPS jitter in a house is a halt, not a way.
 // 12 (24.11.2026): gaps in car rides traced along the streets (pen line only).
-const ABGLEICH_VERSION = 12;
+// 13 (25.11.2026): short stubs with a free end you never came near are taken out.
+const ABGLEICH_VERSION = 13;
 
 interface Flaeche {
   id: string;
@@ -119,6 +120,8 @@ export async function abgleichen(fixes: Fix[], locker: boolean, korrekturen: rea
   for (const id of lueckenSchliessen(alle, aktivIds)) aktivIds.add(id);
   // Two carriageways: one walked counts the other too (Michi, 22.11.2026).
   for (const id of fahrbahnenErgaenzen(alle, aktivIds)) aktivIds.add(id);
+  // Stubs: a short piece with a free end you never came near (Michi, 25.11.2026).
+  for (const id of stummelEntfernen(alle, aktivIds, zuFuss)) aktivIds.delete(id);
   return { aktiv: alle.filter((p) => aktivIds.has(p.id)), gefahren: alle.filter((p) => !aktivIds.has(p.id) && gefahrenIds.has(p.id)) };
 }
 

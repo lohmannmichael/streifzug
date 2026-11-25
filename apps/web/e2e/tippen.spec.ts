@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
 });
 
 test("Herausgezoomt: Tipp auf ein Viertel wählt es", async ({ page }) => {

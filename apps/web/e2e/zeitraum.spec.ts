@@ -8,7 +8,7 @@ test("Rückblicke (F2): drei Kacheln, Monatszeile, ein Zeitraum läuft ab und en
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
 
   await page.getByRole("button", { name: "Pass öffnen" }).tap();
   await page.locator(".pass-zeile", { hasText: "Rückblicke" }).tap();
@@ -27,5 +27,5 @@ test("Rückblicke (F2): drei Kacheln, Monatszeile, ein Zeitraum läuft ab und en
   await expect(page.locator(".zeitraum-zahlen")).toContainText(/komplette Straßen?/);
   await fertig.tap();
   await expect(page.locator(".zeitraum-ende")).toBeHidden();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
 });
