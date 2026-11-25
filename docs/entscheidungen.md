@@ -6,6 +6,7 @@
 - Obergrenze 30 s: Zuerst werden bekannte Strecken und Autofahrten schneller (höchstens dreifach), reicht das nicht, werden sie weggelassen (harter Schnitt, Wege ohne Neues fallen weg); erst danach wird auch Neues schneller (Tage mit sehr viel Neuem wie der 22.11.)
 - Behoben, gefunden durch die Oberflächentests: Der Tipp zum Überspringen wählte zusätzlich das Viertel unter dem Finger. Während des Rückblicks und 0,7 s danach nimmt die Karte keine Tipps an (`karte/tippSperre.ts`). Zeitreise-Test war von der Uhrzeit abhängig (vor 10 Uhr ein Tag mehr), jetzt nicht mehr
 - Kern: `planeDrohne` neu, 7 Tests
+- Panne: Die Version wurde veröffentlicht, obwohl nach einer letzten kleinen Änderung ein Oberflächentest rot war (der Befehl hatte das Testergebnis nicht ausgewertet); die GitHub-Prüfung schlug fehl. Ursache: Die Zeitgrenze im Test stammte noch aus F1 (20 s), die Drohne darf bis zu 30 s plus Überblick und Flüge brauchen. Test angepasst, volle Prüfung grün, neu veröffentlicht
 
 ## 24.11.2026: Rückblick als Drohnenflug (zweite Variante) mit Anzeige oben
 - Michi: Der Rückblick beim Öffnen fährt teils langsam hinterher und ist teils zu weit herausgezoomt; lieber näher und je nach Strecke schneller. Drei Vorschläge gemacht (A immer nah, B nur das Neue, C Drohne); Michi wählte C zum Ausprobieren, dazu Ideen 1 (Straßenname), 2 (Zähler), 5 (komplette Straße)
