@@ -648,7 +648,7 @@ export function App() {
             if (einzeln) return;
             if (polaroidAn) {
               // The picture stays a moment, then the next one comes; the last one stays open.
-              if (pol && pol.i < stationen.length - 1) polWeiter.current = window.setTimeout(() => polWahl(pol.i + 1), 2500);
+              if (pol && pol.i < stationen.length - 1) polWeiter.current = window.setTimeout(() => polWahl(pol.i + 1), 1500);
               return;
             }
             rueckblickFertig();

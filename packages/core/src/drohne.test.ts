@@ -57,4 +57,9 @@ describe("planeDrohne (ruhig schweben, Michi 25.11.2026)", () => {
     const zweiter = plan.abschnitte.find((a) => a.weg === 1)!;
     expect(zweiter.start - (erster.start + erster.dauer)).toBeCloseTo(800, 0);
   });
+
+  it("goes faster with a speed factor (Polaroid)", () => {
+    const plan = planeDrohne([weg(Array(20).fill("neu"))], { tempoFaktor: 2 });
+    expect(plan.dauer / 1000).toBeCloseTo(5.5, 0);
+  });
 });

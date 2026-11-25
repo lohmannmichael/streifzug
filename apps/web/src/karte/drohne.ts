@@ -16,7 +16,11 @@ import { box, nurAktiv, rueckblickAbspielen, spurBis, type Fenster, type Rueckbl
  */
 const ZOOM = 15;
 /** In the smaller Polaroid picture a little higher, so it shows enough around the pen. */
-const ZOOM_POLAROID = 14.6;
+const ZOOM_POLAROID = 14.4;
+/** Polaroid: twice as fast, at most 20 s per picture, shorter look from above (Michi, 25.11.2026). */
+const POLAROID_TEMPO = 2;
+const POLAROID_DECKEL_MS = 20_000;
+const POLAROID_UEBERBLICK_MS = 500;
 /** On a very full day the pen goes faster; then the camera goes up a little (at most this much). */
 const ZOOM_HOECHSTENS_HOEHER = 0.8;
 /** A jump of the pen further than this (car ride, left-out stretch, next way) is a flight. */
@@ -42,14 +46,14 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   const alt = k.entdeckt.filter((p) => (k.erstesMal.get(p.id) ?? 0) < daten.seit);
   const roh = daten.wege.filter((w) => w.coords.length > 1);
   const wege: ReplayWeg[] = roh.map((w) => ({ coords: w.coords, arten: segmentArten(w.coords, neu, w.gefahren) }));
-  const plan = planeDrohne(wege);
+  const plan = planeDrohne(wege, k.fenster ? { tempoFaktor: POLAROID_TEMPO, deckelMs: POLAROID_DECKEL_MS } : {});
   const freigabe = freigabeZeiten(nurAktiv(plan), wege, neu);
   const reihenfolge = [...neu].sort((a, b) => (freigabe.get(a.id) ?? Infinity) - (freigabe.get(b.id) ?? Infinity));
   // A very full day: new streets go faster than planned; the camera goes up a little so the pen
   // keeps a calm pace on the screen.
   const neuPlan = plan.abschnitte.filter((a) => a.art === "neu");
   const neuDauer = neuPlan.reduce((s, a) => s + a.dauer, 0);
-  const neuNatuerlich = neuPlan.reduce((s, a) => s + ((a.bis - a.von) / DROHNE_TEMPO.neu) * 1000, 0);
+  const neuNatuerlich = neuPlan.reduce((s, a) => s + ((a.bis - a.von) / (DROHNE_TEMPO.neu * (k.fenster ? POLAROID_TEMPO : 1))) * 1000, 0);
   const zoom = (k.fenster ? ZOOM_POLAROID : ZOOM) - Math.min(ZOOM_HOECHSTENS_HOEHER, Math.max(0, neuDauer > 0 ? Math.log2(neuNatuerlich / neuDauer) : 0));
 
   let aus = false;
@@ -89,7 +93,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
       cancelAnimationFrame(bild);
       zeiten.forEach((z) => window.clearTimeout(z));
       bildFertig(karte, roh, k.fenster, k, bis);
-      zeiten.push(window.setTimeout(fertig, 1000));
+      zeiten.push(window.setTimeout(fertig, 700));
       return;
     }
     stopp();
@@ -219,11 +223,11 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     // A jump (first start, car ride, left-out stretch, next way): a calm flight, the pen waits.
     const sprung = letzterPunkt ? distanceM(letzterPunkt, st.punkt) : Infinity;
     letzterPunkt = st.punkt;
-    if (sprung > SPRUNG_M) fliegen(st.punkt, sprung === Infinity ? 1800 : flugDauer(sprung), jetzt);
+    if (sprung > SPRUNG_M) fliegen(st.punkt, (sprung === Infinity ? 1800 : flugDauer(sprung)) * (k.fenster ? 0.6 : 1), jetzt);
     else kamera(st.punkt, dt);
     bild = requestAnimationFrame(schritt);
   };
-  zeiten.push(window.setTimeout(() => (bild = requestAnimationFrame(schritt)), UEBERBLICK_MS));
+  zeiten.push(window.setTimeout(() => (bild = requestAnimationFrame(schritt)), k.fenster ? POLAROID_UEBERBLICK_MS : UEBERBLICK_MS));
   return stopp;
 }
 

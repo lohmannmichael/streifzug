@@ -48,9 +48,11 @@ export function segmentArten(coords: readonly LonLat[], neu: readonly { coords: 
  * known stretches go faster (up to twice), else they are left out (ways without anything new drop
  * out); if new streets alone are still too long, they go faster too.
  */
-export function planeDrohne(wege: readonly ReplayWeg[], optionen: { flugMs?: number; deckelMs?: number } = {}): ReplayPlan {
+export function planeDrohne(wege: readonly ReplayWeg[], optionen: { flugMs?: number; deckelMs?: number; tempoFaktor?: number } = {}): ReplayPlan {
   const flugMs = optionen.flugMs ?? 0;
   const deckel = optionen.deckelMs ?? DROHNE_DECKEL_MS;
+  // Polaroid (Michi, 25.11.2026: "könnte schon noch schneller sein"): everything this much faster.
+  const faktor = optionen.tempoFaktor ?? 1;
   const meter = wege.map((w) => {
     const m = [0];
     for (let i = 1; i < w.coords.length; i++) m.push(m[i - 1]! + distanceM(w.coords[i - 1]!, w.coords[i]!));
@@ -65,7 +67,7 @@ export function planeDrohne(wege: readonly ReplayWeg[], optionen: { flugMs?: num
       else out.push({ von: meter[wi]![i]!, bis: meter[wi]![i + 1]!, art, dauer: 0 });
     }
     const da = out.filter((l) => l.bis > l.von);
-    for (const l of da) l.dauer = ((l.bis - l.von) / DROHNE_TEMPO[l.art]) * 1000;
+    for (const l of da) l.dauer = ((l.bis - l.von) / (DROHNE_TEMPO[l.art] * faktor)) * 1000;
     return da;
   });
   let auswahl = wege.map((_, i) => i).filter((i) => laeufe[i]!.length > 0);

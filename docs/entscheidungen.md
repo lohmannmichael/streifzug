@@ -1,5 +1,9 @@
 # Entscheidungen
 
+## 25.11.2026: Polaroid schneller
+- Michi: „Sieht cool aus, könnte aber schneller sein.“ Im Polaroid jetzt doppelt so schnell (neue Straßen 180 m/s, 1 km in gut 5 s), etwas höher (Zoom 14,4), höchstens 20 s je Bild, Blick von oben 0,5 s, Flüge 40 % kürzer, Pause zwischen Bildern 1,5 s statt 2,5 s. Die große Drohne bleibt unverändert
+- Kern: `planeDrohne` mit `tempoFaktor`, 8 Tests
+
 ## 25.11.2026: Polaroid auch unter Rückblicke, Meter insgesamt und neu
 - Michi: Das Polaroid auch im Menüpunkt Rückblicke, und überall zeigen, wie viel insgesamt und wie viel neu
 - Tipp auf einen Tag unter Rückblicke öffnet jetzt das Polaroid (ein Bild je Weg; neu nur bis Mitternacht des Tages). Mit Schalter „Rückblick als Polaroid“ aus läuft der Tag wie bisher auf der großen Karte
