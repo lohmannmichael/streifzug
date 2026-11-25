@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 25.11.2026: Drohne neu gedacht: ruhig schweben statt verfolgen
+- Michi: „Die Drohne fliegt viel zu schnell, man kommt nicht hinterher, viel zu hektisch. Lieber ganz normal drüber schweben, etwas weiter raus, Straßen noch gut lesbar, gute Übersicht, wo man überall war.“
+- Ursache der Hektik war weniger der Stift als die Kamera: Sie klebte am Stift, zoomte ständig zwischen 13,5 und 16,5 und schnitt hart
+- Neu: eine feste Höhe (Zoom 15, iPhone-Breite rund 600 m, Straßennamen lesbar). Die Kamera steht still, solange der Stift in einer ruhigen Zone in der Bildmitte ist (20 % der freien Fläche), und gleitet erst dann sanft nach (Zeitkonstante 0,9 s). Keine Zoomwechsel mehr während des Zeichnens
+- Tempo: neue Straßen 90 m/s (rund 60 Pixel/s, 1 km in 11 s), bekannte 140 m/s. Autofahrten, ausgelassene Stücke und der Weg zum nächsten Weg sind ein ruhiger Flug (1 bis 2,4 s), der Stift wartet so lange
+- Obergrenze 40 s (ohne Flüge): bekannte Strecken höchstens doppelt so schnell, sonst weggelassen; erst dann wird Neues schneller, dafür geht die Kamera etwas höher (bis Zoom 14,2), damit das Tempo auf dem Bildschirm ruhig bleibt
+- Kern: `planeDrohne` angepasst, 7 Tests
+
 ## 25.11.2026: Drohnenflug langsamer (Tempo nach Bildschirm)
 - Michi: „Drohnenflug viel zu schnell.“ Nachgerechnet mit seinen Tagen (nur lesend): 22.11. 14,8 km zu Fuß/Rad (8,0 neu), 23.11. 7,2 km (1,0 neu), 24.11. 1,0 km und 13,4 km Auto. Bisher wurde alles in höchstens 15 s gepresst, am 23.11. fast 1 km pro Sekunde
 - Neu: festes Tempo je Art, auf den Bildschirm bezogen: neue Straße bei Zoom 16,5 rund 150 Pixel/s (80 m/s, 1 km in gut 12 s), bekannte Strecke bei Zoom 15 rund 400 Pixel/s (600 m/s), Autofahrt bei Zoom 13,5 rund 500 Pixel/s (2,1 km/s). Kurze Tage bleiben kurz (kein Strecken mehr)

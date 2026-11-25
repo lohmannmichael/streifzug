@@ -15,7 +15,7 @@ describe("segmentArten (Bauplan 3, F1 Variante Drohne)", () => {
   });
 });
 
-describe("planeDrohne (Tempo nach Bildschirm, Michi 25.11.2026)", () => {
+describe("planeDrohne (ruhig schweben, Michi 25.11.2026)", () => {
   const weg = (arten: ReplayWeg["arten"], x0 = 6.82): ReplayWeg => ({ coords: linie(arten.length + 1, x0), arten });
   const dauer = (plan: ReturnType<typeof planeDrohne>, art: string) => plan.abschnitte.filter((a) => a.art === art).reduce((s, a) => s + a.dauer, 0);
 
@@ -27,15 +27,16 @@ describe("planeDrohne (Tempo nach Bildschirm, Michi 25.11.2026)", () => {
     expect(plan.dauer).toBeLessThan(2000);
   });
 
-  it("1 km of new streets takes about 12 seconds", () => {
+  it("1 km of new streets takes about 11 seconds, car rides take no time", () => {
     const plan = planeDrohne([weg(Array(20).fill("neu"))]);
-    expect(plan.dauer / 1000).toBeCloseTo(12.3, 0);
+    expect(plan.dauer / 1000).toBeCloseTo(10.9, 0);
+    expect(planeDrohne([weg(Array(200).fill("gefahren"))]).dauer).toBe(0);
   });
 
   it("too long: known stretches go faster first, the new ones keep their pace", () => {
-    // 2 km new (25 s) and 6 km known (10 s): 35 s, known three times as fast at most.
-    const plan = planeDrohne([weg([...Array(40).fill("neu"), ...Array(120).fill("bekannt")])]);
-    expect(plan.dauer).toBeCloseTo(30_000, -2);
+    // 2 km new (22 s) and 3 km known (21 s): 43 s, known a bit faster.
+    const plan = planeDrohne([weg([...Array(40).fill("neu"), ...Array(60).fill("bekannt")])]);
+    expect(plan.dauer).toBeCloseTo(DROHNE_DECKEL_MS, -2);
     expect(dauer(plan, "neu")).toBeCloseTo((40 * 49.1 / DROHNE_TEMPO.neu) * 1000, -3);
   });
 
@@ -45,7 +46,7 @@ describe("planeDrohne (Tempo nach Bildschirm, Michi 25.11.2026)", () => {
     expect(dauer(plan, "bekannt")).toBe(0);
   });
 
-  it("a day with very much new: everything within 30 seconds", () => {
+  it("a day with very much new: everything within 40 seconds", () => {
     const plan = planeDrohne([weg(Array(160).fill("neu"))]);
     expect(plan.dauer).toBeCloseTo(DROHNE_DECKEL_MS, -2);
   });

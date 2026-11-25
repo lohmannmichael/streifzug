@@ -8,15 +8,16 @@ import type { ReplayAbschnitt, ReplayArt, ReplayPlan, ReplayWeg } from "./replay
 import { distanceToLineM } from "./ziele";
 
 /**
- * Meters per second (Michi, 25.11.2026: "viel zu schnell"): chosen for the screen at the zoom of
- * each kind (see karte/drohne.ts): new streets at zoom 16.5 about 150 px/s (1 km in 12 s), known
- * stretches at zoom 15 about 400 px/s, car rides at zoom 13.5 about 500 px/s.
+ * Meters per second (Michi, 25.11.2026, second time: "viel zu hektisch, eher ruhig drüber
+ * schweben"): one height for everything (zoom 15, see karte/drohne.ts), there new streets go about
+ * 60 px/s (1 km in 11 s) and known stretches about 95 px/s. Car rides are not drawn along: the
+ * camera flies over them (Infinity = no time in the plan).
  */
-export const DROHNE_TEMPO: Record<ReplayArt, number> = { neu: 80, bekannt: 600, gefahren: 2100 };
-/** At most this long; then known stretches and car rides go faster or are left out, new ones last. */
-export const DROHNE_DECKEL_MS = 30_000;
-/** Known stretches may go at most this much faster before they are left out (hard cut). */
-const SCHNELLER_HOECHSTENS = 3;
+export const DROHNE_TEMPO: Record<ReplayArt, number> = { neu: 90, bekannt: 140, gefahren: Infinity };
+/** At most this long (without the flights); then known stretches go faster or are left out, new ones last. */
+export const DROHNE_DECKEL_MS = 40_000;
+/** Known stretches may go at most this much faster before they are left out. */
+const SCHNELLER_HOECHSTENS = 2;
 
 /** Kind of each segment: driven (car leg), new (along a newly walked piece, within 20 m) or known. */
 export function segmentArten(coords: readonly LonLat[], neu: readonly { coords: readonly LonLat[] }[], gefahren?: readonly boolean[]): ReplayArt[] {
@@ -43,8 +44,8 @@ export function segmentArten(coords: readonly LonLat[], neu: readonly { coords: 
 
 /**
  * All ways one after another with `flugMs` between two ways (the camera flies there), at the
- * speeds of DROHNE_TEMPO; a short day stays short. Longer than `deckelMs`: known stretches and car
- * rides go faster (up to three times), else they are left out (ways without anything new drop
+ * speeds of DROHNE_TEMPO; a short day stays short, car rides take no time. Longer than `deckelMs`:
+ * known stretches go faster (up to twice), else they are left out (ways without anything new drop
  * out); if new streets alone are still too long, they go faster too.
  */
 export function planeDrohne(wege: readonly ReplayWeg[], optionen: { flugMs?: number; deckelMs?: number } = {}): ReplayPlan {
