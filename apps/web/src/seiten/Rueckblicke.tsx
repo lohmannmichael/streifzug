@@ -195,7 +195,7 @@ function TagZeile(props: { tag: Tag; neuM: number; abspielen: () => void; oeffne
         </span>
         <span className="ort-text">
           <b>{tagName.format(tag.von)}</b>
-          <span>{t.rueckblicke.zeile(tag.wege.length, props.neuM >= 1 ? alsStrecke(props.neuM) : null)}</span>
+          <span>{t.rueckblicke.zeile(tag.wege.length, alsStrecke(tag.wege.reduce((m, w) => m + w.distanceM, 0)), props.neuM >= 1 ? alsStrecke(props.neuM) : null)}</span>
         </span>
       </button>
       <button type="button" className="tag-pfeil" aria-label={t.rueckblicke.wegeZeigen(tagName.format(tag.von))} onClick={props.oeffnen}>

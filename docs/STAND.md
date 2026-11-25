@@ -5,7 +5,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 **Geltender Plan: `docs/PLAN-3.md` (Bauplan Fassung 3, Umbauplan).** Fassung 2 (`docs/PLAN.md`) gilt weiter für Zählregeln, Datenbasis und Design-System. Ältere Notizen: `docs/archiv/STAND-bis-2026-11-22.md`.
 
 ## Was läuft
-- Rückblick beim Öffnen als Polaroid (25.11.: Bild je Tag oder je Weg, blättern, Schalter in Stifte), darin bzw. sonst als ruhig schwebende Drohne (feste Höhe Zoom 15, Kamera gleitet nur nach, Autofahrten als Flug, höchstens 40 s; Schalter in Einstellungen → Stifte, aus = ruhig), oben „+340 m neu“ und „Neu/Komplett: Straße“
+- Rückblick beim Öffnen und unter Rückblicke (Tipp auf einen Tag) als Polaroid (25.11.: Bild je Tag oder je Weg, blättern, km unterwegs und neu, Schalter in Stifte), darin bzw. sonst als ruhig schwebende Drohne (feste Höhe Zoom 15, Kamera gleitet nur nach, Autofahrten als Flug, höchstens 40 s; Schalter in Einstellungen → Stifte, aus = ruhig), oben „+340 m neu“ und „Neu/Komplett: Straße“
 - 23 Orte: Köln, Umkreis 20 km um Weiden (18 Gemeinden), Freising, Hameln, Emmerthal, New York
 - GPS-Zappeln im Haus gilt als Halt (nicht gezeichnet, macht nichts gelb)
 - Gespeicherte Ergebnisse gelten nur für eine Version der Kartendaten; nach einem OpenFreeMap-Update wird einmal alles neu gerechnet

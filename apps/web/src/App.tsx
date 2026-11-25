@@ -41,6 +41,15 @@ const monatLang = new Intl.DateTimeFormat("de-DE", { month: "long" });
 const MERKEN_ORT = "streifzug.gebietOrt";
 const MERKEN = "streifzug.gebiet";
 
+/** Ways shown as Polaroid pictures (on opening or a day under "Rückblicke"). */
+interface PolQuelle {
+  nr: number;
+  wege: { startedAt: number; endedAt: number; distanceM: number; coords: [number, number][]; gefahren?: boolean[] }[];
+  /** New only until here (a past day ends at midnight). */
+  bis: number;
+  beimOeffnen: boolean;
+}
+
 export function App() {
   const sitzung = useSitzung();
   const [hoehe, setHoehe] = useState<Hoehe>(1);
@@ -395,40 +404,43 @@ export function App() {
     },
   };
 
-  // Polaroid on opening (Michi, 25.11.2026): one picture per day (several days) or per way.
+  // Polaroid (Michi, 25.11.2026): on opening one picture per day (several days) or per way; a day
+  // tapped under "Rückblicke" one picture per way.
   const rbLaeuft = !!rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv;
-  const polaroidAn = rbLaeuft && einstellungen.rueckblickPolaroid && !einzeln;
+  const [tagPol, setTagPol] = useState<PolQuelle | null>(null);
+  const polQuelle: PolQuelle | null =
+    tagPol ?? (rbLaeuft && rueckblick && einstellungen.rueckblickPolaroid && !einzeln ? { nr: rueckblick.nr, wege: rueckblick.wege, bis: Infinity, beimOeffnen: true } : null);
+  const polaroidAn = !!polQuelle;
   const stationen = useMemo(() => {
-    if (!rueckblick) return [];
-    const wege = rueckblick.wege.map((w) => ({ startedAt: w.startedAt, endedAt: w.endedAt, distanceM: w.distanceM, gefahrenAnteil: w.gefahren?.length ? w.gefahren.filter(Boolean).length / w.gefahren.length : 0 }));
+    if (!polQuelle) return [];
+    const wege = polQuelle.wege.map((w) => ({ startedAt: w.startedAt, endedAt: w.endedAt, distanceM: w.distanceM, gefahrenAnteil: w.gefahren?.length ? w.gefahren.filter(Boolean).length / w.gefahren.length : 0 }));
     return polaroidStationen(wege).map((st) => ({
       ...st,
-      zeile:
-        st.art === "weg"
-          ? `${t.polaroid.uhr(wege[st.wege[0]!]!.startedAt)} ${t.polaroid.art[wegArt(wege[st.wege[0]!]!)]} · ${alsStrecke(st.distanceM)}`
-          : `${t.polaroid.wege(st.wege.length)} · ${alsStrecke(st.distanceM)}`,
+      bis: Math.min(st.bis, polQuelle.bis),
+      zeile: st.art === "weg" ? `${t.polaroid.uhr(wege[st.wege[0]!]!.startedAt)} · ${t.polaroid.art[wegArt(wege[st.wege[0]!]!)]}` : t.polaroid.wege(st.wege.length),
+      gesamtM: st.distanceM,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rueckblick?.nr]);
+  }, [polQuelle?.nr]);
   const [pol, setPol] = useState<{ nr: number; i: number; lauf: number; fenster: DOMRect | null } | null>(null);
   const polWeiter = useRef(0);
   useEffect(() => {
-    if (polaroidAn && rueckblick && pol?.nr !== rueckblick.nr) setPol({ nr: rueckblick.nr, i: 0, lauf: 1, fenster: null });
-    if (!polaroidAn && pol) setPol(null);
-  }, [polaroidAn, rueckblick, pol]);
+    if (polQuelle && pol?.nr !== polQuelle.nr) setPol({ nr: polQuelle.nr, i: 0, lauf: 1, fenster: null });
+    if (!polQuelle && pol) setPol(null);
+  }, [polQuelle, pol]);
   useEffect(() => () => window.clearTimeout(polWeiter.current), []);
   const polWahl = (i: number) => {
     window.clearTimeout(polWeiter.current);
     setPol((p) => (p ? { ...p, i, lauf: p.lauf + 1 } : p));
   };
-  const polStation = pol && polaroidAn ? stationen[pol.i] : undefined;
+  const polStation = pol && polQuelle && pol.nr === polQuelle.nr ? stationen[pol.i] : undefined;
   // Replay: one way tapped under "Zuletzt", or what came in since the last visit (as Polaroid
   // pictures, or on the big map).
   const abspielen =
     einzeln ??
-    (polaroidAn
-      ? pol?.fenster && polStation && rueckblick
-        ? { wege: polStation.wege.map((i) => rueckblick.wege[i]!).map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: polStation.seit, bis: polStation.bis, nr: rueckblick.nr * 1000 + pol.lauf }
+    (polQuelle
+      ? pol?.fenster && polStation
+        ? { wege: polStation.wege.map((i) => polQuelle.wege[i]!).map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: polStation.seit, bis: polStation.bis, nr: polQuelle.nr * 1000 + pol.lauf }
         : null
       : rbLaeuft && rueckblick
         ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr }
@@ -440,7 +452,8 @@ export function App() {
   const polaroidZu = () => {
     window.clearTimeout(polWeiter.current);
     setPol(null);
-    rueckblickFertig();
+    if (tagPol) setTagPol(null);
+    else rueckblickFertig();
   };
   // During a replay: "+340 m neu" and the street just turned yellow (Michi, 24.11.2026).
   const [rbAnzeige, setRbAnzeige] = useState<RbAnzeigeStand | null>(null);
@@ -559,13 +572,17 @@ export function App() {
         abspielen={(tag: Tag) => {
           // The pass closes and the day runs on the plan: its ways, only what was new that day.
           void wegeSeit(tag.von - 86400_000).then((andere) => {
-            const wege = [
-              ...andere.filter((w) => w.startedAt >= tag.von && w.startedAt < tag.bis).map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })),
-              ...streifzuege.filter((s) => s.status !== "aktiv" && s.startedAt >= tag.von && s.startedAt < tag.bis && s.fixes.length > 1).map((s) => kurzMitArt(s.fixes)),
-            ];
+            const wege: PolQuelle["wege"] = [
+              ...andere.filter((w) => w.startedAt >= tag.von && w.startedAt < tag.bis),
+              ...streifzuege
+                .filter((s) => s.status !== "aktiv" && s.startedAt >= tag.von && s.startedAt < tag.bis && s.fixes.length > 1)
+                .map((s) => ({ startedAt: s.startedAt, endedAt: s.endedAt ?? s.startedAt, distanceM: s.distanceM, ...kurzMitArt(s.fixes) })),
+            ].sort((a, b) => a.startedAt - b.startedAt);
             setPass(null);
             setHoehe(1);
-            setEinzeln((alt) => ({ wege, seit: tag.von, bis: tag.bis, nr: (alt?.nr ?? 1000) + 1 }));
+            // As Polaroid pictures, one per way (Michi, 25.11.2026), or on the big map.
+            if (einstellungen.rueckblickPolaroid) setTagPol((alt) => ({ nr: (alt?.nr ?? 1_000_000) + 1, wege, bis: tag.bis, beimOeffnen: false }));
+            else setEinzeln((alt) => ({ wege: wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: tag.von, bis: tag.bis, nr: (alt?.nr ?? 1000) + 1 }));
           });
         }}
       />
@@ -650,11 +667,12 @@ export function App() {
         />
         {zeitraum && !zeitraum.fertig && zrDatum !== null && <ZeitraumDatum t={zrDatum} />}
         {abspielen && !polaroidAn && rbAnzeige && rbAnzeige.m >= 1 && <RueckblickAnzeige stand={rbAnzeige} />}
-        {polaroidAn && pol && stationen.length > 0 && (
+        {polaroidAn && pol && pol.nr === polQuelle?.nr && stationen.length > 0 && (
           <Polaroid
             bilder={stationen}
             i={pol.i}
             neuM={pol.fenster ? (rbAnzeige?.m ?? 0) : 0}
+            gesamtM={stationen[pol.i]?.gesamtM ?? 0}
             onWahl={polWahl}
             onZu={polaroidZu}
             onFenster={(fenster) => setPol((p) => (p ? { ...p, fenster } : p))}

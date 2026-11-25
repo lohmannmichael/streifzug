@@ -1,5 +1,11 @@
 # Entscheidungen
 
+## 25.11.2026: Polaroid auch unter Rückblicke, Meter insgesamt und neu
+- Michi: Das Polaroid auch im Menüpunkt Rückblicke, und überall zeigen, wie viel insgesamt und wie viel neu
+- Tipp auf einen Tag unter Rückblicke öffnet jetzt das Polaroid (ein Bild je Weg; neu nur bis Mitternacht des Tages). Mit Schalter „Rückblick als Polaroid“ aus läuft der Tag wie bisher auf der großen Karte
+- Polaroid-Rand: Datum, darunter „8:10 · Rad“ (bei Tagen „3 Wege“), darunter groß „1,3 km unterwegs“ und „+823 m neu“ (zählt beim Zeichnen hoch)
+- Tageszeile unter Rückblicke: „5 Wege · 9,9 km · 8,5 km neu“ (vorher ohne Gesamtstrecke)
+
 ## 25.11.2026: Rückblick als Polaroid beim Öffnen
 - Michi: Beim Öffnen soll ein Polaroid aufpoppen, in dem die Wege abgefahren werden, darunter das Datum; durch mehrere Tage oder die Stationen eines Tages skippen
 - Fünf Fragen geklärt: Rahmen fliegt auf die Karte, darin läuft der Rückblick; mehrere Tage = ein Bild je Tag, ältester zuerst, automatisch weiter (2,5 s Pause); ein Tag = ein Bild je Weg; ersetzt den bisherigen Rückblick beim Öffnen (Schalter in Einstellungen → Stifte, aus = wie bisher auf der großen Karte); unten Datum, darunter „8:10 Rad · 3,2 km · +340 m neu“ (bei Tagen „3 Wege · 12,4 km · …“)

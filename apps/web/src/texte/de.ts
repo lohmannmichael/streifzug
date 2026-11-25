@@ -224,7 +224,8 @@ export const de = {
     uhr: (t: number) => new Date(t).toLocaleTimeString("de-DE", { hour: "numeric", minute: "2-digit" }),
     art: { fuss: "zu Fuß", rad: "Rad", auto: "Auto" },
     wege: (n: number) => (n === 1 ? "1 Weg" : `${n} Wege`),
-    neu: (strecke: string) => `+${strecke} neu`,
+    unterwegs: "unterwegs",
+    neuWort: "neu",
   },
   rbAnzeige: {
     neu: (strecke: string) => `+${strecke} neu`,
@@ -255,7 +256,7 @@ export const de = {
   },
   rueckblicke: {
     titel: "Rückblicke",
-    zeile: (wege: number, neu: string | null) => `${wege} ${wege === 1 ? "Weg" : "Wege"}${neu ? ` · ${neu} neu` : ""}`,
+    zeile: (wege: number, gesamt: string, neu: string | null) => `${wege} ${wege === 1 ? "Weg" : "Wege"} · ${gesamt}${neu ? ` · ${neu} neu` : ""}`,
     wegeZeigen: (tag: string) => `Wege vom ${tag} zeigen`,
   },
   wege: {

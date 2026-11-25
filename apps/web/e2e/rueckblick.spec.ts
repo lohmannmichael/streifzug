@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ohnePolaroid, planDa, prozent } from "./hilfen";
+import { ohnePolaroid, ohneRueckblick, planDa, prozent } from "./hilfen";
 import { serverErsetzen } from "./server";
 
 test("Rückblick läuft, Tipp überspringt, Endstand stimmt", async ({ page }) => {
@@ -58,15 +58,35 @@ test("Polaroid beim Öffnen: Bild je Weg, Datum und Zeile, blättern, schließen
   const polaroid = page.getByRole("dialog", { name: "Rückblick" });
   await expect(polaroid).toBeVisible({ timeout: 20_000 });
   await expect(polaroid.locator(".polaroid-datum")).toHaveText(/^(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag), \d{1,2}\. \w+/);
-  await expect(polaroid.locator(".polaroid-zeile")).toContainText(/(km| m)/);
+  await expect(polaroid.locator(".polaroid-zeile")).toHaveText(/^(\d{1,2}:\d\d · (zu Fuß|Rad|Auto)|\d+ Wege?)$/);
+  await expect(polaroid.locator(".polaroid-zahlen")).toContainText(/(km| m) unterwegs/);
   // The five test ways of the last 12 hours: one picture per way (or per day around midnight).
   const punkte = polaroid.locator(".polaroid-punkt");
   expect(await punkte.count()).toBeGreaterThan(1);
   await expect(punkte.first()).toHaveAttribute("aria-current", "true");
   // The first picture draws, and something new turns up below.
-  await expect(polaroid.locator(".polaroid-zeile")).toContainText(/neu$/, { timeout: 40_000 });
+  await expect(polaroid.locator(".polaroid-zahlen")).toContainText(/\+[1-9][\d,]* (km|m) neu$/, { timeout: 40_000 });
   await polaroid.getByRole("button", { name: "Nächstes Bild" }).click();
   await expect(punkte.nth(1)).toHaveAttribute("aria-current", "true");
+  await polaroid.getByRole("button", { name: "Rückblick schließen" }).click();
+  await expect(polaroid).toBeHidden();
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
+});
+
+test("Polaroid auch unter Rückblicke: Tipp auf einen Tag zeigt seine Wege als Bilder", async ({ page }) => {
+  await serverErsetzen(page);
+  await ohneRueckblick(page);
+  await page.goto("/");
+  await planDa(page);
+  await page.getByRole("button", { name: "Pass öffnen" }).tap();
+  await page.locator(".pass-zeile", { hasText: "Rückblicke" }).tap();
+  // Each day row: ways, kilometres on the way, new meters.
+  const tag = page.locator(".tag-abspielen").first();
+  await expect(tag).toContainText(/Wege? · [\d,]+ (km|m)/);
+  await tag.tap();
+  const polaroid = page.getByRole("dialog", { name: "Rückblick" });
+  await expect(polaroid).toBeVisible();
+  await expect(polaroid.locator(".polaroid-zahlen")).toContainText("unterwegs");
   await polaroid.getByRole("button", { name: "Rückblick schließen" }).click();
   await expect(polaroid).toBeHidden();
   await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");

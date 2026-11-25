@@ -5,7 +5,7 @@ import { IconSchliessen, IconWeiter, IconZurueck } from "../ui/Icons";
 
 export interface PolaroidBild {
   tag: number;
-  /** Second line without the new meters, e.g. "8:10 Rad · 3,2 km". */
+  /** Second line, e.g. "8:10 · Rad" or "3 Wege". */
   zeile: string;
 }
 
@@ -18,6 +18,8 @@ export function Polaroid(props: {
   bilder: readonly PolaroidBild[];
   i: number;
   neuM: number;
+  /** Meters on the way in this picture (all of it, also car rides). */
+  gesamtM: number;
   onWahl: (i: number) => void;
   onZu: () => void;
   /** The picture's window on screen, once the frame has landed. */
@@ -53,9 +55,10 @@ export function Polaroid(props: {
         <div className="polaroid-foto" ref={foto} />
         <div className="polaroid-rand">
           <p className="polaroid-datum">{t.polaroid.datum(bild.tag)}</p>
-          <p className="polaroid-zeile" aria-live="polite">
-            {bild.zeile}
-            {props.neuM >= 1 && <> · <b>{t.polaroid.neu(alsStrecke(props.neuM))}</b></>}
+          <p className="polaroid-zeile">{bild.zeile}</p>
+          <p className="polaroid-zahlen" aria-live="polite">
+            <span><b>{alsStrecke(props.gesamtM)}</b> {t.polaroid.unterwegs}</span>
+            <span><b>+{alsStrecke(props.neuM)}</b> {t.polaroid.neuWort}</span>
           </p>
           {n > 1 && (
             <div className="polaroid-nav">
