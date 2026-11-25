@@ -50,6 +50,7 @@ Live: https://streifzug.pages.dev · Repo: lohmannmichael/streifzug · Umgebung 
 - Ort hinzufügen: Pass → Orte → Suche, Ort wird vorgemerkt und beim nächsten Mal aufgenommen
 - Reisen (F6): Reisenamen sollen ins Konto (bisher nur auf dem iPhone)?
 - Ort hinzufügen ohne Claude: nächtlicher automatischer Lauf auf GitHub, der vorgemerkte Orte aufnimmt (braucht einmal einen Schlüssel bei GitHub)? Suche am iPhone testen (in der Claude-Umgebung gesperrt)
+- Wege schöner gezeichnet (25.11.: glätten, auf Straßen einrasten, saubere Ecken) am iPhone prüfen
 - Polaroid beim Öffnen (25.11.) ausprobieren: Größe, Tempo, Pause zwischen Bildern, Beschriftung?
 - Schwebende Drohne (25.11.) ausprobieren: Höhe, Tempo, Ruhe der Kamera? Bleibt sie oder die ruhige Variante?
 - GPS-Zappeln: Sind die Zacken weg, wird die eigene Straße vor der Haustür noch gelb?

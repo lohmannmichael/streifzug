@@ -71,6 +71,10 @@ const WINKEL_GRAD = 35;
 const ZELLE = 0.0005;
 /** Points on each side over which the snapping fades in and out. */
 const UEBERGANG = 2;
+/** Step C2: a crossing at most this far from the last point on one street and the first on the next. */
+const ECKE_M = 30;
+/** At most this many points between them (GPS cutting the corner). */
+const ECKE_PUNKTE = 4;
 
 /**
  * Step C1 (Michi, 25.11.2026): where the way clearly runs along a seen street, it is drawn on the
@@ -112,20 +116,24 @@ export function einraster(strassen: readonly { coords: readonly LonLat[] }[]): (
     const m = (x: number, y: number): [number, number] => [(x - x0) * kx, (y - y0) * ky];
     const punkte = coords.map(([x, y]) => m(x, y));
     const ziel: ([number, number] | null)[] = [];
+    const strecke: ([number, number, number, number] | null)[] = [];
     const gewicht: number[] = [];
     for (let i = 0; i < n; i++) {
       if (gefahren?.[i]) {
         ziel.push(null);
+        strecke.push(null);
         gewicht.push(0);
         continue;
       }
       const p = punkte[i]!;
-      // Direction of travel here (from a little before to a little after).
+      // Direction of travel coming in and going out (at a corner one of them fits the street).
       const v = punkte[Math.max(0, i - 2)]!;
       const h = punkte[Math.min(n - 1, i + 2)]!;
-      const [rx, ry] = [h[0] - v[0], h[1] - v[1]];
-      const rl = Math.hypot(rx, ry);
-      let best: { d: number; q: [number, number] } | null = null;
+      const richtungen = [
+        [p[0] - v[0], p[1] - v[1]],
+        [h[0] - p[0], h[1] - p[1]],
+      ].filter(([x, y]) => Math.hypot(x!, y!) > 3) as [number, number][];
+      let best: { d: number; q: [number, number]; seg: [number, number, number, number] } | null = null;
       const gesehen = new Set<Seg>();
       const [cx, cy] = coords[i]!;
       for (const dx of [-1, 0, 1])
@@ -138,14 +146,15 @@ export function einraster(strassen: readonly { coords: readonly LonLat[] }[]): (
             const [sx, sy] = [bx - ax, by - ay];
             const sl = Math.hypot(sx, sy);
             if (sl < 0.01) continue;
-            if (rl > 3 && Math.abs((rx * sx + ry * sy) / (rl * sl)) < cosMin) continue;
+            if (richtungen.length > 0 && !richtungen.some(([rx, ry]) => Math.abs((rx * sx + ry * sy) / (Math.hypot(rx, ry) * sl)) >= cosMin)) continue;
             const t = Math.max(0, Math.min(1, ((p[0] - ax) * sx + (p[1] - ay) * sy) / (sl * sl)));
             const q: [number, number] = [ax + t * sx, ay + t * sy];
             const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
-            if (d < FANG_BIS_M && (!best || d < best.d)) best = { d, q };
+            if (d < FANG_BIS_M && (!best || d < best.d)) best = { d, q, seg: [ax, ay, bx, by] };
           }
         }
       ziel.push(best ? best.q : null);
+      strecke.push(best ? best.seg : null);
       gewicht.push(best ? Math.max(0, Math.min(1, (FANG_BIS_M - best.d) / (FANG_BIS_M - FANG_VOLL_M))) : 0);
     }
     // Fade in and out: each weight at most what its neighbours allow, ramping over a few points.
@@ -158,12 +167,74 @@ export function einraster(strassen: readonly { coords: readonly LonLat[] }[]): (
       }
       return g;
     });
-    return coords.map((c, i) => {
+    const aus: [number, number][] = punkte.map((p, i) => {
       const q = ziel[i];
       const w = weich[i]!;
-      if (!q || w <= 0) return c;
-      const p = punkte[i]!;
-      return [x0 + (p[0] + (q[0] - p[0]) * w) / kx, y0 + (p[1] + (q[1] - p[1]) * w) / ky];
+      return q && w > 0 ? [p[0] + (q[0] - p[0]) * w, p[1] + (q[1] - p[1]) * w] : p;
     });
+    ecken(aus, strecke, weich);
+    return aus.map(([x, y], i) => (aus[i] === punkte[i] ? coords[i]! : [x0 + x / kx, y0 + y / ky]));
   };
+}
+
+/**
+ * Step C2: where the way goes from one street onto another (fully snapped on both sides, the
+ * streets not parallel), it turns exactly at their crossing instead of cutting the corner. The
+ * points in between are laid along the two legs; if there are none, the nearer one moves onto the
+ * crossing. Same number of points.
+ */
+function ecken(aus: [number, number][], strecke: readonly (Seg | null)[], weich: readonly number[]) {
+  const voll = (i: number) => weich[i]! >= 0.99 && strecke[i] !== null;
+  let i = 0;
+  while (i < aus.length - 1) {
+    if (!voll(i)) {
+      i++;
+      continue;
+    }
+    // The next fully snapped point after i, with at most ECKE_PUNKTE in between.
+    let j = i + 1;
+    while (j < aus.length && j - i - 1 <= ECKE_PUNKTE && !voll(j)) j++;
+    if (j >= aus.length || !voll(j) || j - i - 1 > ECKE_PUNKTE) {
+      i = j;
+      continue;
+    }
+    const s1 = strecke[i]!;
+    const s2 = strecke[j]!;
+    const x = s1 === s2 ? null : kreuzung(s1, s2);
+    const a = aus[i]!;
+    const b = aus[j]!;
+    if (x && Math.hypot(x[0] - a[0], x[1] - a[1]) <= ECKE_M && Math.hypot(x[0] - b[0], x[1] - b[1]) <= ECKE_M) {
+      const zwischen = j - i - 1;
+      if (zwischen === 0) {
+        // Move the nearer of the two onto the crossing.
+        const k = Math.hypot(x[0] - a[0], x[1] - a[1]) <= Math.hypot(x[0] - b[0], x[1] - b[1]) ? i : j;
+        aus[k] = x;
+      } else {
+        // Lay the points in between along a → crossing → b.
+        const l1 = Math.hypot(x[0] - a[0], x[1] - a[1]);
+        const l2 = Math.hypot(b[0] - x[0], b[1] - x[1]);
+        for (let k = 1; k <= zwischen; k++) {
+          const t = ((l1 + l2) * k) / (zwischen + 1);
+          aus[i + k] = t <= l1 ? [a[0] + ((x[0] - a[0]) * t) / (l1 || 1), a[1] + ((x[1] - a[1]) * t) / (l1 || 1)] : [x[0] + ((b[0] - x[0]) * (t - l1)) / (l2 || 1), x[1] + ((b[1] - x[1]) * (t - l1)) / (l2 || 1)];
+        }
+        // The point nearest the crossing exactly on it.
+        let naechster = i + 1;
+        for (let k = i + 1; k < j; k++) if (Math.hypot(aus[k]![0] - x[0], aus[k]![1] - x[1]) < Math.hypot(aus[naechster]![0] - x[0], aus[naechster]![1] - x[1])) naechster = k;
+        aus[naechster] = x;
+      }
+    }
+    i = j;
+  }
+}
+
+/** Crossing of the lines through two segments (local meters), unless they run nearly parallel. */
+function kreuzung(s1: Seg, s2: Seg): [number, number] | null {
+  const [ax, ay, bx, by] = s1;
+  const [cx, cy, dx, dy] = s2;
+  const r = [bx - ax, by - ay];
+  const q = [dx - cx, dy - cy];
+  const kreuz = r[0]! * q[1]! - r[1]! * q[0]!;
+  if (Math.abs(kreuz) < Math.sin((25 * Math.PI) / 180) * Math.hypot(r[0]!, r[1]!) * Math.hypot(q[0]!, q[1]!)) return null;
+  const t = ((cx - ax) * q[1]! - (cy - ay) * q[0]!) / kreuz;
+  return [ax + t * r[0]!, ay + t * r[1]!];
 }

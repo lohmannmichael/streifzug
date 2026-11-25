@@ -5,6 +5,8 @@
 - Gilt nur fürs Zeichnen (Stiftlinie im Rückblick, Polaroid, Zeitraum, Live-Spur), am Zählen ändert sich nichts
 - A (`glaetten`): einzelne GPS-Sprünge hin und zurück raus, dann gewichtetes Mittel der Nachbarn innerhalb von etwa 9 m entlang des Wegs (Gauß); Anfang und Ende bleiben, Punktzahl bleibt (damit „gefahren“ je Punkt weiter passt). 5 Tests
 - C1 (`aufStrassen`, `einraster`): Liegt der Weg in Richtung einer gesehenen Straße (höchstens 35° Winkel) und näher als 10 m, wird er auf die Straßenmitte gezogen; bis 20 m anteilig, weiter weg (Park, Platz, Feld) und bei Autofahrten nicht. Ein- und Ausblenden über zwei Punkte, damit nichts springt. Straßen einmal in ein Raster sortiert (schnell auch mit einem Jahr Daten). 5 Tests
+- C2 (saubere Ecken): Wechselt der Weg von einer Straße auf eine andere (nicht parallel, Kreuzung höchstens 30 m entfernt, höchstens 4 Punkte dazwischen), läuft die Linie genau über den Kreuzungspunkt statt die Ecke abzuschneiden. Die Richtung wird dafür getrennt für das Stück davor und danach geprüft. Punktzahl bleibt. 2 Tests
+- Bewusst nicht gebaut: Lücken über noch nie gegangene Straßen „routen“ (bräuchte das ganze Straßennetz auf dem Gerät und könnte Wege erfinden)
 
 ## 25.11.2026: Logo beim Öffnen länger
 - Michi: „Beim Öffnen bitte bissl länger das Logo zeigen.“ Das Startbild (Symbol und Schriftzug) lag bisher in der App-Fläche und verschwand, sobald die App startete. Jetzt liegt es darüber, bleibt mindestens 1,6 s ab Start und blendet in 0,35 s aus; die Karte lädt darunter schon (keine verlorene Zeit). Oberflächentest dazu

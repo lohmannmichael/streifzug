@@ -78,3 +78,26 @@ describe("aufStrassen (Schritt C1: auf erkannte Straßen)", () => {
     for (let i = 1; i < g.length; i++) expect(Math.abs(g[i]![1] - g[i - 1]![1]) * 111_200).toBeLessThan(4.5);
   });
 });
+
+describe("aufStrassen an Kreuzungen (Schritt C2: saubere Ecken)", () => {
+  // Street A along x from 0 to 100 m, street B from (100, 0) north.
+  const a = { coords: [ost(0), ost(100)] };
+  const b = { coords: [ost(100), ost(100, 150)] };
+  const abstand = (p: LonLat, q: LonLat) => distanceM(p, q);
+
+  it("turns exactly at the crossing instead of cutting the corner", () => {
+    // GPS cuts the corner: along A, then diagonally, then along B.
+    const weg = [...[0, 10, 20, 30, 40, 50, 60, 70, 80].map((x) => ost(x, 4)), ost(90, 10), ost(96, 20), ...[30, 40, 50, 60, 70, 80, 90].map((y) => ost(104, y))];
+    const g = aufStrassen(weg, [a, b]);
+    expect(g).toHaveLength(weg.length);
+    expect(Math.min(...g.map((p) => abstand(p, ost(100))))).toBeLessThan(1.5);
+    // Nothing left far from both streets.
+    for (const p of g) expect(Math.min(Math.abs(p[1] - Y0) * 111_200, Math.abs(p[0] - ost(100)[0]) * 70_200)).toBeLessThan(2);
+  });
+
+  it("also when the two snapped points follow each other directly", () => {
+    const weg = [...[0, 15, 30, 45, 60, 75, 90].map((x) => ost(x, 3)), ...[12, 27, 42, 57, 72].map((y) => ost(103, y))];
+    const g = aufStrassen(weg, [a, b]);
+    expect(Math.min(...g.map((p) => abstand(p, ost(100))))).toBeLessThan(1.5);
+  });
+});
