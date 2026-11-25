@@ -1,7 +1,7 @@
 import type { Fix, LonLat, Piece } from "@streifzug/core";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useRef, useState } from "react";
-import { orteImBlick } from "@streifzug/core";
+import { glaetten, orteImBlick } from "@streifzug/core";
 import { orteLaden, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
@@ -187,7 +187,7 @@ export function Karte(props: KartenProps) {
   useEffect(() => {
     const karte = karteRef.current;
     if (!karte || !karte.getSource("spur")) return;
-    const coords = props.spur.map((f) => [f.lon, f.lat]);
+    const coords = glaetten(props.spur.map((f): LonLat => [f.lon, f.lat]));
     setzeDaten(karte, "spur", { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords.length > 1 ? coords : [] } });
     const letzter = props.spur.at(-1);
     const hier: [number, number] | null = letzter ? [letzter.lon, letzter.lat] : props.position;
@@ -264,7 +264,7 @@ export function Karte(props: KartenProps) {
     if (!karte || !z) return;
     return zeitraumAbspielen(
       karte,
-      z,
+      { ...z, wege: z.wege.map((w) => ({ ...w, coords: glaetten(w.coords) })) },
       {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,
@@ -296,7 +296,8 @@ export function Karte(props: KartenProps) {
     const fenster = r ? { oben: r.top - c.top, unten: c.bottom - r.bottom, links: r.left - c.left, rechts: c.right - r.right } : null;
     return (drohneRef.current || fenster ? drohneAbspielen : rueckblickAbspielen)(
       karte,
-      { wege: rb.wege, seit: rb.seit, bis: rb.bis },
+      // Drawn smoothed (Michi, 25.11.2026); counting stays with the matching.
+      { wege: rb.wege.map((w) => ({ ...w, coords: glaetten(w.coords) })), seit: rb.seit, bis: rb.bis },
       {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,

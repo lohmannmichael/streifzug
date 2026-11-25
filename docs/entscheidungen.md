@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 25.11.2026: Wege schöner zeichnen (A: glätten, C: einrasten)
+- Michi: Wege smoother und „mehr vorhersagend“ zeichnen, nicht 100 % auf GPS verlassen. Vier Wege vorgeschlagen (A glätten, B einrasten, C Mischung, D fremder Dienst); Michi wählte A und C. D (z. B. Mapbox) abgelehnt: Standorte an Dritte, Kosten, Abgleich soll auf dem Gerät laufen
+- Gilt nur fürs Zeichnen (Stiftlinie im Rückblick, Polaroid, Zeitraum, Live-Spur), am Zählen ändert sich nichts
+- A (`glaetten`): einzelne GPS-Sprünge hin und zurück raus, dann gewichtetes Mittel der Nachbarn innerhalb von etwa 9 m entlang des Wegs (Gauß); Anfang und Ende bleiben, Punktzahl bleibt (damit „gefahren“ je Punkt weiter passt). 5 Tests
+
 ## 25.11.2026: Logo beim Öffnen länger
 - Michi: „Beim Öffnen bitte bissl länger das Logo zeigen.“ Das Startbild (Symbol und Schriftzug) lag bisher in der App-Fläche und verschwand, sobald die App startete. Jetzt liegt es darüber, bleibt mindestens 1,6 s ab Start und blendet in 0,35 s aus; die Karte lädt darunter schon (keine verlorene Zeit). Oberflächentest dazu
 
