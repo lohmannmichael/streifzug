@@ -1,5 +1,13 @@
 # Entscheidungen
 
+## 25.11.2026: Rückblick als Polaroid beim Öffnen
+- Michi: Beim Öffnen soll ein Polaroid aufpoppen, in dem die Wege abgefahren werden, darunter das Datum; durch mehrere Tage oder die Stationen eines Tages skippen
+- Fünf Fragen geklärt: Rahmen fliegt auf die Karte, darin läuft der Rückblick; mehrere Tage = ein Bild je Tag, ältester zuerst, automatisch weiter (2,5 s Pause); ein Tag = ein Bild je Weg; ersetzt den bisherigen Rückblick beim Öffnen (Schalter in Einstellungen → Stifte, aus = wie bisher auf der großen Karte); unten Datum, darunter „8:10 Rad · 3,2 km · +340 m neu“ (bei Tagen „3 Wege · 12,4 km · …“)
+- Technisch: kein zweiter Kartenausschnitt (wäre auf dem iPhone schwer), sondern ein Rahmen über der großen Karte, außen abgedunkelt; die schwebende Drohne spielt nur im Bildfeld (Zoom 14,6). Am Ende eines Bildes bleiben Weg und Gelb stehen, ganz im Bild. Neu ist, was zwischen Beginn dieses Bildes und Beginn des nächsten zuerst gegangen wurde. Bewegung reduziert: gleich das fertige Bild
+- Art des Wegs: mehr als die Hälfte gefahren = Auto, über 9 km/h = Rad, sonst zu Fuß
+- Behoben: Die Karte merkte sich einen Rand unten (Blatt); dadurch saß der Stift bei der Drohne zu hoch. Die Drohne setzt den Rand zu Beginn auf null
+- Kern: `polaroidStationen`, `wegArt`, 4 Tests; Oberflächentest „Polaroid beim Öffnen“
+
 ## 25.11.2026: Drohne neu gedacht: ruhig schweben statt verfolgen
 - Michi: „Die Drohne fliegt viel zu schnell, man kommt nicht hinterher, viel zu hektisch. Lieber ganz normal drüber schweben, etwas weiter raus, Straßen noch gut lesbar, gute Übersicht, wo man überall war.“
 - Ursache der Hektik war weniger der Stift als die Kamera: Sie klebte am Stift, zoomte ständig zwischen 13,5 und 16,5 und schnitt hart

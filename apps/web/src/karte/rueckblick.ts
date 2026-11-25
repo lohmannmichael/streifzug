@@ -41,6 +41,18 @@ export interface RueckblickKontext {
   veedel: [[number, number], [number, number]] | null;
   /** New pieces just turned yellow (for "+340 m neu" and the street name on top). */
   gelbDazu?: (stuecke: readonly Piece[]) => void;
+  /**
+   * Polaroid (Michi, 25.11.2026): play only inside this window (px from the map's edges). At the
+   * end the picture stays (all ways of it in view, ink and yellow) until the next one starts.
+   */
+  fenster?: Fenster | null;
+}
+
+export interface Fenster {
+  oben: number;
+  unten: number;
+  links: number;
+  rechts: number;
 }
 
 const ZOOM_FOLGEN = 16;

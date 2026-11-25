@@ -117,3 +117,8 @@ export async function zuDenWegen(page: Page) {
   await page.getByRole("button", { name: "Zu meinem Standort" }).tap();
   await page.waitForTimeout(1500);
 }
+
+/** Replay on the big map instead of the Polaroid pictures (switch in "Stifte"). */
+export async function ohnePolaroid(page: Page) {
+  await page.addInitScript(() => localStorage.setItem("streifzug.einstellungen", JSON.stringify({ rueckblickPolaroid: false })));
+}

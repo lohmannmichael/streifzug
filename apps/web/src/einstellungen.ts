@@ -15,6 +15,8 @@ export interface Einstellungen {
   jahresFarben: boolean;
   /** Replay on opening as a drone flight (Michi, 24.11.2026); off: the calm one, way by way. */
   rueckblickDrohne: boolean;
+  /** Replay on opening as Polaroid pictures, one per day or per way (Michi, 25.11.2026). */
+  rueckblickPolaroid: boolean;
 }
 
 export const MARKER_FARBEN = [
@@ -52,6 +54,7 @@ const STANDARD: Einstellungen = {
   kuli: "#d92b20",
   jahresFarben: false,
   rueckblickDrohne: true,
+  rueckblickPolaroid: true,
 };
 
 function lesen(): Einstellungen {

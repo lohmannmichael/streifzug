@@ -35,3 +35,11 @@ export function IconZurueck() {
     </svg>
   );
 }
+
+export function IconWeiter() {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <path {...strich} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}

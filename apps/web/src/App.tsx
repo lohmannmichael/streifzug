@@ -1,4 +1,4 @@
-import { eineLinieJeStrasse, meterBis, type Piece, vormonat, zeitleiste, type Zeitleiste } from "@streifzug/core";
+import { eineLinieJeStrasse, meterBis, type Piece, polaroidStationen, vormonat, wegArt, zeitleiste, type Zeitleiste } from "@streifzug/core";
 import { fragen } from "./daten/arbeiter";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNeueStrassen } from "./daten/unterwegs";
@@ -22,6 +22,8 @@ import { EinstellungenSeite } from "./seiten/Einstellungen";
 import { neuInZeitraum, RueckblickeSeite, type Tag, type ZeitraumWahl } from "./seiten/Rueckblicke";
 import { ZeitraumDatum, ZeitraumKarte } from "./seiten/ZeitraumKarte";
 import { RueckblickAnzeige, type RbAnzeigeStand } from "./seiten/RueckblickAnzeige";
+import { Polaroid } from "./seiten/Polaroid";
+import { alsStrecke } from "./daten/regionen";
 import { reiseUmbenennen, type ReiseZeile } from "./daten/reisen";
 import type { ZeitraumWeg } from "./karte/zeitraum";
 import { ZeitreiseLeiste } from "./seiten/Zeitreise";
@@ -393,9 +395,53 @@ export function App() {
     },
   };
 
-  // Replay: one way tapped under "Zuletzt", or what came in since the last visit.
+  // Polaroid on opening (Michi, 25.11.2026): one picture per day (several days) or per way.
+  const rbLaeuft = !!rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv;
+  const polaroidAn = rbLaeuft && einstellungen.rueckblickPolaroid && !einzeln;
+  const stationen = useMemo(() => {
+    if (!rueckblick) return [];
+    const wege = rueckblick.wege.map((w) => ({ startedAt: w.startedAt, endedAt: w.endedAt, distanceM: w.distanceM, gefahrenAnteil: w.gefahren?.length ? w.gefahren.filter(Boolean).length / w.gefahren.length : 0 }));
+    return polaroidStationen(wege).map((st) => ({
+      ...st,
+      zeile:
+        st.art === "weg"
+          ? `${t.polaroid.uhr(wege[st.wege[0]!]!.startedAt)} ${t.polaroid.art[wegArt(wege[st.wege[0]!]!)]} · ${alsStrecke(st.distanceM)}`
+          : `${t.polaroid.wege(st.wege.length)} · ${alsStrecke(st.distanceM)}`,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rueckblick?.nr]);
+  const [pol, setPol] = useState<{ nr: number; i: number; lauf: number; fenster: DOMRect | null } | null>(null);
+  const polWeiter = useRef(0);
+  useEffect(() => {
+    if (polaroidAn && rueckblick && pol?.nr !== rueckblick.nr) setPol({ nr: rueckblick.nr, i: 0, lauf: 1, fenster: null });
+    if (!polaroidAn && pol) setPol(null);
+  }, [polaroidAn, rueckblick, pol]);
+  useEffect(() => () => window.clearTimeout(polWeiter.current), []);
+  const polWahl = (i: number) => {
+    window.clearTimeout(polWeiter.current);
+    setPol((p) => (p ? { ...p, i, lauf: p.lauf + 1 } : p));
+  };
+  const polStation = pol && polaroidAn ? stationen[pol.i] : undefined;
+  // Replay: one way tapped under "Zuletzt", or what came in since the last visit (as Polaroid
+  // pictures, or on the big map).
   const abspielen =
-    einzeln ?? (rueckblick && rbBereit === rueckblick.nr && !aufzeichnung.aktiv ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr } : null);
+    einzeln ??
+    (polaroidAn
+      ? pol?.fenster && polStation && rueckblick
+        ? { wege: polStation.wege.map((i) => rueckblick.wege[i]!).map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: polStation.seit, bis: polStation.bis, nr: rueckblick.nr * 1000 + pol.lauf }
+        : null
+      : rbLaeuft && rueckblick
+        ? { wege: rueckblick.wege.map((w) => ({ coords: w.coords, ...(w.gefahren ? { gefahren: w.gefahren } : {}) })), seit: rueckblick.seit, nr: rueckblick.nr }
+        : null);
+  const rueckblickFertig = () => {
+    if (zahlVorher !== null) setHochzaehlen((alt) => ({ von: zahlVorher, nr: (alt?.nr ?? 0) + 1 }));
+    rueckblickBeenden();
+  };
+  const polaroidZu = () => {
+    window.clearTimeout(polWeiter.current);
+    setPol(null);
+    rueckblickFertig();
+  };
   // During a replay: "+340 m neu" and the street just turned yellow (Michi, 24.11.2026).
   const [rbAnzeige, setRbAnzeige] = useState<RbAnzeigeStand | null>(null);
   const rbNamen = useRef(new Map<string, string | null>());
@@ -579,11 +625,16 @@ export function App() {
           rueckblick={abspielen}
           rueckblickDrohne={einstellungen.rueckblickDrohne}
           onGelbDazu={gelbDazu}
+          rueckblickFenster={polaroidAn && !einzeln ? (pol?.fenster ?? null) : null}
           onRueckblickEnde={() => {
             setEinzeln(null);
             if (einzeln) return;
-            if (zahlVorher !== null) setHochzaehlen((alt) => ({ von: zahlVorher, nr: (alt?.nr ?? 0) + 1 }));
-            rueckblickBeenden();
+            if (polaroidAn) {
+              // The picture stays a moment, then the next one comes; the last one stays open.
+              if (pol && pol.i < stationen.length - 1) polWeiter.current = window.setTimeout(() => polWahl(pol.i + 1), 2500);
+              return;
+            }
+            rueckblickFertig();
           }}
           erstesMal={erstesMal}
           stifte={stifte}
@@ -598,7 +649,17 @@ export function App() {
           onZeitraumEnde={() => setZeitraum((z) => (z ? { ...z, fertig: true } : z))}
         />
         {zeitraum && !zeitraum.fertig && zrDatum !== null && <ZeitraumDatum t={zrDatum} />}
-        {abspielen && rbAnzeige && rbAnzeige.m >= 1 && <RueckblickAnzeige stand={rbAnzeige} />}
+        {abspielen && !polaroidAn && rbAnzeige && rbAnzeige.m >= 1 && <RueckblickAnzeige stand={rbAnzeige} />}
+        {polaroidAn && pol && stationen.length > 0 && (
+          <Polaroid
+            bilder={stationen}
+            i={pol.i}
+            neuM={pol.fenster ? (rbAnzeige?.m ?? 0) : 0}
+            onWahl={polWahl}
+            onZu={polaroidZu}
+            onFenster={(fenster) => setPol((p) => (p ? { ...p, fenster } : p))}
+          />
+        )}
         <div className="karten-knoepfe">
           <button type="button" className="rund-knopf" aria-label={t.pass.oeffnen} onClick={() => setPass("start")}>
             <IconPass />

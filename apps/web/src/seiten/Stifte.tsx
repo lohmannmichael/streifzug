@@ -40,6 +40,13 @@ export function Stifte(props: { werte: Einstellungen; aendern: (teil: Partial<Ei
       </label>
       <label className="schalter-zeile">
         <span>
+          <span className="schalter-label">{tx.polaroid}</span>
+          <span className="schalter-hinweis">{werte.rueckblickPolaroid ? tx.polaroidAn : tx.polaroidAus}</span>
+        </span>
+        <input type="checkbox" role="switch" className="schalter" checked={werte.rueckblickPolaroid} onChange={(e) => aendern({ rueckblickPolaroid: e.target.checked })} />
+      </label>
+      <label className="schalter-zeile">
+        <span>
           <span className="schalter-label">{tx.drohne}</span>
           <span className="schalter-hinweis">{werte.rueckblickDrohne ? tx.drohneAn : tx.drohneAus}</span>
         </span>

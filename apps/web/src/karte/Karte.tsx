@@ -51,6 +51,8 @@ interface KartenProps {
   onRueckblickEnde: () => void;
   /** Replay as a drone flight (Michi, 24.11.2026) instead of the calm one, way by way. */
   rueckblickDrohne: boolean;
+  /** Polaroid (Michi, 25.11.2026): the picture's window on screen; the replay plays only there. */
+  rueckblickFenster?: DOMRect | null;
   /** New pieces just turned yellow during a replay (for the line on top). */
   onGelbDazu: (stuecke: readonly Piece[]) => void;
   /** A whole period played back ("Dein November", Bauplan 3, F2); `nr` starts it. */
@@ -289,7 +291,10 @@ export function Karte(props: KartenProps) {
     // Visible part of the sheet (it is moved down when small).
     const rahmen = document.querySelector(".blatt")?.getBoundingClientRect();
     const blatt = rahmen ? Math.max(0, karte.getContainer().getBoundingClientRect().bottom - rahmen.top) : 160;
-    return (drohneRef.current ? drohneAbspielen : rueckblickAbspielen)(
+    const c = karte.getContainer().getBoundingClientRect();
+    const r = props.rueckblickFenster;
+    const fenster = r ? { oben: r.top - c.top, unten: c.bottom - r.bottom, links: r.left - c.left, rechts: c.right - r.right } : null;
+    return (drohneRef.current || fenster ? drohneAbspielen : rueckblickAbspielen)(
       karte,
       { wege: rb.wege, seit: rb.seit, bis: rb.bis },
       {
@@ -301,6 +306,7 @@ export function Karte(props: KartenProps) {
         // A past day ends where its ways are, not at the chosen quarter.
         veedel: rb.bis === undefined ? veedelRahmen(gewaehltRef.current, datenRef.current) : null,
         gelbDazu: (stuecke) => gelbDazuRef.current(stuecke),
+        fenster,
       },
       () => rbEnde.current(),
     );

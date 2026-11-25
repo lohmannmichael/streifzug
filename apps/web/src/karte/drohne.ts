@@ -3,7 +3,7 @@ import { MercatorCoordinate, type Map as MapLibreMap } from "maplibre-gl";
 import { LEER, setzeDaten } from "./ebenen";
 import { zeigeBox } from "./kamera";
 import { tippSperren } from "./tippSperre";
-import { box, nurAktiv, rueckblickAbspielen, spurBis, type RueckblickDaten, type RueckblickKontext } from "./rueckblick";
+import { box, nurAktiv, rueckblickAbspielen, spurBis, type Fenster, type RueckblickDaten, type RueckblickKontext } from "./rueckblick";
 
 /**
  * Replay "Drohne" (Michi, 24.11.2026; the second variant next to the calm one in rueckblick.ts).
@@ -15,6 +15,8 @@ import { box, nurAktiv, rueckblickAbspielen, spurBis, type RueckblickDaten, type
  * runs.
  */
 const ZOOM = 15;
+/** In the smaller Polaroid picture a little higher, so it shows enough around the pen. */
+const ZOOM_POLAROID = 14.6;
 /** On a very full day the pen goes faster; then the camera goes up a little (at most this much). */
 const ZOOM_HOECHSTENS_HOEHER = 0.8;
 /** A jump of the pen further than this (car ride, left-out stretch, next way) is a flight. */
@@ -32,7 +34,9 @@ const ruhig = () => window.matchMedia("(prefers-reduced-motion: reduce)").matche
 const flugDauer = (m: number) => (m < 1500 ? 1000 : m < 20_000 ? 1600 : 2400);
 
 export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: RueckblickKontext, fertig: () => void): () => void {
-  if (ruhig()) return rueckblickAbspielen(karte, daten, k, fertig);
+  if (ruhig()) return k.fenster ? standbild(karte, daten, k.fenster, k, fertig) : rueckblickAbspielen(karte, daten, k, fertig);
+  // The map remembers a padding from earlier moves (the sheet); the camera here works without it.
+  karte.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
   const bis = daten.bis ?? Infinity;
   const neu = k.entdeckt.filter((p) => (k.erstesMal.get(p.id) ?? 0) >= daten.seit && (k.erstesMal.get(p.id) ?? 0) < bis);
   const alt = k.entdeckt.filter((p) => (k.erstesMal.get(p.id) ?? 0) < daten.seit);
@@ -46,7 +50,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   const neuPlan = plan.abschnitte.filter((a) => a.art === "neu");
   const neuDauer = neuPlan.reduce((s, a) => s + a.dauer, 0);
   const neuNatuerlich = neuPlan.reduce((s, a) => s + ((a.bis - a.von) / DROHNE_TEMPO.neu) * 1000, 0);
-  const zoom = ZOOM - Math.min(ZOOM_HOECHSTENS_HOEHER, Math.max(0, neuDauer > 0 ? Math.log2(neuNatuerlich / neuDauer) : 0));
+  const zoom = (k.fenster ? ZOOM_POLAROID : ZOOM) - Math.min(ZOOM_HOECHSTENS_HOEHER, Math.max(0, neuDauer > 0 ? Math.log2(neuNatuerlich / neuDauer) : 0));
 
   let aus = false;
   let bild = 0;
@@ -80,6 +84,14 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   };
   const ende = () => {
     if (aus) return;
+    if (k.fenster) {
+      // Polaroid: the picture stays as it is now, with all its ways in view.
+      cancelAnimationFrame(bild);
+      zeiten.forEach((z) => window.clearTimeout(z));
+      bildFertig(karte, roh, k.fenster, k, bis);
+      zeiten.push(window.setTimeout(fertig, 1000));
+      return;
+    }
     stopp();
     if (k.veedel) zeigeBox(karte, k.veedel, { top: 60, bottom: k.untenFrei + 20, left: 30, right: 30 }, { maxZoom: 16, duration: 1200 });
     zeiten.push(window.setTimeout(fertig, 1200));
@@ -124,21 +136,24 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   };
   k.zeichnen(alt);
 
-  const hoehe = () => container.clientHeight;
-  const unten = () => hoehe() - k.untenFrei;
-  /** Shift (in px, downwards positive) from the map's middle to the middle of the free area. */
-  const versatz = () => (OBEN + unten()) / 2 - hoehe() / 2;
+  const f: Fenster = k.fenster ?? { oben: OBEN, unten: k.untenFrei, links: 0, rechts: 0 };
+  /** Shift (px) from the map's middle to the middle of the free area. */
+  const versatz = () => ({ x: (f.links - f.rechts) / 2, y: (f.oben - f.unten) / 2 });
   /** Map middle so that `punkt` is in the middle of the free area at zoom `z`. */
   const mitteFuer = (punkt: LonLat, z: number) => {
     const p = MercatorCoordinate.fromLngLat([punkt[0], punkt[1]]);
-    return new MercatorCoordinate(p.x, p.y - versatz() / (512 * 2 ** z)).toLngLat();
+    const v = versatz();
+    const welt = 512 * 2 ** z;
+    return new MercatorCoordinate(p.x - v.x / welt, p.y - v.y / welt).toLngLat();
   };
+  const freiB = () => container.clientWidth - f.links - f.rechts;
+  const freiH = () => container.clientHeight - f.oben - f.unten;
 
   // A look at the whole day from above (all ways near the first), then down to the start.
   const erster = wege[plan.wege[0]!]!;
   const nah = wege.filter((w) => Math.abs(w.coords[0]![0] - erster.coords[0]![0]) < 0.6 && Math.abs(w.coords[0]![1] - erster.coords[0]![1]) < 0.36);
   const b = box(nah.flatMap((w) => w.coords));
-  zeigeBox(karte, [[b[0], b[1]], [b[2], b[3]]], { top: OBEN, bottom: k.untenFrei + 30, left: 30, right: 30 }, { maxZoom: 14, duration: 0 });
+  zeigeBox(karte, [[b[0], b[1]], [b[2], b[3]]], { top: f.oben + 10, bottom: f.unten + 20, left: f.links + 20, right: f.rechts + 20 }, { maxZoom: 14, duration: 0 });
 
   let mitte: { x: number; y: number } | null = null;
   let t = 0;
@@ -164,10 +179,11 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     }
     const p = MercatorCoordinate.fromLngLat([stift[0], stift[1]]);
     // Pen relative to the middle of the free area, in px.
-    const dx = (p.x - mitte.x) * welt;
-    const dy = (p.y - mitte.y) * welt - versatz();
+    const v = versatz();
+    const dx = (p.x - mitte.x) * welt - v.x;
+    const dy = (p.y - mitte.y) * welt - v.y;
     const d = Math.hypot(dx, dy);
-    const ruhe = RUHE * Math.min(container.clientWidth, unten() - OBEN);
+    const ruhe = RUHE * Math.min(freiB(), freiH());
     if (d <= ruhe) return;
     const f = (1 - ruhe / d) * (1 - Math.exp(-dt / GLEITEN_MS));
     mitte = { x: mitte.x + (dx * f) / welt, y: mitte.y + (dy * f) / welt };
@@ -196,7 +212,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     setzeDaten(karte, "rb-kopf", { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: st.punkt } });
     freigeben(t);
     if (st.fertig || t >= plan.dauer) {
-      k.zeichnen(k.aktuell());
+      if (!k.fenster) k.zeichnen(k.aktuell());
       zeiten.push(window.setTimeout(ende, 500));
       return;
     }
@@ -209,4 +225,32 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   };
   zeiten.push(window.setTimeout(() => (bild = requestAnimationFrame(schritt)), UEBERBLICK_MS));
   return stopp;
+}
+
+/** Polaroid at its end: all ways of the picture in ink, its yellow, everything in view. */
+function bildFertig(karte: MapLibreMap, wege: RueckblickDaten["wege"], f: Fenster, k: RueckblickKontext, bis: number) {
+  const linien = wege.flatMap((w) => {
+    const r: ReplayWeg = { coords: w.coords, arten: segmentArten(w.coords, [], w.gefahren) };
+    const meter = [0];
+    for (let i = 1; i < w.coords.length; i++) meter.push(meter[i - 1]! + distanceM(w.coords[i - 1]!, w.coords[i]!));
+    return spurBis(r, meter, Infinity).features;
+  });
+  setzeDaten(karte, "rb", { type: "FeatureCollection", features: linien });
+  setzeDaten(karte, "rb-kopf", LEER);
+  k.zeichnen(k.entdeckt.filter((p) => (k.erstesMal.get(p.id) ?? 0) < bis));
+  const b = box(wege.flatMap((w) => w.coords));
+  if (Number.isFinite(b[0])) zeigeBox(karte, [[b[0], b[1]], [b[2], b[3]]], { top: f.oben + 16, bottom: f.unten + 16, left: f.links + 16, right: f.rechts + 16 }, { maxZoom: 16, duration: ruhig() ? 0 : 1000 });
+}
+
+/** Polaroid with "Reduce motion": the finished picture at once. */
+function standbild(karte: MapLibreMap, daten: RueckblickDaten, f: Fenster, k: RueckblickKontext, fertig: () => void): () => void {
+  karte.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+  const wege = daten.wege.filter((w) => w.coords.length > 1);
+  bildFertig(karte, wege, f, k, daten.bis ?? Infinity);
+  const z = window.setTimeout(fertig, 600);
+  return () => {
+    window.clearTimeout(z);
+    setzeDaten(karte, "rb", LEER);
+    k.zeichnen(k.aktuell());
+  };
 }
