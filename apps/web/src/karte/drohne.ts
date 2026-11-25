@@ -1,7 +1,8 @@
-import { drohnenZiel, freigabeZeiten, planeDrohne, punktBei, segmentArten, standBei, type LonLat, type ReplayArt, type ReplayWeg } from "@streifzug/core";
+import { distanceM, freigabeZeiten, planeDrohne, punktBei, segmentArten, standBei, type LonLat, type ReplayArt, type ReplayWeg } from "@streifzug/core";
 import { MercatorCoordinate, type Map as MapLibreMap } from "maplibre-gl";
 import { LEER, setzeDaten } from "./ebenen";
 import { zeigeBox } from "./kamera";
+import { tippSperren } from "./tippSperre";
 import { box, nurAktiv, rueckblickAbspielen, spurBis, type RueckblickDaten, type RueckblickKontext } from "./rueckblick";
 
 /**
@@ -12,8 +13,11 @@ import { box, nurAktiv, rueckblickAbspielen, spurBis, type RueckblickDaten, type
  * new kilometre, at most 15 s. Tap skips, holding plays three times as fast. With "Reduce motion"
  * the calm variant runs (no following, no growing).
  */
-const ZOOM: Record<ReplayArt, number> = { neu: 17, bekannt: 15.6, gefahren: 13.6 };
-const ZOOM_FLUG = 14.8;
+// Zoom per kind; the speeds in core/drohne.ts are made for these (Michi, 25.11.2026: too fast).
+const ZOOM: Record<ReplayArt, number> = { neu: 16.5, bekannt: 15, gefahren: 13.5 };
+const ZOOM_FLUG = 14.5;
+/** A jump of the tip further than this (a left-out stretch) is a hard cut, not a glide. */
+const SCHNITT_M = 250;
 const FLUG_MS = 900;
 const UEBERBLICK_MS = 700;
 const OBEN = 70;
@@ -34,8 +38,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   const alt = k.entdeckt.filter((p) => (k.erstesMal.get(p.id) ?? 0) < daten.seit);
   const roh = daten.wege.filter((w) => w.coords.length > 1);
   const wege: ReplayWeg[] = roh.map((w) => ({ coords: w.coords, arten: segmentArten(w.coords, neu, w.gefahren) }));
-  const neuM = neu.reduce((m, p) => m + (p.kind === "street" ? p.lengthM * p.weight : p.lengthM), 0);
-  const plan = planeDrohne(wege, drohnenZiel(neuM), FLUG_MS);
+  const plan = planeDrohne(wege, { flugMs: FLUG_MS });
   const freigabe = freigabeZeiten(nurAktiv(plan), wege, neu);
   const reihenfolge = [...neu].sort((a, b) => (freigabe.get(a.id) ?? Infinity) - (freigabe.get(b.id) ?? Infinity));
 
@@ -58,6 +61,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     container.removeEventListener("pointerup", hoch, true);
     container.removeEventListener("pointercancel", hoch, true);
     if (ziehenWar) karte.dragPan.enable();
+    tippSperren();
     setzeDaten(karte, "rb", LEER);
     setzeDaten(karte, "rb-kopf", LEER);
   };
@@ -75,6 +79,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   };
   const runter = (e: Event) => {
     e.stopPropagation();
+    tippSperren(60_000);
     gehalten = false;
     gedrueckt = true;
     halten = window.setTimeout(() => {
@@ -84,6 +89,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   };
   const hoch = (e: Event) => {
     e.stopPropagation();
+    tippSperren();
     window.clearTimeout(halten);
     if (!gedrueckt) return;
     gedrueckt = false;
@@ -136,10 +142,13 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
   let letzt = 0;
   let wegJetzt = -1;
   const fertigeWege: number[] = [];
+  let letzterPunkt: LonLat | null = null;
+  /** The next camera step jumps (hard cut) instead of gliding. */
+  let schnitt = false;
 
   /** Camera towards the tip (or the next way's start during a flight), smoothly. */
   const kamera = (ziel: LonLat, richtung: LonLat | null, zielZoom: number, dt: number) => {
-    zoom += (zielZoom - zoom) * (1 - Math.exp(-dt / ZOOM_MS));
+    zoom = schnitt ? zielZoom : zoom + (zielZoom - zoom) * (1 - Math.exp(-dt / ZOOM_MS));
     let [rx, ry] = [0, 0];
     if (richtung) {
       const dx = (richtung[0] - ziel[0]) * Math.cos((ziel[1] * Math.PI) / 180);
@@ -157,7 +166,8 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
       const c = MercatorCoordinate.fromLngLat(karte.getCenter());
       mitte = { x: c.x, y: c.y };
     }
-    const f = 1 - Math.exp(-dt / MITTE_MS);
+    const f = schnitt ? 1 : 1 - Math.exp(-dt / MITTE_MS);
+    schnitt = false;
     mitte = { x: mitte.x + (soll.x - mitte.x) * f, y: mitte.y + (soll.y - mitte.y) * f };
     karte.jumpTo({ center: new MercatorCoordinate(mitte.x, mitte.y).toLngLat(), zoom, bearing: 0 });
   };
@@ -181,6 +191,9 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     }
     const weg = wege[st.weg]!;
     const meter = plan.meter[st.weg]!;
+    // A left-out stretch (known or driven, too long a day): cut, do not glide across.
+    if (letzterPunkt && distanceM(letzterPunkt, st.punkt) > SCHNITT_M && t >= plan.abschnitte.find((x) => x.weg === st.weg)!.start) schnitt = true;
+    letzterPunkt = st.punkt;
     // Ink lines: the ways done so far in full, the current one up to the tip.
     const linien = [...fertigeWege.map((i) => spurBis(wege[i]!, plan.meter[i]!, Infinity).features).flat(), ...spurBis(weg, meter, st.m).features];
     setzeDaten(karte, "rb", { type: "FeatureCollection", features: linien });

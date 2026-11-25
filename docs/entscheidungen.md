@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 25.11.2026: Drohnenflug langsamer (Tempo nach Bildschirm)
+- Michi: „Drohnenflug viel zu schnell.“ Nachgerechnet mit seinen Tagen (nur lesend): 22.11. 14,8 km zu Fuß/Rad (8,0 neu), 23.11. 7,2 km (1,0 neu), 24.11. 1,0 km und 13,4 km Auto. Bisher wurde alles in höchstens 15 s gepresst, am 23.11. fast 1 km pro Sekunde
+- Neu: festes Tempo je Art, auf den Bildschirm bezogen: neue Straße bei Zoom 16,5 rund 150 Pixel/s (80 m/s, 1 km in gut 12 s), bekannte Strecke bei Zoom 15 rund 400 Pixel/s (600 m/s), Autofahrt bei Zoom 13,5 rund 500 Pixel/s (2,1 km/s). Kurze Tage bleiben kurz (kein Strecken mehr)
+- Obergrenze 30 s: Zuerst werden bekannte Strecken und Autofahrten schneller (höchstens dreifach), reicht das nicht, werden sie weggelassen (harter Schnitt, Wege ohne Neues fallen weg); erst danach wird auch Neues schneller (Tage mit sehr viel Neuem wie der 22.11.)
+- Behoben, gefunden durch die Oberflächentests: Der Tipp zum Überspringen wählte zusätzlich das Viertel unter dem Finger. Während des Rückblicks und 0,7 s danach nimmt die Karte keine Tipps an (`karte/tippSperre.ts`). Zeitreise-Test war von der Uhrzeit abhängig (vor 10 Uhr ein Tag mehr), jetzt nicht mehr
+- Kern: `planeDrohne` neu, 7 Tests
+
 ## 24.11.2026: Rückblick als Drohnenflug (zweite Variante) mit Anzeige oben
 - Michi: Der Rückblick beim Öffnen fährt teils langsam hinterher und ist teils zu weit herausgezoomt; lieber näher und je nach Strecke schneller. Drei Vorschläge gemacht (A immer nah, B nur das Neue, C Drohne); Michi wählte C zum Ausprobieren, dazu Ideen 1 (Straßenname), 2 (Zähler), 5 (komplette Straße)
 - Drohne (`karte/drohne.ts`, Kern `drohne.ts` mit 5 Tests): je Gegend (Wege innerhalb etwa 40 km) zuerst ein Überblick über alle ihre Wege des Tages (höchstens Zoom 14), dann gleitet die Kamera hinunter. Zoom nach Art des Stücks an der Stiftspitze: neue Straße 17, bekannte 15,6, Autofahrt 13,6, Flug zum nächsten Weg 14,8; der Zoom gleitet (0,65 s), die Position folgt eng (0,22 s), Spitze leicht vor der Mitte. Tempo: Neues 90 m/s, Bekanntes sechsfach, Auto 25-fach, alles zusammen auf 5 s plus 3 s je neuem km gebracht (höchstens 15 s). Neue Gegend (Köln, dann Freising): harter Schnitt zum Überblick. Tipp überspringt, Gedrückthalten dreifach. „Bewegung reduzieren“: die ruhige Variante

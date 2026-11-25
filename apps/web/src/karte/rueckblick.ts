@@ -2,6 +2,7 @@ import { freigabeZeiten, passtBeiZoom, planeNachfahren, punktBei, standBei, type
 import { MercatorCoordinate, type Map as MapLibreMap } from "maplibre-gl";
 import { LEER, setzeDaten } from "./ebenen";
 import { zeigeBox } from "./kamera";
+import { tippSperren } from "./tippSperre";
 
 /**
  * Replay "näher heran, nachfahren" (Bauplan 3, F1). Each way on its own, in the order walked,
@@ -124,6 +125,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
     container.removeEventListener("pointerup", hoch, true);
     container.removeEventListener("pointercancel", hoch, true);
     if (ziehenWar) karte.dragPan.enable();
+    tippSperren();
     setzeDaten(karte, "rb", LEER);
     setzeDaten(karte, "rb-kopf", LEER);
   };
@@ -146,6 +148,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
   let gedrueckt = false;
   const runter = (e: Event) => {
     e.stopPropagation();
+    tippSperren(60_000);
     gehalten = false;
     gedrueckt = true;
     halten = window.setTimeout(() => {
@@ -155,6 +158,7 @@ export function rueckblickAbspielen(karte: MapLibreMap, daten: RueckblickDaten, 
   };
   const hoch = (e: Event) => {
     e.stopPropagation();
+    tippSperren();
     window.clearTimeout(halten);
     if (!gedrueckt) return;
     gedrueckt = false;

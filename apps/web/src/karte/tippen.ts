@@ -3,6 +3,7 @@ import type { Map as MapLibreMap, MapLayerMouseEvent } from "maplibre-gl";
 import type { Regionen } from "../daten/regionen";
 import { etikettAn } from "../daten/veedel";
 import type { EtikettZustand } from "./Schild";
+import { tippGesperrt } from "./tippSperre";
 
 /** The area (smallest level) at a point on screen, or null. */
 export function gebietAnPunkt(karte: MapLibreMap, daten: Regionen | null, punkt: { x: number; y: number }): string | null {
@@ -21,6 +22,8 @@ export function tippenEinrichten(
   ziel: { daten: () => Regionen | null; etikett: (e: EtikettZustand | null) => void; waehlen: (id: string) => void; ort: (id: string) => void },
 ) {
   karte.on("click", async (e: MapLayerMouseEvent) => {
+    // The tap that skipped the replay (see tippSperre.ts).
+    if (tippGesperrt()) return;
     // Far out: a tap on a place's point opens the place (Bauplan 3, F5).
     if (karte.getZoom() < UEBERBLICK_ZOOM && karte.getLayer("orte-punkt")) {
       const pad = 16;

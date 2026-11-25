@@ -7,13 +7,16 @@ import { distanceM, type LonLat } from "./geo";
 import type { ReplayAbschnitt, ReplayArt, ReplayPlan, ReplayWeg } from "./replay";
 import { distanceToLineM } from "./ziele";
 
-/** Meters per second before fitting into the time: new slowly, known six times, car 25 times as fast. */
-export const DROHNE_TEMPO: Record<ReplayArt, number> = { neu: 90, bekannt: 540, gefahren: 2250 };
-
-/** Total time: 5 s plus 3 s per new kilometre, at most 15 s. */
-export function drohnenZiel(neuM: number): number {
-  return Math.min(15_000, 5000 + (neuM / 1000) * 3000);
-}
+/**
+ * Meters per second (Michi, 25.11.2026: "viel zu schnell"): chosen for the screen at the zoom of
+ * each kind (see karte/drohne.ts): new streets at zoom 16.5 about 150 px/s (1 km in 12 s), known
+ * stretches at zoom 15 about 400 px/s, car rides at zoom 13.5 about 500 px/s.
+ */
+export const DROHNE_TEMPO: Record<ReplayArt, number> = { neu: 80, bekannt: 600, gefahren: 2100 };
+/** At most this long; then known stretches and car rides go faster or are left out, new ones last. */
+export const DROHNE_DECKEL_MS = 30_000;
+/** Known stretches may go at most this much faster before they are left out (hard cut). */
+const SCHNELLER_HOECHSTENS = 3;
 
 /** Kind of each segment: driven (car leg), new (along a newly walked piece, within 20 m) or known. */
 export function segmentArten(coords: readonly LonLat[], neu: readonly { coords: readonly LonLat[] }[], gefahren?: readonly boolean[]): ReplayArt[] {
@@ -39,38 +42,58 @@ export function segmentArten(coords: readonly LonLat[], neu: readonly { coords: 
 }
 
 /**
- * All ways one after another with `flugMs` between two ways (the camera flies there). Speeds
- * after DROHNE_TEMPO, all scaled together so the whole replay takes `zielMs`.
+ * All ways one after another with `flugMs` between two ways (the camera flies there), at the
+ * speeds of DROHNE_TEMPO; a short day stays short. Longer than `deckelMs`: known stretches and car
+ * rides go faster (up to three times), else they are left out (ways without anything new drop
+ * out); if new streets alone are still too long, they go faster too.
  */
-export function planeDrohne(wege: readonly ReplayWeg[], zielMs: number, flugMs = 0): ReplayPlan {
+export function planeDrohne(wege: readonly ReplayWeg[], optionen: { flugMs?: number; deckelMs?: number } = {}): ReplayPlan {
+  const flugMs = optionen.flugMs ?? 0;
+  const deckel = optionen.deckelMs ?? DROHNE_DECKEL_MS;
   const meter = wege.map((w) => {
     const m = [0];
     for (let i = 1; i < w.coords.length; i++) m.push(m[i - 1]! + distanceM(w.coords[i - 1]!, w.coords[i]!));
     return m;
   });
   const laeufe = wege.map((w, wi) => {
-    const out: { von: number; bis: number; art: ReplayArt }[] = [];
+    const out: { von: number; bis: number; art: ReplayArt; dauer: number }[] = [];
     for (let i = 0; i < w.coords.length - 1; i++) {
       const art = w.arten[i] ?? "bekannt";
       const letzter = out.at(-1);
       if (letzter && letzter.art === art) letzter.bis = meter[wi]![i + 1]!;
-      else out.push({ von: meter[wi]![i]!, bis: meter[wi]![i + 1]!, art });
+      else out.push({ von: meter[wi]![i]!, bis: meter[wi]![i + 1]!, art, dauer: 0 });
     }
-    return out.filter((l) => l.bis > l.von);
+    const da = out.filter((l) => l.bis > l.von);
+    for (const l of da) l.dauer = ((l.bis - l.von) / DROHNE_TEMPO[l.art]) * 1000;
+    return da;
   });
-  const auswahl = wege.map((_, i) => i).filter((i) => laeufe[i]!.length > 0);
-  const natur = (l: { von: number; bis: number; art: ReplayArt }) => ((l.bis - l.von) / DROHNE_TEMPO[l.art]) * 1000;
-  const fluege = Math.max(0, auswahl.length - 1) * flugMs;
-  const summe = auswahl.reduce((s, i) => s + laeufe[i]!.reduce((t, l) => t + natur(l), 0), 0);
-  const faktor = summe > 0 ? Math.max(0.05, zielMs - fluege) / summe : 1;
+  let auswahl = wege.map((_, i) => i).filter((i) => laeufe[i]!.length > 0);
+  const summe = (art: (a: ReplayArt) => boolean) => auswahl.reduce((s, i) => s + laeufe[i]!.reduce((t, l) => t + (art(l.art) ? l.dauer : 0), 0), 0);
+  const fluege = () => Math.max(0, auswahl.length - 1) * flugMs;
+  const neuZeit = () => summe((a) => a === "neu");
+  const restZeit = () => summe((a) => a !== "neu");
+  const zuViel = neuZeit() + restZeit() + fluege() - deckel;
+  if (zuViel > 0) {
+    const rest = restZeit();
+    const faktor = rest > 0 ? (rest - zuViel) / rest : 0;
+    if (faktor >= 1 / SCHNELLER_HOECHSTENS) {
+      for (const i of auswahl) for (const l of laeufe[i]!) if (l.art !== "neu") l.dauer *= faktor;
+    } else {
+      // Left out: known stretches and car rides; ways with nothing new drop out altogether.
+      for (const i of auswahl) for (const l of laeufe[i]!) if (l.art !== "neu") l.dauer = 0;
+      auswahl = auswahl.filter((i) => laeufe[i]!.some((l) => l.art === "neu"));
+      const neu = neuZeit();
+      const platz = deckel - fluege();
+      if (neu > platz && neu > 0) for (const i of auswahl) for (const l of laeufe[i]!) l.dauer *= Math.max(0.05, platz) / neu;
+    }
+  }
   const abschnitte: ReplayAbschnitt[] = [];
   let t = 0;
   auswahl.forEach((wi, k) => {
     if (k > 0) t += flugMs;
     for (const l of laeufe[wi]!) {
-      const dauer = natur(l) * faktor;
-      abschnitte.push({ weg: wi, von: l.von, bis: l.bis, art: l.art, start: t, dauer });
-      t += dauer;
+      abschnitte.push({ weg: wi, von: l.von, bis: l.bis, art: l.art, start: t, dauer: l.dauer });
+      t += l.dauer;
     }
   });
   return { abschnitte, wege: auswahl, dauer: t, meter };

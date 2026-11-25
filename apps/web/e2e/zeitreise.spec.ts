@@ -20,12 +20,15 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
   const leiste = page.locator(".zeitreise");
   await expect(leiste).toBeVisible();
   const schieber = page.getByRole("slider", { name: "Tag der Zeitreise" });
-  await expect(schieber).toHaveAttribute("max", "40");
+  // First point: 40 days and 10 hours ago; counted in calendar days (one more before 10 am).
+  const erster = Date.now() - (40 * 1440 + 600) * 60_000;
+  const tage = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(erster).setHours(0, 0, 0, 0)) / 86_400_000);
+  await expect(schieber).toHaveAttribute("max", String(tage));
   await expect(leiste.locator(".prozent")).toHaveAttribute("aria-label", "9,8 Prozent");
 
   // Back to the first day: only the first walk is yellow.
   await schieber.fill("0");
-  await expect(leiste.locator(".ober")).toHaveText(new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long", year: "numeric" }).format(new Date(Date.now() - 40 * 86_400_000)));
+  await expect(leiste.locator(".ober")).toHaveText(new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long", year: "numeric" }).format(new Date(erster)));
   const ersterTag = await leiste.locator(".prozent").getAttribute("aria-label");
   expect(Number(ersterTag!.replace(" Prozent", "").replace(",", "."))).toBeLessThan(9.8);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeLessThan(heute * 0.9);
@@ -38,7 +41,7 @@ test("Zeitreise (F3): Schieber zurück zeigt weniger Gelb und eine kleinere Zahl
     })()`);
   await expect.poll(weidenText).toMatch(/^\d,\d %$/);
   expect(await weidenText()).not.toBe("9,8 %");
-  await schieber.fill("40");
+  await schieber.fill(String(tage));
   await expect.poll(weidenText).toBe("9,8 %");
 
   // "Fertig": the sheet and today's yellow are back.
