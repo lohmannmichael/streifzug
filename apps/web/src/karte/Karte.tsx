@@ -1,7 +1,7 @@
 import type { Fix, LonLat, Piece } from "@streifzug/core";
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { useEffect, useRef, useState } from "react";
-import { glaetten, orteImBlick } from "@streifzug/core";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { einraster, glaetten, orteImBlick } from "@streifzug/core";
 import { orteLaden, type Regionen } from "../daten/regionen";
 import { t } from "../texte/de";
 import { karteBauen, stilNeu } from "./aufbau";
@@ -72,6 +72,11 @@ interface KartenProps {
   stifte: { marker: string; kuli: string; jahresFarben: boolean };
 }
 
+/** Ways drawn nicer (Michi, 25.11.2026): smoothed, then on the seen streets; counting stays as it is. */
+function schoen<W extends { coords: LonLat[]; gefahren?: boolean[] }>(wege: readonly W[], raster: ReturnType<typeof einraster>): W[] {
+  return wege.map((w) => ({ ...w, coords: raster(glaetten(w.coords), w.gefahren) }));
+}
+
 export function Karte(props: KartenProps) {
   const box = useRef<HTMLDivElement>(null);
   const karteRef = useRef<MapLibreMap | null>(null);
@@ -85,6 +90,8 @@ export function Karte(props: KartenProps) {
   // Latest seen streets and shares, so they can be drawn again whenever the map style (re)loads.
   const entdecktRef = useRef(props.entdeckt);
   entdecktRef.current = props.entdeckt;
+  // Live track drawn smoothed and on the seen streets (Michi, 25.11.2026).
+  const spurRaster = useMemo(() => einraster(props.entdeckt), [props.entdeckt]);
   const gefahrenRef = useRef(props.gefahren);
   gefahrenRef.current = props.gefahren;
   const prozenteRef = useRef(props.prozente);
@@ -187,7 +194,7 @@ export function Karte(props: KartenProps) {
   useEffect(() => {
     const karte = karteRef.current;
     if (!karte || !karte.getSource("spur")) return;
-    const coords = glaetten(props.spur.map((f): LonLat => [f.lon, f.lat]));
+    const coords = spurRaster(glaetten(props.spur.map((f): LonLat => [f.lon, f.lat])));
     setzeDaten(karte, "spur", { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords.length > 1 ? coords : [] } });
     const letzter = props.spur.at(-1);
     const hier: [number, number] | null = letzter ? [letzter.lon, letzter.lat] : props.position;
@@ -264,7 +271,7 @@ export function Karte(props: KartenProps) {
     if (!karte || !z) return;
     return zeitraumAbspielen(
       karte,
-      { ...z, wege: z.wege.map((w) => ({ ...w, coords: glaetten(w.coords) })) },
+      { ...z, wege: schoen(z.wege, einraster(entdecktRef.current)) },
       {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,
@@ -297,7 +304,7 @@ export function Karte(props: KartenProps) {
     return (drohneRef.current || fenster ? drohneAbspielen : rueckblickAbspielen)(
       karte,
       // Drawn smoothed (Michi, 25.11.2026); counting stays with the matching.
-      { wege: rb.wege.map((w) => ({ ...w, coords: glaetten(w.coords) })), seit: rb.seit, bis: rb.bis },
+      { wege: schoen(rb.wege, einraster(entdecktRef.current)), seit: rb.seit, bis: rb.bis },
       {
         entdeckt: entdecktRef.current,
         erstesMal: erstesMalRef.current,

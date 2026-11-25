@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { distanceM, type LonLat } from "./geo";
-import { glaetten } from "./linie";
+import { aufStrassen, glaetten } from "./linie";
 
 // About 7 m per 0.0001 degrees of longitude in Köln, 11 m per 0.0001 of latitude.
 const Y0 = 50.94;
@@ -39,5 +39,42 @@ describe("glaetten (Wege ruhiger zeichnen, Michi 25.11.2026)", () => {
 
   it("short ways stay as they are", () => {
     expect(glaetten([ost(0), ost(10)])).toEqual([ost(0), ost(10)]);
+  });
+});
+
+describe("aufStrassen (Schritt C1: auf erkannte Straßen)", () => {
+  // A street along the x axis from 0 to 300 m.
+  const strasse = { coords: [ost(0), ost(300)] };
+  const neben = (n: number, abstand: number) => Array.from({ length: n }, (_, i) => ost(20 + i * 10, abstand));
+
+  it("moves a way a few meters beside a seen street onto it", () => {
+    const g = aufStrassen(neben(20, 8), [strasse]);
+    expect(g).toHaveLength(20);
+    for (const p of g) expect(Math.abs(p[1] - Y0) * 111_200).toBeLessThan(0.5);
+  });
+
+  it("leaves a way far from any seen street as it is (park, square)", () => {
+    const weg = neben(20, 40);
+    expect(aufStrassen(weg, [strasse])).toEqual(weg);
+  });
+
+  it("does not snap onto a street crossing at a right angle", () => {
+    const quer = { coords: [ost(100, -100), ost(100, 100)] };
+    const weg = neben(20, 8);
+    const g = aufStrassen(weg, [quer]);
+    expect(Math.abs(g[8]![1] - Y0) * 111_200).toBeGreaterThan(7);
+  });
+
+  it("does not snap car parts", () => {
+    const weg = neben(20, 8);
+    const g = aufStrassen(weg, [strasse], weg.map(() => true));
+    expect(g).toEqual(weg);
+  });
+
+  it("goes over softly where the street ends", () => {
+    // The street stops at 150 m, the way goes on 8 m beside it: no jump of 8 m between two points.
+    const kurz = { coords: [ost(0), ost(150)] };
+    const g = aufStrassen(neben(28, 8), [kurz]);
+    for (let i = 1; i < g.length; i++) expect(Math.abs(g[i]![1] - g[i - 1]![1]) * 111_200).toBeLessThan(4.5);
   });
 });
