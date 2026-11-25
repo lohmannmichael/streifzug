@@ -36,3 +36,14 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 void aufraeumen();
+
+// The logo stays at least 1.6 s after the start (Michi, 25.11.2026: "bissl länger"), then fades;
+// the app loads underneath meanwhile.
+const LOGO_MS = 1600;
+const startbild = document.querySelector<HTMLElement>(".startbild");
+if (startbild) {
+  window.setTimeout(() => {
+    startbild.classList.add("weg");
+    window.setTimeout(() => startbild.remove(), 400);
+  }, Math.max(0, LOGO_MS - performance.now()));
+}

@@ -13,12 +13,11 @@
     <title>Unterwegs</title>
   </head>
   <body>
-    <div id="root">
-      <!-- Start image until the app is ready (replaced by React). -->
-      <div class="startbild" aria-label="Unterwegs">
-        <img src="/icons/icon-192.png" width="96" height="96" alt="" />
-        <img src="/icons/wortmarke.webp" width="216" height="44" alt="Unterwegs" />
-      </div>
+    <div id="root"></div>
+    <!-- Start image: stays a moment over the app while it loads, then fades (main.tsx). -->
+    <div class="startbild" aria-label="Unterwegs">
+      <img src="/icons/icon-192.png" width="96" height="96" alt="" />
+      <img src="/icons/wortmarke.webp" width="216" height="44" alt="Unterwegs" />
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

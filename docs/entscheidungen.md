@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 25.11.2026: Logo beim Öffnen länger
+- Michi: „Beim Öffnen bitte bissl länger das Logo zeigen.“ Das Startbild (Symbol und Schriftzug) lag bisher in der App-Fläche und verschwand, sobald die App startete. Jetzt liegt es darüber, bleibt mindestens 1,6 s ab Start und blendet in 0,35 s aus; die Karte lädt darunter schon (keine verlorene Zeit). Oberflächentest dazu
+
 ## 25.11.2026: Polaroid schneller
 - Michi: „Sieht cool aus, könnte aber schneller sein.“ Im Polaroid jetzt doppelt so schnell (neue Straßen 180 m/s, 1 km in gut 5 s), etwas höher (Zoom 14,4), höchstens 20 s je Bild, Blick von oben 0,5 s, Flüge 40 % kürzer, Pause zwischen Bildern 1,5 s statt 2,5 s. Die große Drohne bleibt unverändert
 - Kern: `planeDrohne` mit `tempoFaktor`, 8 Tests

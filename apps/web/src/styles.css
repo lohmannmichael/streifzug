@@ -449,7 +449,9 @@ textarea.adresse { resize: none; word-break: break-all; font-size: 16px; line-he
 .schild .text-knopf { justify-self: start; min-height: 36px; padding: 0; }
 
 /* Start image while the app loads: the sign and the word mark on paper. */
-.startbild { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 22px; background: #fbfbf8; }
+.startbild { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 22px; background: #fbfbf8; pointer-events: none; transition: opacity 350ms ease-out; }
+.startbild.weg { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .startbild { transition: none; } }
 .startbild img:first-child { border-radius: 22px; outline: 1px solid #e4e4e0; }
 .startbild img:last-child { mix-blend-mode: multiply; }
 .farbwahl legend { float: left; width: 100%; padding: 0; }

@@ -75,3 +75,14 @@ test("Öffnen zeigt sofort den letzten Stand, auch wenn Straßendaten nicht komm
   await zuDenWegen(page);
   await expect.poll(() => gelbePixel(page, UEBER_DEM_BLATT)).toBeGreaterThan(GELB_MINDESTENS);
 });
+
+test("Logo beim Öffnen bleibt kurz stehen und blendet dann aus (Michi, 25.11.2026)", async ({ page }) => {
+  await serverErsetzen(page);
+  await ohneRueckblick(page);
+  await page.goto("/");
+  const logo = page.locator(".startbild");
+  await expect(logo).toBeVisible();
+  await page.waitForTimeout(800);
+  await expect(logo).toBeVisible();
+  await expect(logo).toHaveCount(0, { timeout: 5000 });
+});
