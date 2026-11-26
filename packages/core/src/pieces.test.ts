@@ -83,3 +83,28 @@ describe("Wirtschafts- und lange Zufahrtswege (Michi, 22.11.2026)", () => {
     expect(ids(nachher)).toEqual(ids(vorher));
   });
 });
+
+describe("piecesFromTile: Überwege (Michi, 26.11.2026)", () => {
+  // A street along x at y = 0; a footway from y = -10 to y = 10 across it at x = 40.
+  const quer = (x: number, von: number, bis: number): LonLat[] => [
+    [mitte[0] + x * MX, mitte[1] + von * MY],
+    [mitte[0] + x * MX, mitte[1] + bis * MY],
+  ];
+  const strasse = { props: { class: "minor" }, lines: [gerade(0, 100)] };
+
+  it("leaves out a short footway crossing a street (a crossing), ids of the others stay", () => {
+    const ohne = piecesFromTile(tile, [strasse]);
+    const mit = piecesFromTile(tile, [strasse, { props: { class: "path", subclass: "footway" }, lines: [quer(40, -10, 10)] }]);
+    expect(mit.map((p) => p.id)).toEqual(ohne.map((p) => p.id));
+  });
+
+  it("keeps a short footway that does not cross a street", () => {
+    const p = piecesFromTile(tile, [strasse, { props: { class: "path", subclass: "footway" }, lines: [quer(40, 5, 25)] }]);
+    expect(p.filter((x) => x.kind === "path")).toHaveLength(1);
+  });
+
+  it("keeps a long footway even when it crosses a street", () => {
+    const p = piecesFromTile(tile, [strasse, { props: { class: "path", subclass: "footway" }, lines: [quer(40, -60, 60)] }]);
+    expect(p.filter((x) => x.kind === "path").length).toBeGreaterThan(1);
+  });
+});

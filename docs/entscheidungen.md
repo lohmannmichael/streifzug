@@ -1,5 +1,10 @@
 # Entscheidungen
 
+## 26.11.2026: Überwege nicht mehr zeichnen
+- Michi: Ja zum Vorschlag, Fußgänger-Überwege nicht mehr gelb zu zeichnen
+- OpenMapTiles kennzeichnet footway=crossing nicht; erkannt wird ein Überweg an der Form: ein Fußweg von höchstens 50 m (breite Überwege queren zwei Fahrbahnen und Gleise), der eine Straße kreuzt. Seine Linie bleibt intern in der Liste (alle anderen Stück-Kennungen bleiben gleich), nur seine Stücke entfallen. Zählt ohnehin nicht (Fußwege zählen nicht), es geht nur ums Bild
+- Mit Michis Daten (nur lesend): 10 Stücke weniger, u. a. der lange Überweg an der Haltestelle Bahnstraße/Aachener Straße. Die kurzen Wege auf dem Bahnsteig bleiben. 3 Tests. Abgleich-Version 15
+
 ## 26.11.2026: Stummel-Regel nachgebessert (Ecken waren weg)
 - Michi schickte Bilder: Lücken an den Ecken Moltkestraße/Brauweilerstraße (Lövenich), Zickzack an der Aachener Straße (Haltestelle Bahnstraße), Feldstücke in Frechen
 - Ursache der Lücken (mein Fehler vom 25.11.): Straßen sind in Stücke von etwa 25 m geteilt, die nicht an Kreuzungen enden. Biegt man ab, ragt das Eckstück ein paar Meter über die Kreuzung; die Stummel-Regel nahm es heraus, wenn das GPS die Ecke abkürzte. Mit Michis Daten (nur lesend, Stand 24.11.) waren das gut 60 Stücke, viele echt

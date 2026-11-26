@@ -15,7 +15,8 @@ import { stueckeDerKachel } from "./strassen";
 // 12 (24.11.2026): gaps in car rides traced along the streets (pen line only).
 // 13 (25.11.2026): short stubs with a free end you never came near are taken out.
 // 14 (26.11.2026): a stub never goes on straight into a seen piece (corner pieces stay).
-const ABGLEICH_VERSION = 14;
+// 15 (26.11.2026): crossings (short footways across a street) are left out.
+const ABGLEICH_VERSION = 15;
 
 interface Flaeche {
   id: string;
