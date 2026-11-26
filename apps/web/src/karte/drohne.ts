@@ -17,10 +17,10 @@ import { box, nurAktiv, rueckblickAbspielen, spurBis, type Fenster, type Rueckbl
 const ZOOM = 15;
 /** In the smaller Polaroid picture a little higher, so it shows enough around the pen. */
 const ZOOM_POLAROID = 14.4;
-/** Polaroid: twice as fast, at most 20 s per picture, shorter look from above (Michi, 25.11.2026). */
-const POLAROID_TEMPO = 2;
-const POLAROID_DECKEL_MS = 20_000;
-const POLAROID_UEBERBLICK_MS = 500;
+/** Polaroid: three times as fast (Michi, 26.11.2026: "noch bissl schneller"), at most 15 s per picture, shorter look from above (Michi, 25.11.2026). */
+const POLAROID_TEMPO = 3;
+const POLAROID_DECKEL_MS = 15_000;
+const POLAROID_UEBERBLICK_MS = 300;
 /** On a very full day the pen goes faster; then the camera goes up a little (at most this much). */
 const ZOOM_HOECHSTENS_HOEHER = 0.8;
 /** A jump of the pen further than this (car ride, left-out stretch, next way) is a flight. */
@@ -223,7 +223,7 @@ export function drohneAbspielen(karte: MapLibreMap, daten: RueckblickDaten, k: R
     // A jump (first start, car ride, left-out stretch, next way): a calm flight, the pen waits.
     const sprung = letzterPunkt ? distanceM(letzterPunkt, st.punkt) : Infinity;
     letzterPunkt = st.punkt;
-    if (sprung > SPRUNG_M) fliegen(st.punkt, (sprung === Infinity ? 1800 : flugDauer(sprung)) * (k.fenster ? 0.6 : 1), jetzt);
+    if (sprung > SPRUNG_M) fliegen(st.punkt, (sprung === Infinity ? 1800 : flugDauer(sprung)) * (k.fenster ? 0.45 : 1), jetzt);
     else kamera(st.punkt, dt);
     bild = requestAnimationFrame(schritt);
   };

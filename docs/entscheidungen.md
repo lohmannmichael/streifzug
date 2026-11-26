@@ -1,5 +1,8 @@
 # Entscheidungen
 
+## 26.11.2026: Polaroid noch schneller
+- Michi: „Der Rückblick kann noch bissl schneller.“ Polaroid jetzt dreifach statt doppelt (neue Straßen 270 m/s, 1 km in knapp 4 s), höchstens 15 s je Bild, Blick von oben 0,3 s, Flüge etwas kürzer, Pause zwischen Bildern 1 s
+
 ## 25.11.2026: Stummel an Kreuzungen raus
 - Michi schickte Bilder mit kleinen gelben Kreuzen, Stummeln und Zickzack-Stücken an Kreuzungen (Rudolf-Harbig-Weg, Kantstraße, Aachener Straße/Bunzlauer Straße, Schützenweg, Frechen, Stadtwald)
 - Ursache: Die Regeln, die nach dem Abgleich Ecken, kurze Lücken und die zweite Fahrbahn auffüllen, nehmen an Kreuzungen manchmal ein paar Meter der Querstraße mit
