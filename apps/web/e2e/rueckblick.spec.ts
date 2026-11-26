@@ -19,12 +19,12 @@ test("Rückblick läuft, Tipp überspringt, Endstand stimmt", async ({ page }) =
   await expect(ober).not.toContainText("5 Wege");
   // After the replay the plan shows the quarter with the most new streets: Weiden.
   await expect(page.getByRole("heading", { name: "Weiden" })).toBeVisible();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
 
   // Opening again: nothing new, no replay.
   await page.reload();
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await page.waitForTimeout(3000);
   await expect(page.getByRole("button", { name: "Überspringen" })).toBeHidden();
 });
@@ -47,7 +47,7 @@ test("Rückblick fährt alle Wege nach (Drohne, ruhig schwebend): höchstens 40 
   // graphics chip and is slower when tests run side by side.
   expect(Date.now() - start).toBeLessThan(75_000);
   await expect(page.getByRole("heading", { name: "Weiden" })).toBeVisible();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
 });
 
 test("Polaroid beim Öffnen: Bild je Weg, Datum und Zeile, blättern, schließen (Michi, 25.11.2026)", async ({ page }) => {
@@ -70,7 +70,7 @@ test("Polaroid beim Öffnen: Bild je Weg, Datum und Zeile, blättern, schließen
   await expect(punkte.nth(1)).toHaveAttribute("aria-current", "true");
   await polaroid.getByRole("button", { name: "Rückblick schließen" }).click();
   await expect(polaroid).toBeHidden();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
 });
 
 test("Polaroid auch unter Rückblicke: Tipp auf einen Tag zeigt seine Wege als Bilder", async ({ page }) => {
@@ -89,5 +89,5 @@ test("Polaroid auch unter Rückblicke: Tipp auf einen Tag zeigt seine Wege als B
   await expect(polaroid.locator(".polaroid-zahlen")).toContainText("unterwegs");
   await polaroid.getByRole("button", { name: "Rückblick schließen" }).click();
   await expect(polaroid).toBeHidden();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
 });

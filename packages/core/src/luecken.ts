@@ -99,8 +99,10 @@ const ANSCHLUSS_M = 3;
 /**
  * Stubs (Michi, 25.11.2026: small crosses and stubs at crossings): the rules that close corners
  * and gaps sometimes take a few meters of a side street you only passed. A seen piece of at most
- * 30 m with an end that joins no other seen piece counts only if a GPS point came within 15 m of
- * that end. Returns the ids to take out again.
+ * 30 m that goes on straight into no seen piece of its street, with an end that joins no other
+ * seen piece, counts only if a GPS point came within 15 m of that end. (26.11.2026: pieces are
+ * about 25 m and do not end at crossings, so a corner piece sticks out a little; it stays.)
+ * Returns the ids to take out again.
  */
 export function stummelEntfernen(kandidaten: readonly Piece[], gesehen: ReadonlySet<string>, fixes: readonly { lat: number; lon: number }[]): Set<string> {
   const raus = new Set<string>();
@@ -140,8 +142,40 @@ export function stummelEntfernen(kandidaten: readonly Piece[], gesehen: Readonly
     const t = l > 0 ? Math.max(0, Math.min(1, ((q[0] - a[0]) * sx + (q[1] - a[1]) * sy) / l)) : 0;
     return Math.hypot(q[0] - a[0] - t * sx, q[1] - a[1] - t * sy);
   };
+  // Ends of all seen pieces with the direction of their end segment, for "goes on straight".
+  const endenNetz = new Map<string, { id: string; q: [number, number]; r: [number, number] }[]>();
+  for (const p of seen) {
+    const n = p.coords.length;
+    if (n < 2) continue;
+    for (const [i, j] of [[0, 1], [n - 1, n - 2]] as const) {
+      const q = xy(p.coords[i]!);
+      const w = xy(p.coords[j]!);
+      const e = { id: p.id, q, r: [w[0] - q[0], w[1] - q[1]] as [number, number] };
+      const z = k(q[0], q[1]);
+      (endenNetz.get(z) ?? endenNetz.set(z, []).get(z)!).push(e);
+    }
+  }
+  const cosGerade = Math.cos((35 * Math.PI) / 180);
+  /** Another seen piece starts or ends here and runs on roughly straight (same street). */
+  const gehtWeiter = (q: [number, number], r: [number, number], id: string) => {
+    for (const e of umgebung(endenNetz, q)) {
+      if (e.id === id || Math.hypot(e.q[0] - q[0], e.q[1] - q[1]) > ANSCHLUSS_M) continue;
+      const c = (r[0] * e.r[0] + r[1] * e.r[1]) / (Math.hypot(...r) * Math.hypot(...e.r) || 1);
+      // Going on straight: the other piece leaves this end in the opposite direction.
+      if (c <= -cosGerade) return true;
+    }
+    return false;
+  };
   for (const p of kurze) {
-    const enden = [xy(p.coords[0]!), xy(p.coords[p.coords.length - 1]!)];
+    const n = p.coords.length;
+    // A piece that goes on straight into a seen piece at either end belongs to a walked street
+    // (a corner piece sticking out past the crossing, the last piece of a walk): never a stub.
+    const anfang = xy(p.coords[0]!);
+    const ende = xy(p.coords[n - 1]!);
+    const zweiter = xy(p.coords[1]!);
+    const vorletzter = xy(p.coords[n - 2]!);
+    if (gehtWeiter(anfang, [zweiter[0] - anfang[0], zweiter[1] - anfang[1]], p.id) || gehtWeiter(ende, [vorletzter[0] - ende[0], vorletzter[1] - ende[1]], p.id)) continue;
+    const enden = [anfang, ende];
     const frei = enden.filter((e) => {
       for (const s of umgebung(segs, e)) if (s.id !== p.id && abstand(e, s.a, s.b) <= ANSCHLUSS_M) return false;
       return true;

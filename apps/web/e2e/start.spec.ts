@@ -3,7 +3,7 @@ import { fehlerSammeln, gelbePixel, ohneRueckblick, planDa, prozent, UEBER_DEM_B
 import { serverErsetzen } from "./server";
 
 // Weiden with the three test ways and the car ride (fixed data, fixed recorded street tiles).
-const WEIDEN_PROZENT = "9,5 Prozent";
+const WEIDEN_PROZENT = "9,8 Prozent";
 // Clearly more than none: the three ways leave a few thousand yellow pixels above the sheet.
 const GELB_MINDESTENS = 1500;
 

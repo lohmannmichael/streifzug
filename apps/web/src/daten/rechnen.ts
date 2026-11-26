@@ -14,7 +14,8 @@ import { stueckeDerKachel } from "./strassen";
 // 11 (23.11.2026): GPS jitter in a house is a halt, not a way.
 // 12 (24.11.2026): gaps in car rides traced along the streets (pen line only).
 // 13 (25.11.2026): short stubs with a free end you never came near are taken out.
-const ABGLEICH_VERSION = 13;
+// 14 (26.11.2026): a stub never goes on straight into a seen piece (corner pieces stay).
+const ABGLEICH_VERSION = 14;
 
 interface Flaeche {
   id: string;

@@ -9,7 +9,7 @@ test("Deutschland-Blick (F5): weit draußen feine Linien und ein Punkt je Ort, T
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await page.waitForTimeout(1500);
 
   // Zoom 8 over Köln: the ways as fine yellow lines, no quarter areas.

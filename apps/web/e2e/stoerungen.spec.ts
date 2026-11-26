@@ -7,10 +7,10 @@ test("Netz aus: Offline-Zeile, danach wieder normal", async ({ page, context }) 
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await context.setOffline(true);
   await expect(page.getByText("Offline. Neue Wege kommen, sobald Netz da ist.")).toBeVisible();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await context.setOffline(false);
   await expect(page.getByText("Offline. Neue Wege kommen, sobald Netz da ist.")).toBeHidden();
 });
@@ -35,6 +35,6 @@ test("Einrechnen schlägt fehl: Hinweis, „Nochmal versuchen“ rechnet ein", a
   await expect(page.getByText("Neue Wege ließen sich gerade nicht einrechnen. Deine Wege sind sicher.")).toBeVisible({ timeout: 30_000 });
   server.optionen.strassenAus = false;
   await page.getByRole("button", { name: "Nochmal versuchen" }).tap();
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await expect(page.getByText("Neue Wege ließen sich gerade nicht einrechnen.")).toBeHidden();
 });

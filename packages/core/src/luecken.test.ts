@@ -107,3 +107,33 @@ describe("stummelEntfernen (Michi, 25.11.2026: kleine Kreuze und Stummel an Kreu
     expect([...stummelEntfernen([a, b, allein], new Set(["a", "b", "allein"]), entlang)]).toEqual(["allein"]);
   });
 });
+
+describe("stummelEntfernen an Ecken (26.11.2026: Lücken an Moltke-/Brauweilerstraße)", () => {
+  const OST = 1 / 70_000;
+  const quer = (id: string, von: number, bis: number, nord = 100): Piece => ({
+    id,
+    kind: "street",
+    weight: 1,
+    lengthM: Math.abs(bis - von),
+    coords: [[6.83 + von * OST, 50.94 + nord * M], [6.83 + bis * OST, 50.94 + nord * M]],
+    mid: [6.83 + ((von + bis) / 2) * OST, 50.94 + nord * M],
+  });
+  const fix = (nord: number, ost = 0) => ({ lat: 50.94 + nord * M, lon: 6.83 + ost * OST, t: 0 });
+
+  it("keeps the corner piece that sticks out a few meters past the crossing, when its street goes on in yellow", () => {
+    // Walked north on a (0–100 m), then turned east at 100 m. The east street's first piece runs
+    // from -10 m (sticking out west past the crossing) to 15 m, then the next one goes on.
+    const a = stueck("a", 0, 100);
+    const ecke = quer("ecke", -10, 15);
+    const weiter = quer("weiter", 15, 40);
+    const fixes = [0, 25, 50, 75].map((n) => fix(n)).concat([fix(100, 20), fix(100, 40)]);
+    expect(stummelEntfernen([a, ecke, weiter], new Set(["a", "ecke", "weiter"]), fixes).size).toBe(0);
+  });
+
+  it("keeps the last piece of a walked run", () => {
+    const a = stueck("a", 0, 25);
+    const b = stueck("b", 25, 50);
+    const fixes = [0, 10, 20, 30].map((n) => fix(n));
+    expect(stummelEntfernen([a, b], new Set(["a", "b"]), fixes).size).toBe(0);
+  });
+});

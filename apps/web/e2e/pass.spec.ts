@@ -29,7 +29,7 @@ test("Stempel für Orte und Länder (F7): Köln, Freising, Einreise Deutschland"
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
 
   await page.getByRole("button", { name: "Pass öffnen" }).tap();
   await page.locator(".pass-zeile", { hasText: "Stempel" }).tap();

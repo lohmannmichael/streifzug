@@ -10,7 +10,7 @@ test("Straße komplett (F4): Name unterlegt, Schild sagt „komplett seit“", a
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   // The complete streets come with the calculation; then go there.
   await page.waitForTimeout(3000);
   await page.getByRole("button", { name: "Zu meinem Standort" }).tap();

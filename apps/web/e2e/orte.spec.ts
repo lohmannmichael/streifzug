@@ -35,7 +35,7 @@ test("Start mit Wegen lädt die Orte mit Wegen (Köln, Freising), nichts weit we
   await ohneRueckblick(page);
   await page.goto("/");
   await planDa(page);
-  await expect(prozent(page)).toHaveAttribute("aria-label", "9,5 Prozent");
+  await expect(prozent(page)).toHaveAttribute("aria-label", "9,8 Prozent");
   await expect.poll(() => orte.has("freising")).toBe(true);
   await page.waitForTimeout(1500);
   expect(orte.has("koeln")).toBe(true);

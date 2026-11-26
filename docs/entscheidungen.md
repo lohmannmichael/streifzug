@@ -1,5 +1,12 @@
 # Entscheidungen
 
+## 26.11.2026: Stummel-Regel nachgebessert (Ecken waren weg)
+- Michi schickte Bilder: Lücken an den Ecken Moltkestraße/Brauweilerstraße (Lövenich), Zickzack an der Aachener Straße (Haltestelle Bahnstraße), Feldstücke in Frechen
+- Ursache der Lücken (mein Fehler vom 25.11.): Straßen sind in Stücke von etwa 25 m geteilt, die nicht an Kreuzungen enden. Biegt man ab, ragt das Eckstück ein paar Meter über die Kreuzung; die Stummel-Regel nahm es heraus, wenn das GPS die Ecke abkürzte. Mit Michis Daten (nur lesend, Stand 24.11.) waren das gut 60 Stücke, viele echt
+- Neu: Ein Stück, das an einem Ende gerade (unter 35°) in ein gelbes Stück übergeht, ist nie ein Stummel (Eckstücke, letztes Stück eines Wegs). Mit Michis Daten: nur noch 19 Stücke raus (fast alles einzelne Fußwegstücke abseits), 46 Stücke wieder gelb. 2 Tests dazu. Abgleich-Version 14
+- Zickzack an der Aachener Straße und Feldstücke in Frechen: dort lag das GPS wirklich (3–9 m), es sind sehr kurze Stücke von Überwegen und Kreuzungsteilen. Bleiben vorerst; Idee: Überwege (footway=crossing) gar nicht zeichnen
+- Testwege wieder 9,8 % (die Schleife über der Aachener Straße bleibt: ihre Stücke gehen gerade ineinander über)
+
 ## 26.11.2026: Polaroid noch schneller
 - Michi: „Der Rückblick kann noch bissl schneller.“ Polaroid jetzt dreifach statt doppelt (neue Straßen 270 m/s, 1 km in knapp 4 s), höchstens 15 s je Bild, Blick von oben 0,3 s, Flüge etwas kürzer, Pause zwischen Bildern 1 s
 
